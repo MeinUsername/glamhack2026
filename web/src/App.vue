@@ -79,7 +79,7 @@ onMounted(load)
 
       <table v-if="files.length">
         <thead>
-          <tr><th>Foöe</th><th>Size</th><th>Hochgeladen</th></tr>
+          <tr><th>File</th><th>Size</th><th>Hochgeladen</th></tr>
         </thead>
         <tbody>
           <tr v-for="f in files" :key="f.id">
