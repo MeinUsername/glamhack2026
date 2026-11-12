@@ -1,0 +1,23 @@
+# Build and deploy on every push to main (trigger is created separately, see README).
+# static/app is committed, so no npm step is needed here.
+steps:
+  - name: gcr.io/google.com/cloudsdktool/cloud-sdk:slim
+    entrypoint: gcloud
+    args:
+      - run
+      - deploy
+      - glamhack-app
+      - --source=.
+      - --function=Handler
+      - --base-image=go127
+      - --region=us-central1
+      - --project=glamhack-hack-2026
+      - --allow-unauthenticated
+      - --memory=256Mi
+      - --min-instances=0
+      - --max-instances=2
+      - --timeout=60
+      - --set-env-vars=PROJECT_ID=glamhack-hack-2026,BUCKET_NAME=glamhack-hack-2026-files
+      - --set-build-env-vars=GOFLAGS=-buildvcs=false
+options:
+  logging: CLOUD_LOGGING_ONLY

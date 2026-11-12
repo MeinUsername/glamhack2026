@@ -1,0 +1,11 @@
+{{define "content"}}
+<h1>Anmelden</h1>
+<form data-auth-form="login">
+  <input type="email" name="email" placeholder="E-Mail" autocomplete="email" required>
+  <input type="password" name="password" placeholder="Passwort" autocomplete="current-password" required>
+  <button type="submit">Anmelden</button>
+</form>
+<p class="error" role="alert" data-auth-message></p>
+<p class="muted">Noch kein Konto? <a href="/register">Jetzt registrieren</a></p>
+<script type="module" src="/app/auth.js"></script>
+{{end}}

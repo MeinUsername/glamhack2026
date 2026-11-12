@@ -1,0 +1,10 @@
+{{define "content"}}
+<h1>Hello World</h1>
+<p>Eine kleine Hackathon-App: Go-Cloud-Function mit htmx und Vue, Login per E-Mail und Datei-Upload mit maximal 1 MB.</p>
+{{if .User}}
+  <p>Angemeldet als <strong>{{.User}}</strong>.</p>
+  <p><a href="/dashboard">Zu meinen Dateien</a> · <a href="/app/">Vue-App öffnen</a></p>
+{{else}}
+  <p><a href="/login">Anmelden</a> oder <a href="/register">Konto erstellen</a>.</p>
+{{end}}
+{{end}}

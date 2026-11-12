@@ -1,0 +1,14 @@
+{{define "filesSection"}}{{if .Message}}<p class="notice" role="status">{{.Message}}</p>{{end}}
+{{if .Files}}
+<table>
+  <thead><tr><th>Datei</th><th>Grösse</th><th>Hochgeladen</th></tr></thead>
+  <tbody>
+  {{range .Files}}
+    <tr><td><a href="/files/{{.ID}}">{{.Name}}</a></td><td>{{.Size}}</td><td>{{.CreatedAt}}</td></tr>
+  {{end}}
+  </tbody>
+</table>
+{{else}}
+<p class="muted">Noch keine Dateien.</p>
+{{end}}
+{{end}}

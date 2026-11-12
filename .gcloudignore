@@ -1,0 +1,8 @@
+# Source upload for `gcloud functions deploy`. Only the Go function and the
+# prebuilt static Vue bundle (static/app) are needed in the cloud.
+web/
+.git/
+.gitignore
+.gcloudignore
+*.md
+.DS_Store
