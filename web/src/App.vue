@@ -67,7 +67,7 @@ onMounted(load)
     </div>
 
     <div v-else>
-      <p class="muted">Angemeldet als {{ email }}. Maximal 1 Megabyte pro Datei.</p>
+      <p class="muted">Logged in als {{ email }}. Maximal 1 Megabyte pro Datei.</p>
 
       <label class="upload">
         <input type="file" :disabled="busy" @change="upload" />
@@ -79,7 +79,7 @@ onMounted(load)
 
       <table v-if="files.length">
         <thead>
-          <tr><th>Datei</th><th>Grösse</th><th>Hochgeladen</th></tr>
+          <tr><th>Foöe</th><th>Size</th><th>Hochgeladen</th></tr>
         </thead>
         <tbody>
           <tr v-for="f in files" :key="f.id">
