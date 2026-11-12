@@ -1,6 +1,13 @@
 # Build and deploy on every push to main (trigger is created separately, see README).
-# static/app is committed, so no npm step is needed here.
 steps:
+  # Rebuild the static Vue bundles from web/ into static/app, so the deployed
+  # bundle always matches the committed source.
+  - name: node:24
+    dir: web
+    entrypoint: sh
+    args:
+      - -c
+      - npm ci --no-audit --no-fund && npm run build
   - name: gcr.io/google.com/cloudsdktool/cloud-sdk:slim
     entrypoint: gcloud
     args:
