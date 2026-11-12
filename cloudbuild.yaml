@@ -19,5 +19,6 @@ steps:
       - --timeout=60
       - --set-env-vars=PROJECT_ID=glamhack-hack-2026,BUCKET_NAME=glamhack-hack-2026-files
       - --set-build-env-vars=GOFLAGS=-buildvcs=false
+      - --quiet # Cloud Build has no stdin; never wait for a prompt
 options:
   logging: CLOUD_LOGGING_ONLY
