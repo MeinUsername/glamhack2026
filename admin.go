@@ -1,26 +1,38 @@
 package app
 
 import (
+	"encoding/json"
 	"errors"
-	"io"
 	"log"
 	"net/http"
+	"strings"
 )
 
-// requireAdmin lets only logged-in admins through. Others get a redirect to the
-// login page (not logged in) or 403 (logged in, no admin role). The check reads
-// the role fresh on each request.
+// isAdmin is the single place that decides admin rights.
+func isAdmin(u sessionUser) bool { return u.Role == roleAdmin }
+
+// requireAdmin lets only signed-in admins through (role read fresh per request).
 func (s *server) requireAdmin(next func(http.ResponseWriter, *http.Request, sessionUser)) http.HandlerFunc {
+	return guardAdmin(s.currentUser, next)
+}
+
+// guardAdmin is requireAdmin with the user lookup passed in, so tests can supply users.
+// JSON paths get JSON errors (401 signed out, 403 no admin); pages get a redirect or 403.
+func guardAdmin(resolve func(*http.Request) (sessionUser, bool), next func(http.ResponseWriter, *http.Request, sessionUser)) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		u, ok := s.currentUser(r)
+		isAPI := strings.HasPrefix(r.URL.Path, "/api/")
+		u, ok := resolve(r)
 		if !ok {
+			if isAPI {
+				writeJSONError(w, http.StatusUnauthorized, "nicht angemeldet")
+				return
+			}
 			redirect(w, r, "/login")
 			return
 		}
 		if !isAdmin(u) {
-			if r.Header.Get("HX-Request") == "true" {
-				w.WriteHeader(http.StatusForbidden)
-				_, _ = io.WriteString(w, `<p class="error" role="alert">Nur für Admins.</p>`)
+			if isAPI {
+				writeJSONError(w, http.StatusForbidden, "Nur für Admins.")
 				return
 			}
 			http.Error(w, "Nur für Admins.", http.StatusForbidden)
@@ -30,64 +42,70 @@ func (s *server) requireAdmin(next func(http.ResponseWriter, *http.Request, sess
 	}
 }
 
-// isAdmin is the single place that decides admin rights.
-func isAdmin(u sessionUser) bool { return u.Role == roleAdmin }
+// adminPage serves the React page /admin/users (the data comes from the JSON API).
+func (s *server) adminPage(w http.ResponseWriter, r *http.Request, _ sessionUser) {
+	writeAppIndex(w)
+}
 
-func (s *server) adminUsersPage(w http.ResponseWriter, r *http.Request, u sessionUser) {
+func (s *server) apiListUsers(w http.ResponseWriter, r *http.Request, _ sessionUser) {
 	users, err := s.listUsers(r.Context())
 	if err != nil {
 		log.Printf("list users: %v", err)
-		http.Error(w, "Interner Fehler", http.StatusInternalServerError)
+		writeJSONError(w, http.StatusInternalServerError, "interner Fehler")
 		return
 	}
-	s.render(w, "admin", pageData{User: u.Email, IsAdmin: true, Users: users})
+	if users == nil {
+		users = []userView{}
+	}
+	writeJSON(w, http.StatusOK, users)
 }
 
-// setUserRole is the htmx endpoint for the role select. It returns the users section.
-func (s *server) setUserRole(w http.ResponseWriter, r *http.Request, u sessionUser) {
-	err := s.setRole(r.Context(), u.ID, r.PathValue("uid"), r.FormValue("role"))
-	s.renderUsers(w, r, u, "Rolle gespeichert.", err)
-}
-
-// setUserDisabled is the htmx endpoint for the block button (disabled=true|false).
-func (s *server) setUserDisabled(w http.ResponseWriter, r *http.Request, u sessionUser) {
-	var disabled bool
-	switch r.FormValue("disabled") {
-	case "true":
-		disabled = true
-	case "false":
-		disabled = false
-	default:
-		s.renderUsers(w, r, u, "", userError("Ungültiger Wert."))
+// apiSetUserRole: body {"role": "admin" | "user"}. Answers with the refreshed user list.
+func (s *server) apiSetUserRole(w http.ResponseWriter, r *http.Request, actor sessionUser) {
+	var body struct {
+		Role string `json:"role"`
+	}
+	if !decodeBody(w, r, &body) {
 		return
 	}
-	err := s.setBlocked(r.Context(), u.ID, r.PathValue("uid"), disabled)
-	msg := "Nutzer gesperrt."
-	if !disabled {
-		msg = "Sperre aufgehoben."
-	}
-	s.renderUsers(w, r, u, msg, err)
+	s.answerUsers(w, r, s.setRole(r.Context(), actor.ID, r.PathValue("uid"), body.Role))
 }
 
-// renderUsers writes the users section with either a success message or the error.
-func (s *server) renderUsers(w http.ResponseWriter, r *http.Request, u sessionUser, msg string, actionErr error) {
-	data := pageData{User: u.Email, IsAdmin: true}
+// apiSetUserDisabled: body {"disabled": true | false}. Answers with the refreshed user list.
+func (s *server) apiSetUserDisabled(w http.ResponseWriter, r *http.Request, actor sessionUser) {
+	var body struct {
+		Disabled bool `json:"disabled"`
+	}
+	if !decodeBody(w, r, &body) {
+		return
+	}
+	s.answerUsers(w, r, s.setBlocked(r.Context(), actor.ID, r.PathValue("uid"), body.Disabled))
+}
+
+// answerUsers writes the user list after a change, or the error of the change.
+func (s *server) answerUsers(w http.ResponseWriter, r *http.Request, actionErr error) {
 	if actionErr != nil {
 		var ue userError
-		if errors.As(actionErr, &ue) {
-			data.Error = ue.Error()
-		} else {
+		switch {
+		case errors.Is(actionErr, errNoSuchUser):
+			writeJSONError(w, http.StatusNotFound, actionErr.Error())
+		case errors.As(actionErr, &ue):
+			writeJSONError(w, http.StatusBadRequest, ue.Error())
+		default:
 			log.Printf("admin action: %v", actionErr)
-			data.Error = "Interner Fehler."
+			writeJSONError(w, http.StatusInternalServerError, "interner Fehler")
 		}
-	} else {
-		data.Message = msg
+		return
 	}
-	users, err := s.listUsers(r.Context())
-	if err != nil {
-		log.Printf("list users: %v", err)
-		data.Error = "Interner Fehler."
+	s.apiListUsers(w, r, sessionUser{})
+}
+
+// decodeBody reads a small JSON body. On failure it has already written the 400 response.
+func decodeBody(w http.ResponseWriter, r *http.Request, v any) bool {
+	r.Body = http.MaxBytesReader(w, r.Body, 4<<10)
+	if err := json.NewDecoder(r.Body).Decode(v); err != nil {
+		writeJSONError(w, http.StatusBadRequest, "ungültige Anfrage")
+		return false
 	}
-	data.Users = users
-	s.renderPartial(w, "usersSection", data)
+	return true
 }

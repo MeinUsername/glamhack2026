@@ -5,7 +5,6 @@ import (
 	"embed"
 	"encoding/json"
 	"fmt"
-	"html/template"
 	"io/fs"
 	"log"
 	"net/http"
@@ -20,39 +19,19 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-//go:embed templates
-var templateFS embed.FS
-
+// The React app (frontend/, built into static/app) is the only UI. The Go
+// function serves its index.html for the page routes and the JSON API.
+//
 //go:embed static
 var staticFS embed.FS
+
+const appIndex = "static/app/index.html"
 
 type server struct {
 	db     *firestore.Client
 	bucket *storage.BucketHandle
 	authc  *auth.Client
-	pages  map[string]*template.Template
 	mux    *http.ServeMux
-}
-
-// pageData is the data handed to every template.
-type pageData struct {
-	User    string
-	IsAdmin bool
-	Message string
-	Error   string
-	Files   []fileView
-	Invite  *inviteView
-	Users   []userView
-}
-
-// fileView is a file as shown in the UI and returned by the JSON API.
-type fileView struct {
-	ID        string `json:"id"`
-	Name      string `json:"name"`
-	Bytes     int64  `json:"bytes"`
-	Size      string `json:"-"`
-	CreatedAt string `json:"createdAt"`
-	created   int64
 }
 
 func newServer(ctx context.Context) (*server, error) {
@@ -82,21 +61,10 @@ func newServer(ctx context.Context) (*server, error) {
 		return nil, fmt.Errorf("firebase auth: %w", err)
 	}
 
-	pages := map[string]*template.Template{}
-	for _, name := range []string{"home", "login", "register", "dashboard", "admin"} {
-		t, err := template.ParseFS(templateFS,
-			"templates/layout.html", "templates/partials.html", "templates/"+name+".html")
-		if err != nil {
-			return nil, fmt.Errorf("template %s: %w", name, err)
-		}
-		pages[name] = t
-	}
-
 	s := &server{
 		db:     db,
 		bucket: gcs.Bucket(bucketName),
 		authc:  authc,
-		pages:  pages,
 		mux:    http.NewServeMux(),
 	}
 	s.routes()
@@ -110,55 +78,57 @@ func (s *server) routes() {
 	}
 
 	m := s.mux
-	m.HandleFunc("GET /{$}", s.home)
+	// Pages: the same React index.html; the server only decides redirects.
+	m.HandleFunc("GET /{$}", serveApp)
 	m.HandleFunc("GET /login", s.loginPage)
 	m.HandleFunc("GET /register", s.registerPage)
-	m.HandleFunc("POST /session", s.createSession)
-	m.HandleFunc("POST /logout", s.logout)
 	m.HandleFunc("GET /dashboard", s.dashboard)
-	m.HandleFunc("POST /files", s.uploadForm)
+	m.HandleFunc("GET /admin/users", s.requireAdmin(s.adminPage))
+	m.HandleFunc("GET /app/{$}", func(w http.ResponseWriter, r *http.Request) {
+		http.Redirect(w, r, "/", http.StatusSeeOther) // the old /app/ URL; the pages live at /
+	})
+	m.Handle("GET /app/", http.StripPrefix("/app", http.FileServerFS(vue))) // assets: /app/assets/...
+
+	// Session and account.
+	m.HandleFunc("POST /session", s.createSession)
+	m.HandleFunc("POST /register", s.register)
+	m.HandleFunc("POST /logout", s.logout)
+
+	// Files.
 	m.HandleFunc("GET /files/{id}", s.download)
 	m.HandleFunc("GET /api/me", s.apiMe)
 	m.HandleFunc("GET /api/files", s.apiListFiles)
 	m.HandleFunc("POST /api/files", s.apiUpload)
-	m.HandleFunc("POST /register", s.register)
-	m.HandleFunc("POST /invitations", s.invitationForm)
+
+	// Invitations.
 	m.HandleFunc("POST /api/invitations", s.apiCreateInvitation)
 	m.HandleFunc("GET /api/invitations/{token}", s.apiCheckInvitation)
-	m.HandleFunc("GET /admin/users", s.requireAdmin(s.adminUsersPage))
-	m.HandleFunc("POST /admin/users/{uid}/role", s.requireAdmin(s.setUserRole))
-	m.HandleFunc("POST /admin/users/{uid}/disabled", s.requireAdmin(s.setUserDisabled))
-	m.Handle("GET /app/", http.StripPrefix("/app", http.FileServerFS(vue)))
+
+	// Admin.
+	m.HandleFunc("GET /api/admin/users", s.requireAdmin(s.apiListUsers))
+	m.HandleFunc("POST /api/admin/users/{uid}/role", s.requireAdmin(s.apiSetUserRole))
+	m.HandleFunc("POST /api/admin/users/{uid}/disabled", s.requireAdmin(s.apiSetUserDisabled))
 }
 
-func (s *server) home(w http.ResponseWriter, r *http.Request) {
-	u, _ := s.currentUser(r)
-	s.render(w, "home", pageData{User: u.Email, IsAdmin: u.Role == roleAdmin})
+// serveApp writes the React page. The client router decides what to show.
+func serveApp(w http.ResponseWriter, r *http.Request) {
+	writeAppIndex(w)
 }
 
-// render writes a full page (layout + page content).
-func (s *server) render(w http.ResponseWriter, page string, data pageData) {
-	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	if err := s.pages[page].ExecuteTemplate(w, "layout", data); err != nil {
-		log.Printf("render %s: %v", page, err)
-	}
-}
-
-// renderPartial writes a fragment for htmx swaps.
-func (s *server) renderPartial(w http.ResponseWriter, name string, data any) {
-	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	if err := s.pages["dashboard"].ExecuteTemplate(w, name, data); err != nil {
-		log.Printf("partial %s: %v", name, err)
-	}
-}
-
-// redirect sends htmx requests an HX-Redirect header and plain requests a 303.
-func redirect(w http.ResponseWriter, r *http.Request, to string) {
-	if r.Header.Get("HX-Request") == "true" {
-		w.Header().Set("HX-Redirect", to)
-		w.WriteHeader(http.StatusOK)
+func writeAppIndex(w http.ResponseWriter) {
+	page, err := fs.ReadFile(staticFS, appIndex)
+	if err != nil {
+		log.Printf("read %s: %v", appIndex, err)
+		http.Error(w, "Interner Fehler", http.StatusInternalServerError)
 		return
 	}
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	w.Header().Set("Cache-Control", "no-cache")
+	_, _ = w.Write(page)
+}
+
+// redirect sends the browser to another page (303).
+func redirect(w http.ResponseWriter, r *http.Request, to string) {
 	http.Redirect(w, r, to, http.StatusSeeOther)
 }
 

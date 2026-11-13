@@ -28,10 +28,10 @@ type userDoc struct {
 
 // userView is a user as shown on the admin page.
 type userView struct {
-	UID      string
-	Email    string
-	Role     string
-	Disabled bool
+	UID      string `json:"uid"`
+	Email    string `json:"email"`
+	Role     string `json:"role"`
+	Disabled bool   `json:"disabled"`
 }
 
 // Messages for the admin page. They are shown to the user as they are.

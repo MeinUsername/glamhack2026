@@ -1,0 +1,56 @@
+import { describe, expect, it } from 'vitest'
+import userEvent from '@testing-library/user-event'
+import { screen } from '@testing-library/react'
+import { MAX_UPLOAD_BYTES } from './Dashboard'
+import { renderAt, routeFetch } from '../test/helpers'
+
+const user = { json: { email: 'a@example.ch', role: 'user' } }
+
+describe('Dashboard', () => {
+  it('AC-005-5 lehnt eine Datei über 1 MB ab und sendet sie nicht', async () => {
+    const { calls } = routeFetch({
+      'GET /api/me': () => user,
+      'GET /api/files': () => ({ json: [] }),
+    })
+    renderAt('/dashboard')
+    const picker = await screen.findByLabelText('Datei')
+
+    const big = new File([new Uint8Array(MAX_UPLOAD_BYTES + 1)], 'gross.bin')
+    await userEvent.setup().upload(picker, big)
+
+    expect(await screen.findByText('Die Datei ist größer als 1 MB.')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Hochladen' })).toBeDisabled()
+    expect(calls.some((c) => c.method === 'POST')).toBe(false)
+  })
+
+  it('AC-005-5 lädt eine Datei bis 1 MB hoch und zeigt sie in der Liste', async () => {
+    const { calls } = routeFetch({
+      'GET /api/me': () => user,
+      'GET /api/files': () => ({ json: [] }),
+      'POST /api/files': () => ({
+        status: 201,
+        json: { id: 'f1', name: 'hallo.txt', bytes: 5, createdAt: '13.11.2026 10:00' },
+      }),
+    })
+    renderAt('/dashboard')
+    const picker = await screen.findByLabelText('Datei')
+
+    const u = userEvent.setup()
+    await u.upload(picker, new File(['hallo'], 'hallo.txt', { type: 'text/plain' }))
+    await u.click(screen.getByRole('button', { name: 'Hochladen' }))
+
+    expect(await screen.findByRole('link', { name: 'hallo.txt' })).toHaveAttribute('href', '/files/f1')
+    expect(calls.filter((c) => c.method === 'POST')).toHaveLength(1)
+  })
+
+  it('AC-005-5 zeigt die Größe in KB', async () => {
+    routeFetch({
+      'GET /api/me': () => user,
+      'GET /api/files': () => ({
+        json: [{ id: 'f2', name: 'bild.png', bytes: 2048, createdAt: '12.11.2026 09:00' }],
+      }),
+    })
+    renderAt('/dashboard')
+    expect(await screen.findByText('2.0 KB')).toBeInTheDocument()
+  })
+})

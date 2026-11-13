@@ -116,34 +116,6 @@ func inviteLink(r *http.Request, token string) string {
 	return scheme + "://" + r.Host + "/register?invite=" + token
 }
 
-// inviteView is what the dashboard shows after an invitation was created.
-type inviteView struct {
-	Link      string
-	ExpiresAt string
-}
-
-func newInviteView(link string, expires time.Time) *inviteView {
-	return &inviteView{Link: link, ExpiresAt: expires.Local().Format("02.01.2006 15:04")}
-}
-
-// invitationForm is the htmx endpoint on the dashboard: it returns the link fragment.
-func (s *server) invitationForm(w http.ResponseWriter, r *http.Request) {
-	u, ok := s.currentUser(r)
-	if !ok {
-		redirect(w, r, "/login")
-		return
-	}
-	data := pageData{User: u.Email}
-	token, expires, err := s.newInvitation(r.Context(), u.ID)
-	if err != nil {
-		log.Printf("create invitation: %v", err)
-		data.Error = "Der Einladungslink konnte nicht erzeugt werden."
-	} else {
-		data.Invite = newInviteView(inviteLink(r, token), expires)
-	}
-	s.renderPartial(w, "inviteSection", data)
-}
-
 // apiCreateInvitation is the JSON endpoint: {"link", "expiresAt"} (RFC 3339).
 func (s *server) apiCreateInvitation(w http.ResponseWriter, r *http.Request) {
 	u, ok := s.currentUser(r)

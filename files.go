@@ -34,6 +34,16 @@ type fileDoc struct {
 	CreatedAt   time.Time `firestore:"created_at"`
 }
 
+// fileView is a file as shown in the UI and returned by the JSON API.
+type fileView struct {
+	ID        string `json:"id"`
+	Name      string `json:"name"`
+	Bytes     int64  `json:"bytes"`
+	Size      string `json:"-"`
+	CreatedAt string `json:"createdAt"`
+	created   int64
+}
+
 // userError is an error whose message is shown to the user.
 type userError string
 
@@ -41,46 +51,7 @@ func (e userError) Error() string { return string(e) }
 
 const errTooLarge = userError("Die Datei ist größer als 1 MB.")
 
-func (s *server) dashboard(w http.ResponseWriter, r *http.Request) {
-	u, ok := s.currentUser(r)
-	if !ok {
-		redirect(w, r, "/login")
-		return
-	}
-	files, err := s.listFiles(r, u.ID)
-	if err != nil {
-		log.Printf("list files: %v", err)
-		http.Error(w, "Interner Fehler", http.StatusInternalServerError)
-		return
-	}
-	s.render(w, "dashboard", pageData{User: u.Email, IsAdmin: u.Role == roleAdmin, Files: files})
-}
-
-// uploadForm is the htmx endpoint: it returns the refreshed file section.
-func (s *server) uploadForm(w http.ResponseWriter, r *http.Request) {
-	u, ok := s.currentUser(r)
-	if !ok {
-		redirect(w, r, "/login")
-		return
-	}
-	msg := "Datei hochgeladen."
-	if _, _, err := s.saveUpload(w, r, u.ID); err != nil {
-		var ue userError
-		if errors.As(err, &ue) {
-			msg = string(ue)
-		} else {
-			log.Printf("upload: %v", err)
-			msg = "Interner Fehler beim Hochladen."
-		}
-	}
-	files, err := s.listFiles(r, u.ID)
-	if err != nil {
-		log.Printf("list files: %v", err)
-	}
-	s.renderPartial(w, "filesSection", pageData{User: u.Email, Message: msg, Files: files})
-}
-
-// apiUpload is the JSON endpoint used by the Vue app.
+// apiUpload is the JSON endpoint used by the React app.
 func (s *server) apiUpload(w http.ResponseWriter, r *http.Request) {
 	u, ok := s.currentUser(r)
 	if !ok {
@@ -204,7 +175,7 @@ func (s *server) apiMe(w http.ResponseWriter, r *http.Request) {
 		writeJSONError(w, http.StatusUnauthorized, "nicht angemeldet")
 		return
 	}
-	writeJSON(w, http.StatusOK, map[string]string{"email": u.Email})
+	writeJSON(w, http.StatusOK, map[string]string{"email": u.Email, "role": u.Role})
 }
 
 func (s *server) apiListFiles(w http.ResponseWriter, r *http.Request) {

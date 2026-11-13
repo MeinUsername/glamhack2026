@@ -43,12 +43,13 @@ func (s *server) currentUser(r *http.Request) (sessionUser, bool) {
 	return sessionUser{ID: tok.UID, Email: email, Role: d.Role}, true
 }
 
+// loginPage and registerPage send signed-in users to the dashboard.
 func (s *server) loginPage(w http.ResponseWriter, r *http.Request) {
 	if _, ok := s.currentUser(r); ok {
 		redirect(w, r, "/dashboard")
 		return
 	}
-	s.render(w, "login", pageData{})
+	writeAppIndex(w)
 }
 
 func (s *server) registerPage(w http.ResponseWriter, r *http.Request) {
@@ -56,7 +57,16 @@ func (s *server) registerPage(w http.ResponseWriter, r *http.Request) {
 		redirect(w, r, "/dashboard")
 		return
 	}
-	s.render(w, "register", pageData{})
+	writeAppIndex(w)
+}
+
+// dashboard is the page for signed-in users; everyone else goes to the login page.
+func (s *server) dashboard(w http.ResponseWriter, r *http.Request) {
+	if _, ok := s.currentUser(r); !ok {
+		redirect(w, r, "/login")
+		return
+	}
+	writeAppIndex(w)
 }
 
 // setSessionCookie exchanges a Firebase ID token for a session cookie and sets it.

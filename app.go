@@ -1,5 +1,5 @@
 // Package app is the Cloud Run functions entry point. A single Go HTTP
-// handler serves the htmx pages, the static Vue app and the JSON API.
+// handler serves the React pages, the static React app and the JSON API.
 package app
 
 import (
