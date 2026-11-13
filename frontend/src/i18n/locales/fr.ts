@@ -10,6 +10,13 @@ export const fr: Record<keyof typeof en, string> = {
   'nav.login': 'Se connecter',
   'nav.register': "S’inscrire",
   'nav.language': 'Langue',
+  'nav.basket': 'Panier',
+  'basket.add': 'Ajouter au panier',
+  'basket.bought': 'Acheté',
+  'basket.title': 'Panier',
+  'basket.empty': 'Le panier est vide.',
+  'basket.remove': 'Retirer',
+  'basket.removeNamed': 'Retirer {{title}} du panier',
 
   'auth.email': 'E-mail',
   'auth.password': 'Mot de passe',

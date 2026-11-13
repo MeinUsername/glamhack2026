@@ -8,6 +8,13 @@ export const en = {
   'nav.login': 'Sign in',
   'nav.register': 'Register',
   'nav.language': 'Language',
+  'nav.basket': 'Basket',
+  'basket.add': 'Add to basket',
+  'basket.bought': 'Bought',
+  'basket.title': 'Basket',
+  'basket.empty': 'The basket is empty.',
+  'basket.remove': 'Remove',
+  'basket.removeNamed': 'Remove {{title}} from the basket',
 
   'auth.email': 'Email',
   'auth.password': 'Password',

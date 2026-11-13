@@ -16,6 +16,7 @@ export default function Layout() {
           Hackathon App
         </Link>
         <nav className="flex flex-wrap items-center gap-3">
+          <Link to="/basket">{t('nav.basket')}</Link>
           {me.status === 'ready' && (
             <>
               <Link to="/dashboard">{t('nav.files')}</Link>

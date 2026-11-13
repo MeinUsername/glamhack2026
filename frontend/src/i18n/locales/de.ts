@@ -9,6 +9,13 @@ export const de: Record<keyof typeof en, string> = {
   'nav.login': 'Anmelden',
   'nav.register': 'Registrieren',
   'nav.language': 'Sprache',
+  'nav.basket': 'Korb',
+  'basket.add': 'In den Korb',
+  'basket.bought': 'gekauft',
+  'basket.title': 'Korb',
+  'basket.empty': 'Der Korb ist leer.',
+  'basket.remove': 'Entfernen',
+  'basket.removeNamed': '{{title}} aus dem Korb entfernen',
 
   'auth.email': 'E-Mail',
   'auth.password': 'Passwort',

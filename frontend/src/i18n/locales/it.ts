@@ -10,6 +10,13 @@ export const it: Record<keyof typeof en, string> = {
   'nav.login': 'Accedi',
   'nav.register': 'Registrati',
   'nav.language': 'Lingua',
+  'nav.basket': 'Carrello',
+  'basket.add': 'Aggiungi al carrello',
+  'basket.bought': 'Acquistato',
+  'basket.title': 'Carrello',
+  'basket.empty': 'Il carrello è vuoto.',
+  'basket.remove': 'Rimuovi',
+  'basket.removeNamed': 'Rimuovi {{title}} dal carrello',
 
   'auth.email': 'E-mail',
   'auth.password': 'Password',

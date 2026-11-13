@@ -5,6 +5,7 @@ import { api, ApiError } from '../api'
 import type { Idea } from '../types'
 import { errorText, h1, h2, muted } from '../ui'
 import { CATEGORY_LABEL } from './categories'
+import BasketButton from '../basket/BasketButton'
 
 type State =
   | { status: 'loading' }
@@ -48,6 +49,7 @@ function Show({ idea }: { idea: Idea }) {
   return (
     <article className="grid max-w-2xl gap-4">
       <h1 className={h1}>{title}</h1>
+      <BasketButton ideaId={idea.id} />
       {idea.categories.length > 0 && (
         <ul aria-label={t('ideas.categories.chips')} className="flex flex-wrap gap-2">
           {idea.categories.map((key) => (

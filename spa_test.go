@@ -92,3 +92,13 @@ func TestAC005_6_AdminAPIRejectsNonAdmin(t *testing.T) {
 		t.Error("admin must reach the handler")
 	}
 }
+
+// AC-006-6 (route): the basket page is served without a session, and does not redirect to login.
+func TestBasketRouteServesReactIndexWithoutSession(t *testing.T) {
+	s := newRouteServer(t)
+	rec := httptest.NewRecorder()
+	s.mux.ServeHTTP(rec, httptest.NewRequest("GET", "/basket", nil))
+	if rec.Code != http.StatusOK || !strings.Contains(rec.Body.String(), `<div id="root">`) {
+		t.Errorf("GET /basket: status %d, want 200 with the React page", rec.Code)
+	}
+}
