@@ -1,7 +1,7 @@
 ---
 id: F-008
 title: Master - Prompt Editor
-status: refining
+status: testing
 ---
 
 # F-008 Master - Prompt Editor

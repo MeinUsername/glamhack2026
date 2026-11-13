@@ -1,7 +1,7 @@
 ---
 id: F-012
 title: Public Usage
-status: implementing
+status: testing
 ---
 
 # F-012 Public Usage

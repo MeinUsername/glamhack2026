@@ -1,7 +1,7 @@
 ---
 id: F-003
 title: Ein Prompt-Generator
-status: plan-ready
+status: testing
 ---
 
 # F-003 Ein Prompt-Generator
