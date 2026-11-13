@@ -35,19 +35,24 @@ var budgetSizes = map[string]bool{"S": true, "M": true, "L": true, "XL": true}
 
 // ideaDoc lives in the "ideas" collection.
 type ideaDoc struct {
-	Title          string     `firestore:"title"`
-	Description    string     `firestore:"description"`
-	Audience       string     `firestore:"audience"`
-	Goal           string     `firestore:"goal"`
-	Sustainability string     `firestore:"sustainability"`
-	Accessibility  string     `firestore:"accessibility"`
-	Space          spaceDoc   `firestore:"space"`
-	Equipment      []string   `firestore:"equipment"`
-	Categories     []string   `firestore:"categories"`
-	Budget         *string    `firestore:"budget"`
-	Images         []imageDoc `firestore:"images"`
-	CreatedBy      string     `firestore:"created_by"`
-	CreatedAt      time.Time  `firestore:"created_at"`
+	Title       string `firestore:"title"`
+	Description string `firestore:"description"`
+	TargetGroup string `firestore:"target_group"`
+	// LegacyAudience is only read: pages saved before F-014 hold the target group here.
+	LegacyAudience           string     `firestore:"audience"`
+	Goal                     string     `firestore:"goal"`
+	DescriptionOfInteraction string     `firestore:"description_of_interaction"`
+	StaffNeeded              string     `firestore:"staff_needed"`
+	ExhibitRelated           string     `firestore:"exhibit_related"`
+	Sustainability           string     `firestore:"sustainability"`
+	Accessibility            string     `firestore:"accessibility"`
+	Space                    spaceDoc   `firestore:"space"`
+	Equipment                []string   `firestore:"equipment"`
+	Categories               []string   `firestore:"categories"`
+	Budget                   *string    `firestore:"budget"`
+	Images                   []imageDoc `firestore:"images"`
+	CreatedBy                string     `firestore:"created_by"`
+	CreatedAt                time.Time  `firestore:"created_at"`
 }
 
 type spaceDoc struct {
@@ -70,13 +75,16 @@ type equipmentDoc struct {
 // ideaInput is the JSON part ("data") of the multipart upload. Numbers arrive as text
 // so that "2,5" and "2.5" are both accepted.
 type ideaInput struct {
-	Title          string `json:"title"`
-	Description    string `json:"description"`
-	Audience       string `json:"audience"`
-	Goal           string `json:"goal"`
-	Sustainability string `json:"sustainability"`
-	Accessibility  string `json:"accessibility"`
-	Space          struct {
+	Title                    string `json:"title"`
+	Description              string `json:"description"`
+	TargetGroup              string `json:"targetGroup"`
+	Goal                     string `json:"goal"`
+	DescriptionOfInteraction string `json:"descriptionOfInteraction"`
+	StaffNeeded              string `json:"staffNeeded"`
+	ExhibitRelated           string `json:"exhibitRelated"`
+	Sustainability           string `json:"sustainability"`
+	Accessibility            string `json:"accessibility"`
+	Space                    struct {
 		AreaM2   string `json:"areaM2"`
 		VolumeM3 string `json:"volumeM3"`
 	} `json:"space"`
@@ -87,19 +95,22 @@ type ideaInput struct {
 
 // ideaView is an idea as returned by GET /api/ideas/{id}.
 type ideaView struct {
-	ID             string      `json:"id"`
-	Title          string      `json:"title"`
-	Description    string      `json:"description"`
-	Audience       string      `json:"audience"`
-	Goal           string      `json:"goal"`
-	Sustainability string      `json:"sustainability"`
-	Accessibility  string      `json:"accessibility"`
-	Space          spaceView   `json:"space"`
-	Equipment      []string    `json:"equipment"`
-	Categories     []string    `json:"categories"`
-	Budget         *string     `json:"budget"`
-	Images         []imageView `json:"images"`
-	CreatedAt      string      `json:"createdAt"`
+	ID                       string      `json:"id"`
+	Title                    string      `json:"title"`
+	Description              string      `json:"description"`
+	TargetGroup              string      `json:"targetGroup"`
+	Goal                     string      `json:"goal"`
+	DescriptionOfInteraction string      `json:"descriptionOfInteraction"`
+	StaffNeeded              string      `json:"staffNeeded"`
+	ExhibitRelated           string      `json:"exhibitRelated"`
+	Sustainability           string      `json:"sustainability"`
+	Accessibility            string      `json:"accessibility"`
+	Space                    spaceView   `json:"space"`
+	Equipment                []string    `json:"equipment"`
+	Categories               []string    `json:"categories"`
+	Budget                   *string     `json:"budget"`
+	Images                   []imageView `json:"images"`
+	CreatedAt                string      `json:"createdAt"`
 }
 
 type spaceView struct {
@@ -116,12 +127,15 @@ type imageView struct {
 // document to store. The empty input is valid: no field is required.
 func validateIdeaInput(in ideaInput) (ideaDoc, []equipmentDoc, error) {
 	texts := map[string]string{
-		"Title":          in.Title,
-		"Description":    in.Description,
-		"Audience":       in.Audience,
-		"Goal":           in.Goal,
-		"Sustainability": in.Sustainability,
-		"Accessibility":  in.Accessibility,
+		"Title":                      in.Title,
+		"Description":                in.Description,
+		"Target group":               in.TargetGroup,
+		"Goal":                       in.Goal,
+		"Description of interaction": in.DescriptionOfInteraction,
+		"Staff needed":               in.StaffNeeded,
+		"Exhibit relation":           in.ExhibitRelated,
+		"Sustainability":             in.Sustainability,
+		"Accessibility":              in.Accessibility,
 	}
 	for field, v := range texts {
 		if utf8.RuneCountInString(v) > maxIdeaTextRunes {
@@ -132,8 +146,11 @@ func validateIdeaInput(in ideaInput) (ideaDoc, []equipmentDoc, error) {
 	var doc ideaDoc
 	doc.Title = strings.TrimSpace(in.Title)
 	doc.Description = strings.TrimSpace(in.Description)
-	doc.Audience = strings.TrimSpace(in.Audience)
+	doc.TargetGroup = strings.TrimSpace(in.TargetGroup)
 	doc.Goal = strings.TrimSpace(in.Goal)
+	doc.DescriptionOfInteraction = strings.TrimSpace(in.DescriptionOfInteraction)
+	doc.StaffNeeded = strings.TrimSpace(in.StaffNeeded)
+	doc.ExhibitRelated = strings.TrimSpace(in.ExhibitRelated)
 	doc.Sustainability = strings.TrimSpace(in.Sustainability)
 	doc.Accessibility = strings.TrimSpace(in.Accessibility)
 
@@ -373,18 +390,24 @@ func (s *server) apiGetIdea(w http.ResponseWriter, r *http.Request) {
 
 func toIdeaView(id string, d ideaDoc) ideaView {
 	v := ideaView{
-		ID:             id,
-		Title:          d.Title,
-		Description:    d.Description,
-		Audience:       d.Audience,
-		Goal:           d.Goal,
-		Sustainability: d.Sustainability,
-		Accessibility:  d.Accessibility,
-		Space:          spaceView{AreaM2: d.Space.AreaM2, VolumeM3: d.Space.VolumeM3},
-		Equipment:      d.Equipment,
-		Budget:         d.Budget,
-		Categories:     d.Categories,
-		CreatedAt:      d.CreatedAt.Format(time.RFC3339),
+		ID:                       id,
+		Title:                    d.Title,
+		Description:              d.Description,
+		TargetGroup:              d.TargetGroup,
+		Goal:                     d.Goal,
+		DescriptionOfInteraction: d.DescriptionOfInteraction,
+		StaffNeeded:              d.StaffNeeded,
+		ExhibitRelated:           d.ExhibitRelated,
+		Sustainability:           d.Sustainability,
+		Accessibility:            d.Accessibility,
+		Space:                    spaceView{AreaM2: d.Space.AreaM2, VolumeM3: d.Space.VolumeM3},
+		Equipment:                d.Equipment,
+		Budget:                   d.Budget,
+		Categories:               d.Categories,
+		CreatedAt:                d.CreatedAt.Format(time.RFC3339),
+	}
+	if v.TargetGroup == "" {
+		v.TargetGroup = d.LegacyAudience // no migration (Q-014-09)
 	}
 	if v.Categories == nil {
 		v.Categories = []string{} // pages saved before F-009 have no field
@@ -482,6 +505,8 @@ type ideaSummary struct {
 	ID         string `json:"id"`
 	Title      string `json:"title"`
 	ImageCount int    `json:"imageCount"`
+	// Description is the full text of the field "Beschreibung" (Q-014-08).
+	Description string `json:"description"`
 }
 
 // apiListIdeas handles GET /api/ideas: all ideas, newest first (F-011).
@@ -504,7 +529,7 @@ func (s *server) apiListIdeas(w http.ResponseWriter, r *http.Request) {
 			log.Printf("decode idea %s: %v", snap.Ref.ID, err)
 			continue
 		}
-		out = append(out, ideaSummary{ID: snap.Ref.ID, Title: d.Title, ImageCount: len(d.Images)})
+		out = append(out, ideaSummary{ID: snap.Ref.ID, Title: d.Title, ImageCount: len(d.Images), Description: d.Description})
 	}
 	writeJSON(w, http.StatusOK, out)
 }

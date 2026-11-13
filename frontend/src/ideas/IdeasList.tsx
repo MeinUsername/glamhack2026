@@ -9,6 +9,7 @@ interface IdeaRow {
   id: string
   title: string
   imageCount: number
+  description: string
 }
 
 // The overview of all ideas (F-011). Public since F-012 (D1); the basket button marks bought ideas (D1, D2).
@@ -40,9 +41,12 @@ function Overview() {
               {row.imageCount > 0 && (
                 <img src={`/api/ideas/${row.id}/images/0`} alt="" className="h-16 w-16 rounded object-cover" />
               )}
-              <Link to={`/ideas/${row.id}`} className="flex-1 font-medium">
-                {row.title || t('ideas.untitled')}
-              </Link>
+              <div className="flex-1">
+                <Link to={`/ideas/${row.id}`} className="font-medium">
+                  {row.title || t('ideas.untitled')}
+                </Link>
+                {row.description && <p className="whitespace-pre-line text-sm">{row.description}</p>}
+              </div>
               <BasketButton ideaId={row.id} />
             </li>
           ))}

@@ -73,9 +73,12 @@ function Show({ idea }: { idea: Idea }) {
         </ul>
       )}
       <Section title={t('ideas.field.description')} text={idea.description} />
-      <Section title={t('ideas.field.audience')} text={idea.audience} />
+      <Section title={t('ideas.field.descriptionOfInteraction')} text={idea.descriptionOfInteraction} />
+      <Section title={t('ideas.field.targetGroup')} text={idea.targetGroup} />
       <Section title={t('ideas.goal')} text={idea.goal} />
       <Section title={t('ideas.sustainability')} text={idea.sustainability} />
+      <Section title={t('ideas.field.staffNeeded')} text={idea.staffNeeded} />
+      <Section title={t('ideas.field.exhibitRelated')} text={idea.exhibitRelated} />
       <Section title={t('ideas.accessibility')} text={idea.accessibility} />
       <section>
         <h2 className={h2}>{t('ideas.space.legend')}</h2>

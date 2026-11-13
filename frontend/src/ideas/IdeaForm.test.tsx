@@ -11,7 +11,10 @@ const savedIdea = {
     id: 'i1',
     title: '',
     description: '',
-    audience: '',
+    targetGroup: '',
+    descriptionOfInteraction: '',
+    staffNeeded: '',
+    exhibitRelated: '',
     goal: '',
     sustainability: '',
     accessibility: '',
@@ -44,6 +47,31 @@ describe('IdeaForm', () => {
     const data = JSON.parse(String(formData(post?.body).get('data')))
     expect(data.title).toBe('')
     expect(data.budget).toBe('')
+  })
+
+  it('AC-014-1 sendet target group und die drei neuen Textfelder', async () => {
+    const { calls } = routeFetch({
+      'GET /api/me': () => user,
+      'POST /api/ideas': () => ({ status: 201, json: { id: 'i1' } }),
+      'GET /api/ideas/i1': () => savedIdea,
+    })
+    renderAt('/ideas/new')
+    const u = userEvent.setup()
+    await u.type(await screen.findByLabelText('Target audience'), 'Schulklassen')
+    await u.type(screen.getByLabelText('Description of interaction'), 'Drücken')
+    await u.type(screen.getByLabelText('Staff needed'), 'yes')
+    await u.type(screen.getByLabelText('Necessarily related to specific exhibits'), 'no')
+    await u.click(screen.getByRole('button', { name: 'Save idea' }))
+
+    const post = calls.find((c) => c.method === 'POST')
+    const data = JSON.parse(String(formData(post?.body).get('data')))
+    expect(data).toMatchObject({
+      targetGroup: 'Schulklassen',
+      descriptionOfInteraction: 'Drücken',
+      staffNeeded: 'yes',
+      exhibitRelated: 'no',
+    })
+    expect(data.audience).toBeUndefined()
   })
 
   it('AC-002-3 lehnt mehr als 5 Bilder ab und sendet nichts', async () => {

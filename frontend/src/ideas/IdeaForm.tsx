@@ -13,7 +13,10 @@ import type { Category, Idea } from '../types'
 interface Draft {
   title: string
   description: string
-  audience: string
+  targetGroup: string
+  descriptionOfInteraction: string
+  staffNeeded: string
+  exhibitRelated: string
   areaM2: string
   volumeM3: string
   equipment: string[]
@@ -29,7 +32,10 @@ function draftFrom(idea: Idea): Draft {
   return {
     title: idea.title,
     description: idea.description,
-    audience: idea.audience,
+    targetGroup: idea.targetGroup,
+    descriptionOfInteraction: idea.descriptionOfInteraction,
+    staffNeeded: idea.staffNeeded,
+    exhibitRelated: idea.exhibitRelated,
     areaM2: idea.space.areaM2 === null ? '' : String(idea.space.areaM2),
     volumeM3: idea.space.volumeM3 === null ? '' : String(idea.space.volumeM3),
     equipment: idea.equipment,
@@ -44,7 +50,10 @@ function draftFrom(idea: Idea): Draft {
 const emptyDraft: Draft = {
   title: '',
   description: '',
-  audience: '',
+  targetGroup: '',
+  descriptionOfInteraction: '',
+  staffNeeded: '',
+  exhibitRelated: '',
   areaM2: '',
   volumeM3: '',
   equipment: [],
@@ -135,7 +144,10 @@ function IdeaEditor({ edit }: { edit?: Idea }) {
     const data: Record<string, unknown> = {
       title: draft.title,
       description: draft.description,
-      audience: draft.audience,
+      targetGroup: draft.targetGroup,
+      descriptionOfInteraction: draft.descriptionOfInteraction,
+      staffNeeded: draft.staffNeeded,
+      exhibitRelated: draft.exhibitRelated,
       goal: draft.goal,
       sustainability: draft.sustainability,
       accessibility: draft.accessibility,
@@ -182,6 +194,9 @@ function IdeaEditor({ edit }: { edit?: Idea }) {
         <Field label={t('ideas.field.description')}>
           <textarea className={input} rows={4} value={draft.description} onChange={(e) => set('description', e.target.value)} />
         </Field>
+        <Field label={t('ideas.field.descriptionOfInteraction')}>
+          <textarea className={input} rows={3} value={draft.descriptionOfInteraction} onChange={(e) => set('descriptionOfInteraction', e.target.value)} />
+        </Field>
         <Field label={t('ideas.field.images', { max: MAX_IDEA_IMAGES })}>
           <input
             key={inputKey}
@@ -193,8 +208,8 @@ function IdeaEditor({ edit }: { edit?: Idea }) {
           />
           {imageError && <span className={errorText}>{imageError}</span>}
         </Field>
-        <Field label={t('ideas.field.audience')}>
-          <input className={input} value={draft.audience} onChange={(e) => set('audience', e.target.value)} />
+        <Field label={t('ideas.field.targetGroup')}>
+          <input className={input} value={draft.targetGroup} onChange={(e) => set('targetGroup', e.target.value)} />
         </Field>
         <fieldset className="grid gap-2">
           <legend className="font-medium">{t('ideas.space.legend')}</legend>
@@ -207,6 +222,12 @@ function IdeaEditor({ edit }: { edit?: Idea }) {
             </Field>
           </div>
         </fieldset>
+        <Field label={t('ideas.field.staffNeeded')}>
+          <textarea className={input} rows={2} value={draft.staffNeeded} onChange={(e) => set('staffNeeded', e.target.value)} />
+        </Field>
+        <Field label={t('ideas.field.exhibitRelated')}>
+          <textarea className={input} rows={2} value={draft.exhibitRelated} onChange={(e) => set('exhibitRelated', e.target.value)} />
+        </Field>
         <Field label={t('ideas.equipment.label')}>
           <EquipmentInput value={draft.equipment} onChange={(next) => set('equipment', next)} />
         </Field>

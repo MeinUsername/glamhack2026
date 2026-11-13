@@ -6,8 +6,8 @@ import { readBasket } from '../basket/basket'
 
 const user = { json: { email: 'a@example.ch', role: 'user' } }
 const rows = [
-  { id: 'a', title: 'Lichtinstallation', imageCount: 2 },
-  { id: 'b', title: 'Klangraum', imageCount: 0 },
+  { id: 'a', title: 'Lichtinstallation', imageCount: 2, description: 'Licht im Raum\nzweite Zeile' },
+  { id: 'b', title: 'Klangraum', imageCount: 0, description: '' },
 ]
 
 function setBasket(ids: string[]) {
@@ -29,6 +29,15 @@ describe('IdeasList (F-011)', () => {
 
     const second = screen.getByRole('link', { name: 'Klangraum' }).closest('li') as HTMLElement
     expect(second.querySelector('img')).toBeNull() // no image, no preview
+  })
+
+  // AC-014-6: the overview shows the full description (Q-014-08).
+  it('AC-014-6 zeigt die Beschreibung unter dem Titel', async () => {
+    routeFetch({ 'GET /api/me': () => user, 'GET /api/ideas': () => ({ json: rows }) })
+    renderAt('/ideas')
+    const row = (await screen.findByRole('link', { name: 'Lichtinstallation' })).closest('li') as HTMLElement
+    expect(row.textContent).toContain('Licht im Raum')
+    expect(row.textContent).toContain('zweite Zeile')
   })
 
   // AK2: «In den Korb» on the overview puts the idea in the basket and marks it as bought.

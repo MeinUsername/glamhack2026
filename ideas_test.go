@@ -2,6 +2,7 @@ package app
 
 import (
 	"bytes"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"mime/multipart"
@@ -236,5 +237,73 @@ func TestAC009_6_PageWithoutCategoriesIsEmptyList(t *testing.T) {
 	v := toIdeaView("i1", ideaDoc{Title: "alt"})
 	if v.Categories == nil || len(v.Categories) != 0 {
 		t.Errorf("categories = %#v, want []", v.Categories)
+	}
+}
+
+// AC-014-1, AC-014-4: the new text fields round-trip and keep inner line breaks.
+func TestAC014_1_NewFieldsRoundTrip(t *testing.T) {
+	in := ideaInput{
+		TargetGroup:              " Schulklassen ",
+		DescriptionOfInteraction: "Zeile 1\nZeile 2",
+		StaffNeeded:              "yes",
+		ExhibitRelated:           "no",
+	}
+	doc, _, err := validateIdeaInput(in)
+	if err != nil {
+		t.Fatal(err)
+	}
+	v := toIdeaView("x", doc)
+	if v.TargetGroup != "Schulklassen" || v.DescriptionOfInteraction != "Zeile 1\nZeile 2" ||
+		v.StaffNeeded != "yes" || v.ExhibitRelated != "no" {
+		t.Errorf("view: %+v", v)
+	}
+}
+
+// AC-014-2: target_group replaces audience; old documents stay readable.
+func TestAC014_2_TargetGroupUnderNewKey(t *testing.T) {
+	if v := toIdeaView("x", ideaDoc{LegacyAudience: "alt"}); v.TargetGroup != "alt" {
+		t.Errorf("legacy fallback: %q", v.TargetGroup)
+	}
+	if v := toIdeaView("x", ideaDoc{TargetGroup: "neu", LegacyAudience: "alt"}); v.TargetGroup != "neu" {
+		t.Errorf("target_group must win: %q", v.TargetGroup)
+	}
+}
+
+// AC-014-3: non-numeric space values are rejected.
+func TestAC014_3_SpaceNonNumericRejected(t *testing.T) {
+	in := ideaInput{}
+	in.Space.VolumeM3 = "viel"
+	if _, _, err := validateIdeaInput(in); err == nil {
+		t.Error("non-numeric volume accepted")
+	}
+}
+
+// AC-014-4: the new text fields are limited to 5000 characters.
+func TestAC014_4_NewTextFieldsLimit(t *testing.T) {
+	long := strings.Repeat("a", maxIdeaTextRunes+1)
+	for name, in := range map[string]ideaInput{
+		"interaction": {DescriptionOfInteraction: long},
+		"staff":       {StaffNeeded: long},
+		"exhibit":     {ExhibitRelated: long},
+		"targetGroup": {TargetGroup: long},
+	} {
+		if _, _, err := validateIdeaInput(in); err == nil {
+			t.Errorf("%s: 5001 characters accepted", name)
+		}
+	}
+}
+
+// AC-014-6: the overview row carries id, title, imageCount and description only.
+func TestAC014_6_SummaryFields(t *testing.T) {
+	b, _ := json.Marshal(ideaSummary{})
+	var m map[string]any
+	_ = json.Unmarshal(b, &m)
+	if len(m) != 4 {
+		t.Errorf("summary keys: %v", m)
+	}
+	for _, k := range []string{"id", "title", "imageCount", "description"} {
+		if _, ok := m[k]; !ok {
+			t.Errorf("missing %q", k)
+		}
 	}
 }

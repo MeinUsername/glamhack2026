@@ -46,7 +46,7 @@ export function formatIdea(idea: Idea): string {
     if (v) lines.push(`- ${label}: ${v}`)
   }
   add('Beschreibung', idea.description)
-  add('Zielgruppe', idea.audience)
+  add('Zielgruppe', idea.targetGroup)
   add('Ziel', idea.goal)
   add('Nachhaltigkeit', idea.sustainability)
   add('Barrierefreiheit', idea.accessibility)

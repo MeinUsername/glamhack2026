@@ -38,8 +38,11 @@ export interface Idea {
   id: string
   title: string
   description: string
-  audience: string
+  targetGroup: string
   goal: string
+  descriptionOfInteraction: string
+  staffNeeded: string
+  exhibitRelated: string
   sustainability: string
   accessibility: string
   space: { areaM2: number | null; volumeM3: number | null }
