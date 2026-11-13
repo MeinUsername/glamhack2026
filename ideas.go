@@ -492,3 +492,39 @@ func writeUserError(w http.ResponseWriter, err error) {
 	}
 	writeJSONError(w, http.StatusInternalServerError, "internal error")
 }
+
+// ideaSummary is one row of the overview (F-011). The full page comes from GET /api/ideas/{id}.
+type ideaSummary struct {
+	ID         string `json:"id"`
+	Title      string `json:"title"`
+	ImageCount int    `json:"imageCount"`
+}
+
+// apiListIdeas handles GET /api/ideas: all ideas, newest first (F-011).
+func (s *server) apiListIdeas(w http.ResponseWriter, r *http.Request) {
+	if _, ok := s.currentUser(r); !ok {
+		writeJSONError(w, http.StatusUnauthorized, "not signed in")
+		return
+	}
+	it := s.db.Collection("ideas").OrderBy("created_at", firestore.Desc).Documents(r.Context())
+	defer it.Stop()
+	out := []ideaSummary{}
+	for {
+		snap, err := it.Next()
+		if errors.Is(err, iterator.Done) {
+			break
+		}
+		if err != nil {
+			log.Printf("list ideas: %v", err)
+			writeJSONError(w, http.StatusInternalServerError, "internal error")
+			return
+		}
+		var d ideaDoc
+		if err := snap.DataTo(&d); err != nil {
+			log.Printf("decode idea %s: %v", snap.Ref.ID, err)
+			continue
+		}
+		out = append(out, ideaSummary{ID: snap.Ref.ID, Title: d.Title, ImageCount: len(d.Images)})
+	}
+	writeJSON(w, http.StatusOK, out)
+}

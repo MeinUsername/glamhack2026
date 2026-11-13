@@ -102,3 +102,13 @@ func TestBasketRouteServesReactIndexWithoutSession(t *testing.T) {
 		t.Errorf("GET /basket: status %d, want 200 with the React page", rec.Code)
 	}
 }
+
+// F-011: the overview is a React page at /ideas.
+func TestIdeasOverviewRouteServesReactIndex(t *testing.T) {
+	s := newRouteServer(t)
+	rec := httptest.NewRecorder()
+	s.mux.ServeHTTP(rec, httptest.NewRequest("GET", "/ideas", nil))
+	if rec.Code != http.StatusOK || !strings.Contains(rec.Body.String(), `<div id="root">`) {
+		t.Errorf("GET /ideas: status %d, want 200 with the React page", rec.Code)
+	}
+}

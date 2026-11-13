@@ -20,6 +20,7 @@ export default function Layout() {
           {me.status === 'ready' && (
             <>
               <Link to="/dashboard">{t('nav.files')}</Link>
+              <Link to="/ideas">{t('nav.ideas')}</Link>
               {me.me.role === 'admin' && <Link to="/admin/users">{t('nav.users')}</Link>}
               <form action="/logout" method="post" className="inline">
                 <button type="submit" className={linkButton}>

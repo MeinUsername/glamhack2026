@@ -8,6 +8,7 @@ import AdminUsers from './pages/AdminUsers'
 import IdeaForm from './ideas/IdeaForm'
 import IdeaPage from './ideas/IdeaPage'
 import Basket from './pages/Basket'
+import IdeasList from './ideas/IdeasList'
 
 // The page routes. The Go function returns the same index.html for all of them.
 export default function App() {
@@ -22,6 +23,7 @@ export default function App() {
         <Route path="/ideas/new" element={<IdeaForm />} />
         <Route path="/ideas/:id" element={<IdeaPage />} />
         <Route path="/basket" element={<Basket />} />
+        <Route path="/ideas" element={<IdeasList />} />
       </Route>
     </Routes>
   )

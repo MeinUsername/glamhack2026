@@ -86,6 +86,7 @@ func (s *server) routes() {
 	m.HandleFunc("GET /ideas/new", serveApp)
 	m.HandleFunc("GET /ideas/{id}", serveApp)
 	m.HandleFunc("GET /basket", serveApp) // F-006: public, no redirect
+	m.HandleFunc("GET /ideas", serveApp)  // F-011: overview
 	m.HandleFunc("GET /admin/users", s.requireAdmin(s.adminPage))
 	m.HandleFunc("GET /app/{$}", func(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "/", http.StatusSeeOther) // the old /app/ URL; the pages live at /
@@ -105,6 +106,7 @@ func (s *server) routes() {
 
 	// Ideas (F-002).
 	m.HandleFunc("POST /api/ideas", s.apiCreateIdea)
+	m.HandleFunc("GET /api/ideas", s.apiListIdeas)
 	m.HandleFunc("GET /api/ideas/{id}", s.apiGetIdea)
 	m.HandleFunc("GET /api/ideas/{id}/images/{n}", s.apiIdeaImage)
 	m.HandleFunc("GET /api/equipment", s.apiEquipment)

@@ -147,6 +147,7 @@ func TestAC002_7_IdeaEndpointsRequireSignIn(t *testing.T) {
 	s.routes()
 	cases := []struct{ method, path string }{
 		{"POST", "/api/ideas"},
+		{"GET", "/api/ideas"},
 		{"GET", "/api/ideas/abc"},
 		{"GET", "/api/ideas/abc/images/0"},
 		{"GET", "/api/equipment?q=bea"},
