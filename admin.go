@@ -42,6 +42,27 @@ func guardAdmin(resolve func(*http.Request) (sessionUser, bool), next func(http.
 	}
 }
 
+// requireSignedIn checks only the login, not the role (F-008: the master prompt is readable by every role).
+func (s *server) requireSignedIn(next func(http.ResponseWriter, *http.Request, sessionUser)) http.HandlerFunc {
+	return guardSignedIn(s.currentUser, next)
+}
+
+// guardSignedIn lets every signed-in role through. Signed-out API calls get 401 JSON.
+func guardSignedIn(resolve func(*http.Request) (sessionUser, bool), next func(http.ResponseWriter, *http.Request, sessionUser)) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		u, ok := resolve(r)
+		if !ok {
+			if strings.HasPrefix(r.URL.Path, "/api/") {
+				writeJSONError(w, http.StatusUnauthorized, "nicht angemeldet")
+				return
+			}
+			redirect(w, r, "/login")
+			return
+		}
+		next(w, r, u)
+	}
+}
+
 // adminPage serves the React page /admin/users (the data comes from the JSON API).
 func (s *server) adminPage(w http.ResponseWriter, r *http.Request, _ sessionUser) {
 	writeAppIndex(w)

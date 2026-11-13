@@ -88,6 +88,7 @@ func (s *server) routes() {
 	m.HandleFunc("GET /basket", serveApp) // F-006: public, no redirect
 	m.HandleFunc("GET /ideas", serveApp)  // F-011: overview
 	m.HandleFunc("GET /admin/users", s.requireAdmin(s.adminPage))
+	m.HandleFunc("GET /admin/master-prompt", s.requireAdmin(s.adminPage)) // F-008: editor page
 	m.HandleFunc("GET /app/{$}", func(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "/", http.StatusSeeOther) // the old /app/ URL; the pages live at /
 	})
@@ -110,6 +111,12 @@ func (s *server) routes() {
 	m.HandleFunc("GET /api/ideas/{id}", s.apiGetIdea)
 	m.HandleFunc("GET /api/ideas/{id}/images/{n}", s.apiIdeaImage)
 	m.HandleFunc("GET /api/equipment", s.apiEquipment)
+
+	// Master prompt (F-008). Reading the current text is open to every signed-in role (Q-008-13).
+	m.HandleFunc("GET /api/master-prompt", s.requireSignedIn(s.apiCurrentMasterPrompt))
+	m.HandleFunc("GET /api/admin/master-prompt", s.requireAdmin(s.apiAdminMasterPrompt))
+	m.HandleFunc("POST /api/admin/master-prompt", s.requireAdmin(s.apiSaveMasterPrompt))
+	m.HandleFunc("POST /api/admin/master-prompt/versions/{n}/restore", s.requireAdmin(s.apiRestoreMasterPrompt))
 
 	// Invitations.
 	m.HandleFunc("POST /api/invitations", s.apiCreateInvitation)
