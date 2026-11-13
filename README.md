@@ -1,28 +1,27 @@
 # glamhack2026
 
-Kleine Hello-World-App: Login mit Firebase Auth (E-Mail/Passwort), Datei-Upload (max. 1 MB) in
-einen Cloud-Storage-Bucket und eine Referenz in Firestore. Einladungslinks und eine Admin-Seite
-für Rollen und Sperren (F-001).
+Ideen-Shop für Kunstvermittlung: Ideen erfassen und ansehen, in den Korb legen und daraus einen
+Prompt erzeugen. Admins melden sich über Firebase Auth an und verwalten Nutzer, Einladungen,
+den Master-Prompt und den CSV-Import.
 
 ## Aufbau
 
 - **Backend:** eine Go-Function (Cloud Run functions, Runtime `go127`). Einstieg ist `Handler` in
   `app.go`. Routing in `server.go`.
   - `auth.go`: Firebase Admin SDK prüft das ID-Token und setzt ein Session-Cookie (HttpOnly, Secure).
-  - `files.go`: Upload mit 1-MB-Grenze, Download nur für den Besitzer, JSON-API.
+  - `ideas*.go`: Ideen (Seiten-Template), Bilder, CSV-Import.
   - `users.go`, `invitations.go`, `admin.go`: Rollen, Einladungslinks, Admin-API.
 - **Frontend:** React-App mit TypeScript und Tailwind CSS in `frontend/`. Vite baut nach
-  `static/app/`, die Go-Function liefert die Seiten `/`, `/login`, `/register`, `/dashboard` und
-  `/admin/users` mit derselben `index.html` aus. Der Client-Router zeigt die Seite.
+  `static/app/`, die Go-Function liefert die Seiten `/`, `/login`, `/register`, `/ideas`, `/basket` und
+  `/admin/...` mit derselben `index.html` aus. Der Client-Router zeigt die Seite.
   - `frontend/src/auth/`: Firebase JS SDK, Session über `POST /session`, Registrierung über `POST /register`.
-  - `frontend/src/pages/`: Login, Registrierung, Dashboard (Dateien, Einladung), Admin-Seite.
+  - `frontend/src/pages/`: Login, Registrierung, Ideen, Korb, Admin-Seiten (Nutzer mit Einladung, Master-Prompt, Import).
 - **Build-Ausgabe** `static/app/` ist eingecheckt, weil der Deploy kein npm ausführt.
-- **Daten:** Firestore-Collection `files` mit Referenz (`owner_id`, `name`, `size`, `object`, ...).
-  Die Datei selbst liegt im Bucket. Benutzer verwaltet Firebase Auth, nicht die Datenbank.
+- **Daten:** Firestore-Collection `ideas`; die Bilder liegen im Bucket. Benutzer verwaltet Firebase Auth, nicht die Datenbank.
 - **Nutzerverwaltung:** Collection `users` (Dokument-ID = UID) mit Rolle (`admin` | `user`)
   und Sperre (`disabled`). Collection `invitations` (Dokument-ID = SHA-256 des Einladungstokens,
   einmalig, 7 Tage). Rollen liest jeder Request frisch aus Firestore.
-  - Einladungslink: Dashboard «Einladungslink erzeugen» oder `POST /api/invitations`.
+  - Einladungslink: Admin-Seite `/admin/users` «Einladungslink erzeugen» oder `POST /api/invitations`.
   - Admin-API: `GET /api/admin/users`, `POST /api/admin/users/{uid}/role`,
     `POST /api/admin/users/{uid}/disabled`. Die Seite `/admin/users` nur für Admins.
 
@@ -36,7 +35,7 @@ die App trotzdem, legt aber keinen Admin an.
 
 Anmelden geht über die nicht verlinkte Seite `/login` mit E-Mail und Passwort.
 
-Weitere Admins kommen über Einladungslinks (Admin-Bereich `/dashboard`). Jeder Link ist
+Weitere Admins kommen über Einladungslinks (Admin-Seite `/admin/users`). Jeder Link ist
 einmal einlösbar und läuft nicht ab; wer ihn einlöst, wird Admin.
 
 Der frühere Befehl `cmd/setup-admin` macht einen bestehenden Account einmalig zum Admin. Er
@@ -83,7 +82,7 @@ gcloud run deploy glamhack-app --source . --function Handler --base-image go127 
 ```
 
 Die App läuft unter `https://glamhack-app-966336370599.us-central1.run.app`, also ohne Präfix,
-damit die Links `/login`, `/dashboard` und `/admin/users` stimmen. `/app/` leitet auf `/` weiter.
+damit die Links `/login` und `/admin/users` stimmen. `/app/` leitet auf `/` weiter.
 
 Die Firebase-Web-Konfiguration in `frontend/.env.production` ist öffentlich. Sicherheit kommt aus
 Firebase Auth und der Prüfung im Backend.

@@ -56,7 +56,7 @@ function BasketEntry({ id, onGone }: { id: string; onGone: () => void }) {
   if (entry.status === 'loading') return <li className={muted}>{t('common.loading')}</li>
   if (entry.status === 'failed') {
     return (
-      <li className="flex items-center justify-between gap-3 rounded-lg border border-gray-400/50 p-3">
+      <li className="flex items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white p-3 shadow-sm dark:border-slate-700 dark:bg-slate-900">
         <span className={errorText}>{t('ideas.loadError')}</span>
         <RemoveButton title={id} onClick={onGone} />
       </li>
@@ -65,7 +65,7 @@ function BasketEntry({ id, onGone }: { id: string; onGone: () => void }) {
   const { idea } = entry
   const title = idea.title || t('ideas.untitled')
   return (
-    <li className="flex items-center gap-3 rounded-lg border border-gray-400/50 p-3">
+    <li className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white p-3 shadow-sm dark:border-slate-700 dark:bg-slate-900">
       {idea.images.length > 0 && (
         <img
           src={`/api/ideas/${idea.id}/images/0`}

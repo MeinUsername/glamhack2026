@@ -3,6 +3,8 @@
 package app
 
 import (
+	"crypto/rand"
+	"encoding/hex"
 	"net/http"
 	"sync"
 
@@ -30,4 +32,18 @@ func handler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	srv.mux.ServeHTTP(w, r)
+}
+
+// userError is an error whose message is shown to the user.
+type userError string
+
+func (e userError) Error() string { return string(e) }
+
+// randomHex returns nbytes of random data as hex text.
+func randomHex(nbytes int) string {
+	b := make([]byte, nbytes)
+	if _, err := rand.Read(b); err != nil {
+		panic(err) // crypto/rand failing means the platform is broken
+	}
+	return hex.EncodeToString(b)
 }

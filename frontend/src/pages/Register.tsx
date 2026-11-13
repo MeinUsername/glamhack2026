@@ -42,7 +42,7 @@ export default function Register() {
     try {
       const user = await signUp(email.trim(), password)
       await registerAccount(await user.getIdToken(), invite)
-      navigate('/dashboard')
+      navigate('/ideas')
     } catch (err) {
       // The server removes a new account when the link is invalid; the local sign-in goes too.
       await signOutFirebase().catch(() => {})

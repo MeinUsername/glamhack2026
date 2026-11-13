@@ -55,7 +55,7 @@ export default function EquipmentInput({ value, onChange }: Props) {
     <div className="grid gap-2">
       <ul className="flex flex-wrap gap-2" aria-label={t('ideas.equipment.label')}>
         {value.map((name) => (
-          <li key={name} className="flex items-center gap-1 rounded-full border border-gray-400/50 px-3 py-1">
+          <li key={name} className="flex items-center gap-1 rounded-full border border-slate-200 dark:border-slate-700 px-3 py-1">
             {name}
             <button
               type="button"

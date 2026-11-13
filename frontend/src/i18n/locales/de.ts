@@ -42,8 +42,10 @@ export const de: Record<keyof typeof en, string> = {
   'error.firebase.tooManyRequests': 'Zu viele Versuche. Bitte warte kurz und versuche es erneut.',
   'error.firebase.network': 'Keine Verbindung. Bitte prüfe dein Netzwerk.',
 
-  'home.title': 'Hallo Welt',
-  'home.intro': 'Eine kleine Hackathon-App: Go-Cloud-Function mit React, Login per E-Mail und Datei-Upload mit maximal 1 MB.',
+  'home.title': 'Ideen für die Kunstvermittlung',
+  'home.intro': 'Stöbere in Ideen für die Kunstvermittlung, sammle deine Favoriten im Korb und erzeuge daraus einen Prompt.',
+  'home.newIdea': 'Idee erfassen',
+  'app.name': 'Ideen-Shop',
   'home.signedInAs': 'Angemeldet als {{email}}.',
   'home.toFiles': 'Zu meinen Dateien',
   'home.or': 'oder',

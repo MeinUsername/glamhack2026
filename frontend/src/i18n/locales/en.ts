@@ -41,8 +41,10 @@ export const en = {
   'error.firebase.tooManyRequests': 'Too many attempts. Please wait a moment and try again.',
   'error.firebase.network': 'No connection. Please check your network.',
 
-  'home.title': 'Hello World',
-  'home.intro': 'A small hackathon app: Go cloud function with React, email login and file upload of up to 1 MB.',
+  'home.title': 'Ideas for art mediation',
+  'home.intro': 'Browse ideas for art mediation, collect the ones you like in your basket and turn them into a prompt.',
+  'home.newIdea': 'Add an idea',
+  'app.name': 'Idea Shop',
   'home.signedInAs': 'Signed in as {{email}}.',
   'home.toFiles': 'To my files',
   'home.or': 'or',

@@ -9,6 +9,18 @@ const users = [
 ]
 
 describe('AdminUsers', () => {
+  // F-012 D8, moved from the dashboard (F-016): an admin creates an invitation link.
+  it('erzeugt einen Einladungslink', async () => {
+    routeFetch({
+      'GET /api/me': () => ({ json: { email: 'admin@example.ch', role: 'admin' } }),
+      'GET /api/admin/users': () => ({ json: users }),
+      'POST /api/invitations': () => ({ status: 201, json: { link: 'https://x.ch/register?invite=abc' } }),
+    })
+    renderAt('/admin/users')
+    await userEvent.setup().click(await screen.findByRole('button', { name: 'Create invitation link' }))
+    expect(await screen.findByText('https://x.ch/register?invite=abc')).toBeInTheDocument()
+  })
+
   it('AC-005-6 zeigt für Nicht-Admins keine Nutzerliste und ruft die Admin-API nicht auf', async () => {
     const { calls } = routeFetch({ 'GET /api/me': () => ({ json: { email: 'u@example.ch', role: 'user' } }) })
     renderAt('/admin/users')

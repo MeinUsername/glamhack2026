@@ -11,16 +11,17 @@ export default function Layout() {
 
   return (
     <>
-      <header className="flex flex-wrap items-center justify-between gap-4 border-b border-gray-400/50 p-4">
-        <Link to="/" className="font-semibold text-inherit no-underline">
-          Hackathon App
+      <header className="sticky top-0 z-10 border-b border-slate-200 bg-white/80 backdrop-blur dark:border-slate-800 dark:bg-slate-950/80">
+        <div className="mx-auto flex max-w-4xl flex-wrap items-center justify-between gap-x-6 gap-y-2 px-4 py-3">
+        <Link to="/" className="flex items-center gap-2 text-lg font-semibold tracking-tight text-inherit no-underline hover:no-underline">
+          <span aria-hidden="true" className="inline-block h-3 w-3 rounded-full bg-indigo-600" />
+          {t('app.name')}
         </Link>
-        <nav className="flex flex-wrap items-center gap-3">
+        <nav className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
           <Link to="/basket">{t('nav.basket')}</Link>
           <Link to="/ideas">{t('nav.ideas')}</Link>
           {me.status === 'ready' && me.me.role === 'admin' && (
             <>
-              <Link to="/dashboard">{t('nav.files')}</Link>
               <Link to="/admin/users">{t('nav.users')}</Link>
               <Link to="/admin/master-prompt">{t('nav.masterPrompt')}</Link>
               <Link to="/admin/import">{t('nav.import')}</Link>
@@ -36,8 +37,9 @@ export default function Layout() {
           )}
           <LanguageSwitch />
         </nav>
+        </div>
       </header>
-      <main className="mx-auto max-w-2xl p-4 max-sm:p-3">
+      <main className="mx-auto max-w-4xl px-4 py-8 max-sm:py-5">
         <Outlet />
       </main>
     </>

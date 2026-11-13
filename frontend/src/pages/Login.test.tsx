@@ -6,7 +6,7 @@ import { renderAt, routeFetch, unauthorized } from '../test/helpers'
 import type { User } from 'firebase/auth'
 
 describe('Login', () => {
-  it('AC-005-3 leitet nach Login auf /dashboard', async () => {
+  it('AC-005-3 leitet Admins nach dem Login auf die Ideen-Übersicht', async () => {
     let signedIn = false
     const { calls } = routeFetch({
       'GET /api/me': () => (signedIn ? { json: { email: 'a@example.ch', role: 'admin' } } : unauthorized),
@@ -14,7 +14,7 @@ describe('Login', () => {
         signedIn = true
         return { status: 204 }
       },
-      'GET /api/files': () => ({ json: [] }),
+      'GET /api/ideas': () => ({ json: [] }),
     })
     vi.mocked(signIn).mockResolvedValue({ getIdToken: async () => 'id-token' } as unknown as User)
 
@@ -24,7 +24,7 @@ describe('Login', () => {
     await user.type(screen.getByLabelText('Password'), 'geheim123')
     await user.click(screen.getByRole('button', { name: 'Sign in' }))
 
-    expect(await screen.findByRole('heading', { name: 'My files' })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: 'Ideas' })).toBeInTheDocument()
     const session = calls.find((c) => c.url === '/session')
     expect(JSON.parse(session?.body as string)).toEqual({ idToken: 'id-token' })
   })

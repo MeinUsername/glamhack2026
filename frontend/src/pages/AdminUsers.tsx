@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { api, ApiError } from '../api'
 import { useMe } from '../auth/useMe'
 import type { AdminUser, Role } from '../types'
-import { cell, errorText, h1, muted, noticeText, table } from '../ui'
+import { button, cell, errorText, h1, h2, input, muted, noticeText, table } from '../ui'
 
 export default function AdminUsers() {
   const me = useMe()
@@ -17,6 +17,8 @@ export default function AdminUsers() {
 
 function UserTable() {
   const { t } = useTranslation()
+  const [invite, setInvite] = useState<{ link: string } | null>(null)
+  const [inviteError, setInviteError] = useState('')
   const [users, setUsers] = useState<AdminUser[]>([])
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
@@ -36,6 +38,16 @@ function UserTable() {
       setMessage(done)
     } catch (err) {
       setError(err instanceof ApiError ? err.message : t('admin.internal'))
+    }
+  }
+
+  // F-012 D8: an admin creates a one-time invitation link (moved here from the dashboard, F-016).
+  async function handleInvite() {
+    setInviteError('')
+    try {
+      setInvite(await api<{ link: string }>('/api/invitations', { method: 'POST' }))
+    } catch (err) {
+      setInviteError(err instanceof ApiError ? err.message : t('files.invite.error'))
     }
   }
 
@@ -73,7 +85,7 @@ function UserTable() {
                     aria-label={t('admin.roleOf', { email: u.email })}
                     value={u.role}
                     onChange={(e) => setRole(u.uid, e.target.value as Role)}
-                    className="rounded border border-gray-400/50 bg-transparent px-1"
+                    className="rounded border border-slate-200 dark:border-slate-700 bg-transparent px-1"
                   >
                     <option value="user">{t('admin.roleUser')}</option>
                     <option value="admin">{t('admin.roleAdmin')}</option>
@@ -89,7 +101,7 @@ function UserTable() {
                 <td className={cell}>
                   <button
                     type="button"
-                    className="cursor-pointer bg-transparent p-0 text-blue-600 dark:text-blue-400"
+                    className="cursor-pointer bg-transparent p-0 text-indigo-600 dark:text-indigo-400"
                     onClick={() => setBlocked(u)}
                   >
                     {u.disabled ? t('admin.unblock') : t('admin.block')}
@@ -101,6 +113,19 @@ function UserTable() {
         </table>
       ) : (
         <p className={`${muted} mt-4`}>{t('admin.none')}</p>
+      )}
+
+      <h2 className={h2}>{t('files.invite.title')}</h2>
+      <p className={muted}>{t('files.invite.hint')}</p>
+      <button type="button" className={`${button} mt-2`} onClick={handleInvite}>
+        {t('files.invite.create')}
+      </button>
+      {inviteError && <p role="alert" className={errorText}>{inviteError}</p>}
+      {invite && (
+        <div className="mt-3">
+          <p className={noticeText}>{t('files.invite.created')}</p>
+          <code className={`${input} mt-2 block break-all`}>{invite.link}</code>
+        </div>
       )}
     </>
   )

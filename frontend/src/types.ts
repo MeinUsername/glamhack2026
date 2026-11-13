@@ -1,4 +1,4 @@
-// Shapes of the JSON API (see the Go handlers in files.go, auth.go, users.go, invitations.go).
+// Shapes of the JSON API (see the Go handlers in auth.go, users.go, invitations.go).
 
 export type Role = 'admin' | 'user'
 

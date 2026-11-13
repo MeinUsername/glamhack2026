@@ -118,7 +118,7 @@ function Editor() {
       type="button"
       aria-pressed={mode === value}
       onClick={() => setMode(value)}
-      className={`cursor-pointer rounded-lg border border-gray-400/50 px-3 py-1 ${mode === value ? 'font-semibold' : ''}`}
+      className={`cursor-pointer rounded-lg border border-slate-200 dark:border-slate-700 px-3 py-1 ${mode === value ? 'font-semibold' : ''}`}
     >
       {label}
     </button>
@@ -145,7 +145,7 @@ function Editor() {
       ) : (
         <>
           <p className={`${muted} mt-3`}>{t('masterPrompt.previewNote', { n: ideas.length })}</p>
-          <pre className="mt-2 rounded-lg border border-gray-400/50 p-3 whitespace-pre-wrap text-sm">
+          <pre className="mt-2 rounded-xl border border-slate-200 bg-white p-3 shadow-sm dark:border-slate-700 dark:bg-slate-900 whitespace-pre-wrap text-sm">
             {renderPrompt(text, ideas, localeFor(i18n.resolvedLanguage))}
           </pre>
         </>

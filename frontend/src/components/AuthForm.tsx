@@ -26,7 +26,7 @@ export default function AuthForm(props: Props) {
 
   return (
     <>
-      <form onSubmit={handleSubmit} className="my-4 grid gap-3">
+      <form onSubmit={handleSubmit} className="my-4 grid max-w-sm gap-3">
         <input
           name="email"
           type="email"

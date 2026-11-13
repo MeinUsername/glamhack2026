@@ -21,7 +21,7 @@ export default function Login() {
       const user = await signIn(email.trim(), password)
       await createSession(await user.getIdToken())
       const me = await api<Me>('/api/me')
-      navigate(me.role === 'admin' ? '/dashboard' : '/') // F-012 T3
+      navigate(me.role === 'admin' ? '/ideas' : '/') // F-012 T3
     } catch (err) {
       // The server refused the session (for example a blocked account): drop the Firebase sign-in too.
       await signOutFirebase().catch(() => {})

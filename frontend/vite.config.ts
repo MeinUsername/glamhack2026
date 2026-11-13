@@ -3,7 +3,7 @@ import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 
 // The Go function serves the build from /app/ (static/app). The page routes
-// (/, /login, /register, /dashboard, /admin/users) return the same index.html.
+// (/, /login, /register, /ideas, /admin/users) return the same index.html.
 export default defineConfig({
   base: '/app/',
   plugins: [react(), tailwindcss()],

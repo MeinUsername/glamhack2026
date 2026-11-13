@@ -33,9 +33,9 @@ func TestAC005_8_PageRoutesServeReactIndex(t *testing.T) {
 }
 
 // AC-005-8: signed-out visitors are sent to the login page.
-func TestAC005_8_DashboardWithoutSessionRedirectsToLogin(t *testing.T) {
+func TestAC005_8_AdminPagesWithoutSessionRedirectToLogin(t *testing.T) {
 	s := newRouteServer(t)
-	for _, path := range []string{"/dashboard", "/admin/users"} {
+	for _, path := range []string{"/admin/users", "/admin/import", "/admin/master-prompt"} {
 		rec := httptest.NewRecorder()
 		s.mux.ServeHTTP(rec, httptest.NewRequest("GET", path, nil))
 		if rec.Code != http.StatusSeeOther || rec.Header().Get("Location") != "/login" {
@@ -120,5 +120,27 @@ func TestIdeaEditRouteServesReactIndex(t *testing.T) {
 	s.mux.ServeHTTP(rec, httptest.NewRequest("GET", "/ideas/abc/edit", nil))
 	if rec.Code != http.StatusOK || !strings.Contains(rec.Body.String(), `<div id="root">`) {
 		t.Errorf("GET /ideas/abc/edit: status %d, want 200 with the React page", rec.Code)
+	}
+}
+
+// AC-016-1: /dashboard leads to the ideas overview.
+func TestAC016_1_DashboardRedirectsToIdeas(t *testing.T) {
+	s := newRouteServer(t)
+	rec := httptest.NewRecorder()
+	s.mux.ServeHTTP(rec, httptest.NewRequest("GET", "/dashboard", nil))
+	if rec.Code != http.StatusSeeOther || rec.Header().Get("Location") != "/ideas" {
+		t.Errorf("GET /dashboard: status %d location %q, want 303 to /ideas", rec.Code, rec.Header().Get("Location"))
+	}
+}
+
+// AC-016-2: the file routes are gone.
+func TestAC016_2_FileRoutesAreGone(t *testing.T) {
+	s := newRouteServer(t)
+	for _, c := range [][2]string{{"GET", "/files/abc"}, {"GET", "/api/files"}, {"POST", "/api/files"}} {
+		rec := httptest.NewRecorder()
+		s.mux.ServeHTTP(rec, httptest.NewRequest(c[0], c[1], nil))
+		if rec.Code != http.StatusNotFound {
+			t.Errorf("%s %s: status %d, want 404", c[0], c[1], rec.Code)
+		}
 	}
 }

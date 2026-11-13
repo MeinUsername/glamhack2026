@@ -3,7 +3,7 @@ import { Link } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { api } from '../api'
 import BasketButton from '../basket/BasketButton'
-import { errorText, h1, muted } from '../ui'
+import { card, errorText, h1, muted } from '../ui'
 
 interface IdeaRow {
   id: string
@@ -35,19 +35,21 @@ function Overview() {
       {rows === null && !failed && <p className={muted}>{t('common.loading')}</p>}
       {rows !== null && rows.length === 0 && <p className={muted}>{t('ideas.list.empty')}</p>}
       {rows !== null && rows.length > 0 && (
-        <ul className="grid gap-3">
+        <ul className="grid gap-4 sm:grid-cols-2">
           {rows.map((row) => (
-            <li key={row.id} className="flex items-center gap-3 rounded-lg border border-gray-400/50 p-3">
+            <li key={row.id} className={`${card} flex items-start gap-4 transition hover:shadow-md`}>
               {row.imageCount > 0 && (
-                <img src={`/api/ideas/${row.id}/images/0`} alt="" className="h-16 w-16 rounded object-cover" />
+                <img src={`/api/ideas/${row.id}/images/0`} alt="" className="h-20 w-20 shrink-0 rounded-lg object-cover" />
               )}
-              <div className="flex-1">
-                <Link to={`/ideas/${row.id}`} className="font-medium">
+              <div className="flex min-w-0 flex-1 flex-col gap-2">
+                <Link to={`/ideas/${row.id}`} className="text-base font-semibold">
                   {row.title || t('ideas.untitled')}
                 </Link>
-                {row.description && <p className="whitespace-pre-line text-sm">{row.description}</p>}
+                {row.description && <p className="whitespace-pre-line text-sm text-slate-600 dark:text-slate-300">{row.description}</p>}
+                <div className="mt-auto pt-1">
+                  <BasketButton ideaId={row.id} />
+                </div>
               </div>
-              <BasketButton ideaId={row.id} />
             </li>
           ))}
         </ul>

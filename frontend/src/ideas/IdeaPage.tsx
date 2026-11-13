@@ -53,7 +53,7 @@ function Show({ idea }: { idea: Idea }) {
       {idea.categories.length > 0 && (
         <ul aria-label={t('ideas.categories.chips')} className="flex flex-wrap gap-2">
           {idea.categories.map((key) => (
-            <li key={key} className="rounded-full border border-gray-400/50 px-3 py-1 text-sm">
+            <li key={key} className="rounded-full border border-slate-200 dark:border-slate-700 px-3 py-1 text-sm">
               {CATEGORY_LABEL[key]}
             </li>
           ))}

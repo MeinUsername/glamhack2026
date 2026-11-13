@@ -18,6 +18,15 @@ describe('Layout', () => {
     expect(await screen.findByRole('link', { name: 'Users' })).toHaveAttribute('href', '/admin/users')
   })
 
+  // AC-016-3: no link to files or dashboard, not even for admins.
+  it('AC-016-3 hat für Admins keinen Verweis auf Dateien oder Dashboard', async () => {
+    routeFetch({ 'GET /api/me': () => ({ json: { email: 'a@example.ch', role: 'admin' } }) })
+    renderAt('/')
+    await screen.findByRole('link', { name: 'Users' })
+    expect(screen.queryByRole('link', { name: 'Files' })).not.toBeInTheDocument()
+    expect(document.querySelector('a[href="/dashboard"]')).toBeNull()
+  })
+
   // AC-012-6: the public interface has no link to /login or /register (D6).
   it('AC-012-6 zeigt ohne Sitzung keine Anmelde- oder Registrierlinks', async () => {
     routeFetch({ 'GET /api/me': () => unauthorized })

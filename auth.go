@@ -43,11 +43,11 @@ func (s *server) currentUser(r *http.Request) (sessionUser, bool) {
 	return sessionUser{ID: tok.UID, Email: email, Role: d.Role}, true
 }
 
-// loginPage sends signed-in admins to the dashboard and other signed-in users to the start page (F-012 T3).
+// loginPage sends signed-in admins to the ideas overview and other signed-in users to the start page (F-012 T3).
 func (s *server) loginPage(w http.ResponseWriter, r *http.Request) {
 	if u, ok := s.currentUser(r); ok {
 		if u.Role == roleAdmin {
-			redirect(w, r, "/dashboard")
+			redirect(w, r, "/ideas")
 		} else {
 			redirect(w, r, "/")
 		}
@@ -56,20 +56,11 @@ func (s *server) loginPage(w http.ResponseWriter, r *http.Request) {
 	writeAppIndex(w)
 }
 
-// registerPage sends signed-in users to the dashboard. Without an invitation link the page
+// registerPage sends signed-in users to the ideas overview. Without an invitation link the page
 // explains that registration is not possible (F-012 Q-012-11).
 func (s *server) registerPage(w http.ResponseWriter, r *http.Request) {
 	if _, ok := s.currentUser(r); ok {
-		redirect(w, r, "/dashboard")
-		return
-	}
-	writeAppIndex(w)
-}
-
-// dashboard is the page for signed-in users; everyone else goes to the login page.
-func (s *server) dashboard(w http.ResponseWriter, r *http.Request) {
-	if _, ok := s.currentUser(r); !ok {
-		redirect(w, r, "/login")
+		redirect(w, r, "/ideas")
 		return
 	}
 	writeAppIndex(w)
@@ -198,4 +189,14 @@ func (s *server) logout(w http.ResponseWriter, r *http.Request) {
 		SameSite: http.SameSiteLaxMode,
 	})
 	redirect(w, r, "/")
+}
+
+// apiMe handles GET /api/me: the signed-in user's email and role, 401 otherwise.
+func (s *server) apiMe(w http.ResponseWriter, r *http.Request) {
+	u, ok := s.currentUser(r)
+	if !ok {
+		writeJSONError(w, http.StatusUnauthorized, "nicht angemeldet")
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]string{"email": u.Email, "role": u.Role})
 }

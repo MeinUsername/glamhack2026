@@ -86,7 +86,9 @@ func (s *server) routes() {
 	m.HandleFunc("GET /{$}", serveApp)
 	m.HandleFunc("GET /login", s.loginPage)
 	m.HandleFunc("GET /register", s.registerPage)
-	m.HandleFunc("GET /dashboard", s.dashboard)
+	m.HandleFunc("GET /dashboard", func(w http.ResponseWriter, r *http.Request) {
+		redirect(w, r, "/ideas") // F-016: the dashboard is gone
+	})
 	m.HandleFunc("GET /ideas/new", serveApp)
 	m.HandleFunc("GET /ideas/{id}", serveApp)
 	m.HandleFunc("GET /ideas/{id}/edit", serveApp) // F-012 T6
@@ -105,12 +107,7 @@ func (s *server) routes() {
 	m.HandleFunc("POST /register", s.register)
 	m.HandleFunc("POST /logout", s.logout)
 
-	// Files.
-	// F-012 T4: files are admin-only.
-	m.HandleFunc("GET /files/{id}", s.requireAdmin(anyUser(s.download)))
 	m.HandleFunc("GET /api/me", s.apiMe)
-	m.HandleFunc("GET /api/files", s.requireAdmin(anyUser(s.apiListFiles)))
-	m.HandleFunc("POST /api/files", s.requireAdmin(anyUser(s.apiUpload)))
 
 	// Ideas (F-002).
 	m.HandleFunc("POST /api/ideas", s.apiCreateIdea)

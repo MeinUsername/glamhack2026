@@ -91,7 +91,7 @@ function Generator({ ids }: { ids: string[] }) {
       {emptyBasket && <p className={muted}>{t('prompt.emptyBasket')}</p>}
 
       {master.status === 'ready' && (
-        <pre className="mt-2 rounded-lg border border-gray-400/50 p-3 whitespace-pre-wrap text-sm">{text}</pre>
+        <pre className="mt-2 rounded-xl border border-slate-200 bg-white p-3 shadow-sm dark:border-slate-700 dark:bg-slate-900 whitespace-pre-wrap text-sm">{text}</pre>
       )}
 
       <div className="mt-3 flex flex-wrap gap-2">
