@@ -93,6 +93,7 @@ func (s *server) routes() {
 	m.HandleFunc("GET /basket", serveApp)          // F-006: public, no redirect
 	m.HandleFunc("GET /ideas", serveApp)           // F-011: overview
 	m.HandleFunc("GET /admin/users", s.requireAdmin(s.adminPage))
+	m.HandleFunc("GET /admin/import", s.requireAdmin(s.adminPage))        // F-015: CSV import page
 	m.HandleFunc("GET /admin/master-prompt", s.requireAdmin(s.adminPage)) // F-008: editor page
 	m.HandleFunc("GET /app/{$}", func(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "/", http.StatusSeeOther) // the old /app/ URL; the pages live at /
@@ -128,6 +129,10 @@ func (s *server) routes() {
 	// Invitations.
 	m.HandleFunc("POST /api/invitations", s.requireAdmin(s.apiCreateInvitation)) // F-012 D8
 	m.HandleFunc("GET /api/invitations/{token}", s.apiCheckInvitation)
+
+	// CSV import of ideas (F-015), admin only.
+	m.HandleFunc("POST /api/admin/import/ideas/preview", s.requireAdmin(s.apiImportIdeasPreview))
+	m.HandleFunc("POST /api/admin/import/ideas", s.requireAdmin(s.apiImportIdeas))
 
 	// Admin.
 	m.HandleFunc("GET /api/admin/users", s.requireAdmin(s.apiListUsers))

@@ -23,6 +23,7 @@ export default function Layout() {
               <Link to="/dashboard">{t('nav.files')}</Link>
               <Link to="/admin/users">{t('nav.users')}</Link>
               <Link to="/admin/master-prompt">{t('nav.masterPrompt')}</Link>
+              <Link to="/admin/import">{t('nav.import')}</Link>
             </>
           )}
           {/* F-012 D6: /login and /register are not linked from the public interface. */}
