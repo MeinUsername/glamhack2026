@@ -25,6 +25,7 @@ steps:
       - --max-instances=2
       - --timeout=60
       - --set-env-vars=PROJECT_ID=glamhack-hack-2026,BUCKET_NAME=glamhack-hack-2026-files
+      - --set-secrets=INITIAL_ADMIN_PASSWORD=INITIAL_ADMIN_PASSWORD:latest
       - --set-build-env-vars=GOFLAGS=-buildvcs=false
       - --quiet # Cloud Build has no stdin; never wait for a prompt
 options:
