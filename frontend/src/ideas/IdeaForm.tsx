@@ -5,6 +5,9 @@ import { useMe } from '../auth/useMe'
 import { button, errorText, h1, input, muted } from '../ui'
 import EquipmentInput from './EquipmentInput'
 import { BUDGETS, imageProblem, MAX_IDEA_IMAGES } from './rules'
+import { CATEGORIES } from './categories'
+import CategoriesInfo from './CategoriesInfo'
+import type { Category } from '../types'
 
 // Text fields of the form; the names are the English field names of the spec.
 interface Draft {
@@ -14,6 +17,7 @@ interface Draft {
   areaM2: string
   volumeM3: string
   equipment: string[]
+  categories: Category[]
   goal: string
   sustainability: string
   accessibility: string
@@ -27,6 +31,7 @@ const emptyDraft: Draft = {
   areaM2: '',
   volumeM3: '',
   equipment: [],
+  categories: [],
   goal: '',
   sustainability: '',
   accessibility: '',
@@ -51,6 +56,13 @@ function NewIdea() {
 
   function set<K extends keyof Draft>(key: K, value: Draft[K]) {
     setDraft((d) => ({ ...d, [key]: value }))
+  }
+
+  function toggleCategory(key: Category) {
+    set(
+      'categories',
+      draft.categories.includes(key) ? draft.categories.filter((c) => c !== key) : [...draft.categories, key],
+    )
   }
 
   function handlePickImages(event: ChangeEvent<HTMLInputElement>) {
@@ -87,6 +99,7 @@ function NewIdea() {
         accessibility: draft.accessibility,
         space: { areaM2: draft.areaM2, volumeM3: draft.volumeM3 },
         equipment: draft.equipment,
+        categories: draft.categories,
         budget: draft.budget,
       }),
     )
@@ -140,6 +153,23 @@ function NewIdea() {
         <Field label="Needed equipment">
           <EquipmentInput value={draft.equipment} onChange={(next) => set('equipment', next)} />
         </Field>
+        <fieldset className="grid gap-2">
+          <legend className="font-medium">
+            Categories of critical art mediation
+            <CategoriesInfo />
+          </legend>
+          {CATEGORIES.map((c) => (
+            <label key={c.key} className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                value={c.key}
+                checked={draft.categories.includes(c.key)}
+                onChange={() => toggleCategory(c.key)}
+              />
+              {c.label}
+            </label>
+          ))}
+        </fieldset>
         <Field label="Goal">
           <textarea className={input} rows={3} value={draft.goal} onChange={(e) => set('goal', e.target.value)} />
         </Field>

@@ -43,6 +43,7 @@ type ideaDoc struct {
 	Accessibility  string     `firestore:"accessibility"`
 	Space          spaceDoc   `firestore:"space"`
 	Equipment      []string   `firestore:"equipment"`
+	Categories     []string   `firestore:"categories"`
 	Budget         *string    `firestore:"budget"`
 	Images         []imageDoc `firestore:"images"`
 	CreatedBy      string     `firestore:"created_by"`
@@ -79,8 +80,9 @@ type ideaInput struct {
 		AreaM2   string `json:"areaM2"`
 		VolumeM3 string `json:"volumeM3"`
 	} `json:"space"`
-	Equipment []string `json:"equipment"`
-	Budget    string   `json:"budget"`
+	Equipment  []string `json:"equipment"`
+	Budget     string   `json:"budget"`
+	Categories []string `json:"categories"`
 }
 
 // ideaView is an idea as returned by GET /api/ideas/{id}.
@@ -94,6 +96,7 @@ type ideaView struct {
 	Accessibility  string      `json:"accessibility"`
 	Space          spaceView   `json:"space"`
 	Equipment      []string    `json:"equipment"`
+	Categories     []string    `json:"categories"`
 	Budget         *string     `json:"budget"`
 	Images         []imageView `json:"images"`
 	CreatedAt      string      `json:"createdAt"`
@@ -158,7 +161,37 @@ func validateIdeaInput(in ideaInput) (ideaDoc, []equipmentDoc, error) {
 		return ideaDoc{}, nil, err
 	}
 	doc.Equipment = equipment
+	categories, err := normalizeCategories(in.Categories)
+	if err != nil {
+		return ideaDoc{}, nil, err
+	}
+	doc.Categories = categories
 	return doc, catalog, nil
+}
+
+// ideaCategories are the valid category keys in the order of the spec table (F-009).
+var ideaCategories = []string{"affirmative", "reproductive", "deconstructive", "transformation"}
+
+// normalizeCategories accepts only the four keys (case-sensitive), drops duplicates and
+// keeps the order of the first occurrences. nil and an empty list are valid.
+func normalizeCategories(raw []string) ([]string, error) {
+	valid := map[string]bool{}
+	for _, c := range ideaCategories {
+		valid[c] = true
+	}
+	seen := map[string]bool{}
+	out := []string{}
+	for _, c := range raw {
+		if !valid[c] {
+			return nil, userError(fmt.Sprintf("Unknown category %q.", c))
+		}
+		if seen[c] {
+			continue
+		}
+		seen[c] = true
+		out = append(out, c)
+	}
+	return out, nil
 }
 
 // parseArea reads a non-negative number; "" means not given. Comma and point both work.
@@ -358,7 +391,11 @@ func toIdeaView(id string, d ideaDoc) ideaView {
 		Space:          spaceView{AreaM2: d.Space.AreaM2, VolumeM3: d.Space.VolumeM3},
 		Equipment:      d.Equipment,
 		Budget:         d.Budget,
+		Categories:     d.Categories,
 		CreatedAt:      d.CreatedAt.Format(time.RFC3339),
+	}
+	if v.Categories == nil {
+		v.Categories = []string{} // pages saved before F-009 have no field
 	}
 	if v.Equipment == nil {
 		v.Equipment = []string{}

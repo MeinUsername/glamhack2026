@@ -193,3 +193,44 @@ func multipartWithFiles(t *testing.T, field string, n int, data []byte) *multipa
 	}
 	return req.MultipartForm
 }
+
+// AC-009-1: no, one or several categories are valid, and the field is optional.
+func TestAC009_1_CategoriesAreOptional(t *testing.T) {
+	for _, in := range [][]string{nil, {}, {"affirmative"}, {"affirmative", "reproductive", "deconstructive", "transformation"}} {
+		doc, _, err := validateIdeaInput(ideaInput{Categories: in})
+		if err != nil {
+			t.Errorf("categories %q rejected: %v", in, err)
+		}
+		if doc.Categories == nil {
+			t.Errorf("categories %q: stored as nil, want empty list", in)
+		}
+	}
+}
+
+// AC-009-2: values outside the four keys are rejected; the match is case-sensitive.
+func TestAC009_2_UnknownCategoryRejected(t *testing.T) {
+	for _, bad := range []string{"Affirmative", "affimative", "", "all"} {
+		if _, _, err := validateIdeaInput(ideaInput{Categories: []string{"affirmative", bad}}); err == nil {
+			t.Errorf("category %q accepted, want rejection", bad)
+		}
+	}
+}
+
+// AC-009-3: a category sent twice is stored once, in the order of first occurrence.
+func TestAC009_3_DuplicateCategoryStoredOnce(t *testing.T) {
+	doc, _, err := validateIdeaInput(ideaInput{Categories: []string{"transformation", "affirmative", "transformation"}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(doc.Categories) != 2 || doc.Categories[0] != "transformation" || doc.Categories[1] != "affirmative" {
+		t.Errorf("categories = %q", doc.Categories)
+	}
+}
+
+// AC-009-6: a page without the field shows an empty list, never null.
+func TestAC009_6_PageWithoutCategoriesIsEmptyList(t *testing.T) {
+	v := toIdeaView("i1", ideaDoc{Title: "alt"})
+	if v.Categories == nil || len(v.Categories) != 0 {
+		t.Errorf("categories = %#v, want []", v.Categories)
+	}
+}

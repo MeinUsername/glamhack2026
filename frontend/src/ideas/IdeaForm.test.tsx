@@ -17,6 +17,7 @@ const savedIdea = {
     accessibility: '',
     space: { areaM2: null, volumeM3: null },
     equipment: [],
+    categories: [],
     budget: null,
     images: [],
     createdAt: '2026-11-13T10:00:00Z',
@@ -119,5 +120,36 @@ describe('IdeaForm', () => {
 
     expect(await screen.findByText('Budget must be S, M, L, XL or empty.')).toBeInTheDocument()
     expect(screen.getByLabelText('Title')).toHaveValue('Lichtinstallation')
+  })
+
+  it('AC-009-1 sendet die gewählten Kategorien als Schlüssel, auch ohne Auswahl', async () => {
+    const { calls } = routeFetch({
+      'GET /api/me': () => user,
+      'POST /api/ideas': () => ({ status: 201, json: { id: 'i1' } }),
+      'GET /api/ideas/i1': () => savedIdea,
+    })
+    renderAt('/ideas/new')
+    const u = userEvent.setup()
+    await u.click(await screen.findByRole('checkbox', { name: 'Reproductive' }))
+    await u.click(screen.getByRole('checkbox', { name: 'Transformation' }))
+    await u.click(screen.getByRole('button', { name: 'Save idea' }))
+
+    const post = calls.find((c) => c.method === 'POST')
+    const data = JSON.parse(String(formData(post?.body).get('data')))
+    expect(data.categories).toEqual(['reproductive', 'transformation'])
+  })
+
+  it('AC-009-1 speichert ohne gewählte Kategorie mit leerer Liste', async () => {
+    const { calls } = routeFetch({
+      'GET /api/me': () => user,
+      'POST /api/ideas': () => ({ status: 201, json: { id: 'i1' } }),
+      'GET /api/ideas/i1': () => savedIdea,
+    })
+    renderAt('/ideas/new')
+    await userEvent.setup().click(await screen.findByRole('button', { name: 'Save idea' }))
+
+    const post = calls.find((c) => c.method === 'POST')
+    const data = JSON.parse(String(formData(post?.body).get('data')))
+    expect(data.categories).toEqual([])
   })
 })

@@ -28,6 +28,7 @@ export interface AdminUser {
 
 // F-002: an idea page as returned by GET /api/ideas/{id}.
 export type Budget = 'S' | 'M' | 'L' | 'XL'
+export type Category = 'affirmative' | 'reproductive' | 'deconstructive' | 'transformation'
 
 export interface IdeaImage {
   contentType: string
@@ -44,6 +45,7 @@ export interface Idea {
   accessibility: string
   space: { areaM2: number | null; volumeM3: number | null }
   equipment: string[]
+  categories: Category[]
   budget: Budget | null
   images: IdeaImage[]
   createdAt: string

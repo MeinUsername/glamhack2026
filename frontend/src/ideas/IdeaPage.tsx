@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Navigate, useParams } from 'react-router'
 import { api, ApiError } from '../api'
 import type { Idea } from '../types'
+import { CATEGORY_LABEL } from './categories'
 import { errorText, h1, h2, muted } from '../ui'
 
 type State =
@@ -43,6 +44,15 @@ function Show({ idea }: { idea: Idea }) {
   return (
     <article className="grid max-w-2xl gap-4">
       <h1 className={h1}>{idea.title || 'Untitled idea'}</h1>
+      {idea.categories.length > 0 && (
+        <ul aria-label="Categories" className="flex flex-wrap gap-2">
+          {idea.categories.map((key) => (
+            <li key={key} className="rounded-full border border-gray-400/50 px-3 py-1 text-sm">
+              {CATEGORY_LABEL[key]}
+            </li>
+          ))}
+        </ul>
+      )}
       {idea.images.length > 0 && (
         <ul className="grid grid-cols-2 gap-3">
           {idea.images.map((_, n) => (
