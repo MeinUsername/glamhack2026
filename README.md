@@ -16,6 +16,20 @@ einen Cloud-Storage-Bucket und eine Referenz in Firestore.
 - **Build-Ausgabe** `static/app/` ist eingecheckt, weil der Deploy kein npm ausführt.
 - **Daten:** Firestore-Collection `files` mit Referenz (`owner_id`, `name`, `size`, `object`, ...).
   Die Datei selbst liegt im Bucket. Benutzer verwaltet Firebase Auth, nicht die Datenbank.
+- **Nutzerverwaltung (F-001):** Collection `users` (Dokument-ID = UID) mit Rolle (`admin` | `user`)
+  und Sperre (`disabled`). Collection `invitations` (Dokument-ID = SHA-256 des Einladungstokens,
+  einmalig, 7 Tage). Rollen liest jeder Request frisch aus Firestore.
+  - Einladungslink: Dashboard «Einladungslink erzeugen» oder `POST /api/invitations`.
+  - Admin-Seite `/admin/users`: Rollen vergeben, sperren und entsperren.
+
+## Ersten Admin einrichten
+
+Einmalig pro Projekt, nachdem das Konto registriert ist. Das Kommando legt `system/setup` an und
+bricht bei einem zweiten Aufruf ab.
+
+```sh
+go run ./cmd/setup-admin -project glamhack-hack-2026 admin@example.ch
+```
 
 ## Lokal bauen und testen
 

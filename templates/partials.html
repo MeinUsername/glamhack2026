@@ -12,3 +12,43 @@
 <p class="muted">Noch keine Dateien.</p>
 {{end}}
 {{end}}
+
+{{define "inviteSection"}}{{if .Error}}<p class="error" role="alert">{{.Error}}</p>{{end}}
+{{if .Invite}}
+<p class="notice" role="status">Einladungslink erstellt, gültig bis {{.Invite.ExpiresAt}}:</p>
+<p><code style="word-break:break-all">{{.Invite.Link}}</code></p>
+{{end}}
+{{end}}
+
+{{define "usersSection"}}{{if .Message}}<p class="notice" role="status">{{.Message}}</p>{{end}}
+{{if .Error}}<p class="error" role="alert">{{.Error}}</p>{{end}}
+{{if .Users}}
+<table>
+  <thead><tr><th>E-Mail</th><th>Rolle</th><th>Status</th><th></th></tr></thead>
+  <tbody>
+  {{range .Users}}
+    <tr>
+      <td>{{.Email}}</td>
+      <td>
+        <form hx-post="/admin/users/{{.UID}}/role" hx-trigger="change" hx-target="#users" hx-swap="innerHTML" style="margin:0">
+          <select name="role" aria-label="Rolle von {{.Email}}">
+            <option value="user"{{if eq .Role "user"}} selected{{end}}>User</option>
+            <option value="admin"{{if eq .Role "admin"}} selected{{end}}>Admin</option>
+          </select>
+        </form>
+      </td>
+      <td>{{if .Disabled}}<span class="error">gesperrt</span>{{else}}aktiv{{end}}</td>
+      <td>
+        <form hx-post="/admin/users/{{.UID}}/disabled" hx-target="#users" hx-swap="innerHTML" style="margin:0">
+          <input type="hidden" name="disabled" value="{{if .Disabled}}false{{else}}true{{end}}">
+          <button class="link" type="submit">{{if .Disabled}}Entsperren{{else}}Sperren{{end}}</button>
+        </form>
+      </td>
+    </tr>
+  {{end}}
+  </tbody>
+</table>
+{{else}}
+<p class="muted">Noch keine Nutzer.</p>
+{{end}}
+{{end}}

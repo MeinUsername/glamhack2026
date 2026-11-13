@@ -1,7 +1,9 @@
 package app
 
 import (
+	"context"
 	"encoding/json"
+	"errors"
 	"log"
 	"net/http"
 	"time"
@@ -15,9 +17,11 @@ const (
 type sessionUser struct {
 	ID    string
 	Email string
+	Role  string // roleAdmin or roleUser, read fresh from the users collection
 }
 
-// currentUser verifies the Firebase session cookie. Any failure means "not logged in".
+// currentUser verifies the Firebase session cookie and loads the role. Any failure
+// means "not logged in", and so does a blocked account.
 func (s *server) currentUser(r *http.Request) (sessionUser, bool) {
 	c, err := r.Cookie(sessionCookie)
 	if err != nil || c.Value == "" {
@@ -28,7 +32,15 @@ func (s *server) currentUser(r *http.Request) (sessionUser, bool) {
 		return sessionUser{}, false
 	}
 	email, _ := tok.Claims["email"].(string)
-	return sessionUser{ID: tok.UID, Email: email}, true
+	d, err := s.loadOrCreateUser(r.Context(), tok.UID, email)
+	if err != nil {
+		log.Printf("load user %s: %v", tok.UID, err)
+		return sessionUser{}, false
+	}
+	if d.Disabled {
+		return sessionUser{}, false
+	}
+	return sessionUser{ID: tok.UID, Email: email, Role: d.Role}, true
 }
 
 func (s *server) loginPage(w http.ResponseWriter, r *http.Request) {
@@ -47,22 +59,11 @@ func (s *server) registerPage(w http.ResponseWriter, r *http.Request) {
 	s.render(w, "register", pageData{})
 }
 
-// createSession exchanges a freshly issued Firebase ID token for a session cookie.
-// The browser sends the token after a successful Firebase sign-in or registration.
-func (s *server) createSession(w http.ResponseWriter, r *http.Request) {
-	r.Body = http.MaxBytesReader(w, r.Body, 16<<10)
-	var body struct {
-		IDToken string `json:"idToken"`
-	}
-	if err := json.NewDecoder(r.Body).Decode(&body); err != nil || body.IDToken == "" {
-		writeJSONError(w, http.StatusBadRequest, "ungültige Anfrage")
-		return
-	}
-	cookie, err := s.authc.SessionCookie(r.Context(), body.IDToken, sessionTTL)
+// setSessionCookie exchanges a Firebase ID token for a session cookie and sets it.
+func (s *server) setSessionCookie(w http.ResponseWriter, r *http.Request, idToken string) error {
+	cookie, err := s.authc.SessionCookie(r.Context(), idToken, sessionTTL)
 	if err != nil {
-		log.Printf("session cookie: %v", err)
-		writeJSONError(w, http.StatusUnauthorized, "ungültiges Token")
-		return
+		return err
 	}
 	http.SetCookie(w, &http.Cookie{
 		Name:     sessionCookie,
@@ -73,7 +74,101 @@ func (s *server) createSession(w http.ResponseWriter, r *http.Request) {
 		Secure:   true,
 		SameSite: http.SameSiteLaxMode,
 	})
+	return nil
+}
+
+// createSession is used after sign-in. The browser sends the fresh ID token.
+func (s *server) createSession(w http.ResponseWriter, r *http.Request) {
+	r.Body = http.MaxBytesReader(w, r.Body, 16<<10)
+	var body struct {
+		IDToken string `json:"idToken"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil || body.IDToken == "" {
+		writeJSONError(w, http.StatusBadRequest, "ungültige Anfrage")
+		return
+	}
+	ctx := r.Context()
+	tok, err := s.authc.VerifyIDToken(ctx, body.IDToken)
+	if err != nil {
+		log.Printf("verify id token: %v", err)
+		writeJSONError(w, http.StatusUnauthorized, "ungültiges Token")
+		return
+	}
+	email, _ := tok.Claims["email"].(string)
+	d, err := s.loadOrCreateUser(ctx, tok.UID, email)
+	if err != nil {
+		log.Printf("load user %s: %v", tok.UID, err)
+		writeJSONError(w, http.StatusInternalServerError, "interner Fehler")
+		return
+	}
+	if d.Disabled {
+		writeJSONError(w, http.StatusForbidden, "Dieses Konto ist gesperrt.")
+		return
+	}
+	if err := s.setSessionCookie(w, r, body.IDToken); err != nil {
+		log.Printf("session cookie: %v", err)
+		writeJSONError(w, http.StatusUnauthorized, "ungültiges Token")
+		return
+	}
 	w.WriteHeader(http.StatusNoContent)
+}
+
+// register completes a sign-up. The browser has already created the Firebase
+// account and sends its ID token, plus the invitation token if there is one.
+// An invalid link (410) removes the new account again, so that nothing is left over.
+func (s *server) register(w http.ResponseWriter, r *http.Request) {
+	r.Body = http.MaxBytesReader(w, r.Body, 16<<10)
+	var body struct {
+		IDToken string `json:"idToken"`
+		Invite  string `json:"invite"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil || body.IDToken == "" {
+		writeJSONError(w, http.StatusBadRequest, "ungültige Anfrage")
+		return
+	}
+	ctx := r.Context()
+	tok, err := s.authc.VerifyIDToken(ctx, body.IDToken)
+	if err != nil {
+		log.Printf("verify id token: %v", err)
+		writeJSONError(w, http.StatusUnauthorized, "ungültiges Token")
+		return
+	}
+	email, _ := tok.Claims["email"].(string)
+
+	if body.Invite != "" {
+		if err := s.redeemInvitation(ctx, body.Invite, tok.UID, email); err != nil {
+			s.discardNewAccount(ctx, tok.UID)
+			if errors.Is(err, errInvalidInvite) {
+				writeJSONError(w, http.StatusGone, errInvalidInvite.Error())
+				return
+			}
+			log.Printf("redeem invitation: %v", err)
+			writeJSONError(w, http.StatusInternalServerError, "interner Fehler")
+			return
+		}
+	} else if _, err := s.loadOrCreateUser(ctx, tok.UID, email); err != nil {
+		log.Printf("create user %s: %v", tok.UID, err)
+		writeJSONError(w, http.StatusInternalServerError, "interner Fehler")
+		return
+	}
+
+	if err := s.setSessionCookie(w, r, body.IDToken); err != nil {
+		log.Printf("session cookie: %v", err)
+		writeJSONError(w, http.StatusUnauthorized, "ungültiges Token")
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
+}
+
+// discardNewAccount deletes a Firebase account that has no users document yet.
+// Accounts that already have one are kept.
+func (s *server) discardNewAccount(ctx context.Context, uid string) {
+	if s.userExists(ctx, uid) {
+		return
+	}
+	if err := s.authc.DeleteUser(ctx, uid); err != nil {
+		log.Printf("discard account %s: %v", uid, err)
+	}
 }
 
 func (s *server) logout(w http.ResponseWriter, r *http.Request) {

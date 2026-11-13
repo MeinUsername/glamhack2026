@@ -53,7 +53,7 @@ func (s *server) dashboard(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Interner Fehler", http.StatusInternalServerError)
 		return
 	}
-	s.render(w, "dashboard", pageData{User: u.Email, Files: files})
+	s.render(w, "dashboard", pageData{User: u.Email, IsAdmin: u.Role == roleAdmin, Files: files})
 }
 
 // uploadForm is the htmx endpoint: it returns the refreshed file section.

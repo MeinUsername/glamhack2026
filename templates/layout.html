@@ -30,6 +30,9 @@
     <nav>
       {{- if .User}}
         <a href="/dashboard">Dateien</a>
+        {{- if .IsAdmin}}
+        <a href="/admin/users">Benutzer</a>
+        {{- end}}
         <a href="/app/">Vue-App</a>
         <form method="post" action="/logout" style="display:inline">
           <button class="link" type="submit">Abmelden</button>

@@ -10,4 +10,11 @@
 <div id="files">
   {{template "filesSection" .}}
 </div>
+
+<h2>Einladen</h2>
+<p class="muted">Der Link ist 7 Tage gültig und funktioniert nur einmal. Er wird nur einmal angezeigt.</p>
+<form hx-post="/invitations" hx-target="#invite" hx-swap="innerHTML">
+  <button type="submit">Einladungslink erzeugen</button>
+</form>
+<div id="invite"></div>
 {{end}}

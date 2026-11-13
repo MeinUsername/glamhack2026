@@ -37,8 +37,12 @@ type server struct {
 // pageData is the data handed to every template.
 type pageData struct {
 	User    string
+	IsAdmin bool
 	Message string
+	Error   string
 	Files   []fileView
+	Invite  *inviteView
+	Users   []userView
 }
 
 // fileView is a file as shown in the UI and returned by the JSON API.
@@ -79,7 +83,7 @@ func newServer(ctx context.Context) (*server, error) {
 	}
 
 	pages := map[string]*template.Template{}
-	for _, name := range []string{"home", "login", "register", "dashboard"} {
+	for _, name := range []string{"home", "login", "register", "dashboard", "admin"} {
 		t, err := template.ParseFS(templateFS,
 			"templates/layout.html", "templates/partials.html", "templates/"+name+".html")
 		if err != nil {
@@ -117,12 +121,19 @@ func (s *server) routes() {
 	m.HandleFunc("GET /api/me", s.apiMe)
 	m.HandleFunc("GET /api/files", s.apiListFiles)
 	m.HandleFunc("POST /api/files", s.apiUpload)
+	m.HandleFunc("POST /register", s.register)
+	m.HandleFunc("POST /invitations", s.invitationForm)
+	m.HandleFunc("POST /api/invitations", s.apiCreateInvitation)
+	m.HandleFunc("GET /api/invitations/{token}", s.apiCheckInvitation)
+	m.HandleFunc("GET /admin/users", s.requireAdmin(s.adminUsersPage))
+	m.HandleFunc("POST /admin/users/{uid}/role", s.requireAdmin(s.setUserRole))
+	m.HandleFunc("POST /admin/users/{uid}/disabled", s.requireAdmin(s.setUserDisabled))
 	m.Handle("GET /app/", http.StripPrefix("/app", http.FileServerFS(vue)))
 }
 
 func (s *server) home(w http.ResponseWriter, r *http.Request) {
 	u, _ := s.currentUser(r)
-	s.render(w, "home", pageData{User: u.Email})
+	s.render(w, "home", pageData{User: u.Email, IsAdmin: u.Role == roleAdmin})
 }
 
 // render writes a full page (layout + page content).
