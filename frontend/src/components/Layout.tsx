@@ -17,24 +17,21 @@ export default function Layout() {
         </Link>
         <nav className="flex flex-wrap items-center gap-3">
           <Link to="/basket">{t('nav.basket')}</Link>
-          {me.status === 'ready' && (
+          <Link to="/ideas">{t('nav.ideas')}</Link>
+          {me.status === 'ready' && me.me.role === 'admin' && (
             <>
               <Link to="/dashboard">{t('nav.files')}</Link>
-              <Link to="/ideas">{t('nav.ideas')}</Link>
-              {me.me.role === 'admin' && <Link to="/admin/users">{t('nav.users')}</Link>}
-              {me.me.role === 'admin' && <Link to="/admin/master-prompt">{t('nav.masterPrompt')}</Link>}
-              <form action="/logout" method="post" className="inline">
-                <button type="submit" className={linkButton}>
-                  {t('nav.logout')}
-                </button>
-              </form>
+              <Link to="/admin/users">{t('nav.users')}</Link>
+              <Link to="/admin/master-prompt">{t('nav.masterPrompt')}</Link>
             </>
           )}
-          {me.status === 'anonymous' && (
-            <>
-              <Link to="/login">{t('nav.login')}</Link>
-              <Link to="/register">{t('nav.register')}</Link>
-            </>
+          {/* F-012 D6: /login and /register are not linked from the public interface. */}
+          {me.status === 'ready' && (
+            <form action="/logout" method="post" className="inline">
+              <button type="submit" className={linkButton}>
+                {t('nav.logout')}
+              </button>
+            </form>
           )}
           <LanguageSwitch />
         </nav>

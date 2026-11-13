@@ -4,12 +4,13 @@ import { screen } from '@testing-library/react'
 import { MAX_UPLOAD_BYTES } from './Dashboard'
 import { renderAt, routeFetch } from '../test/helpers'
 
-const user = { json: { email: 'a@example.ch', role: 'user' } }
+const admin = { json: { email: 'a@example.ch', role: 'admin' } }
+const user = { json: { email: 'u@example.ch', role: 'user' } }
 
 describe('Dashboard', () => {
   it('AC-005-5 lehnt eine Datei über 1 MB ab und sendet sie nicht', async () => {
     const { calls } = routeFetch({
-      'GET /api/me': () => user,
+      'GET /api/me': () => admin,
       'GET /api/files': () => ({ json: [] }),
     })
     renderAt('/dashboard')
@@ -25,7 +26,7 @@ describe('Dashboard', () => {
 
   it('AC-005-5 lädt eine Datei bis 1 MB hoch und zeigt sie in der Liste', async () => {
     const { calls } = routeFetch({
-      'GET /api/me': () => user,
+      'GET /api/me': () => admin,
       'GET /api/files': () => ({ json: [] }),
       'POST /api/files': () => ({
         status: 201,
@@ -45,12 +46,20 @@ describe('Dashboard', () => {
 
   it('AC-005-5 zeigt die Größe in KB', async () => {
     routeFetch({
-      'GET /api/me': () => user,
+      'GET /api/me': () => admin,
       'GET /api/files': () => ({
         json: [{ id: 'f2', name: 'bild.png', bytes: 2048, createdAt: '12.11.2026 09:00' }],
       }),
     })
     renderAt('/dashboard')
     expect(await screen.findByText('2.0 KB')).toBeInTheDocument()
+  })
+
+  // F-012 T4/T7: files are admin-only; a user sees the denial and no file list.
+  it('AC-012-5 zeigt Nicht-Admins keine Dateien und ruft die Datei-API nicht auf', async () => {
+    const { calls } = routeFetch({ 'GET /api/me': () => user })
+    renderAt('/dashboard')
+    expect(await screen.findByText('Admins only.')).toBeInTheDocument()
+    expect(calls.some((c) => c.url === '/api/files')).toBe(false)
   })
 })

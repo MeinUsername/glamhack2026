@@ -70,11 +70,15 @@ describe('IdeasList (F-011)', () => {
     expect(within(row).queryByText('Bought')).toBeNull()
   })
 
-  // AK5: visitors without login are sent to the login page.
-  it('AK5 leitet einen Besucher ohne Anmeldung zur Anmeldung', async () => {
-    routeFetch({ 'GET /api/me': () => ({ status: 401, json: { error: 'not signed in' } }) })
+  // AC-012-1 (replaces AK5): the overview is public, visitors see it without login (D1).
+  it('AC-012-1 zeigt einem Besucher ohne Anmeldung die Übersicht', async () => {
+    const { calls } = routeFetch({
+      'GET /api/me': () => ({ status: 401, json: { error: 'not signed in' } }),
+      'GET /api/ideas': () => ({ json: [] }),
+    })
     renderAt('/ideas')
 
-    expect(await screen.findByRole('heading', { name: 'Sign in' })).toBeInTheDocument()
+    expect(await screen.findByText('No ideas yet.')).toBeInTheDocument()
+    expect(calls.some((c) => c.url === '/api/ideas')).toBe(true)
   })
 })

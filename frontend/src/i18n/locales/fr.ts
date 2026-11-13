@@ -64,10 +64,10 @@ export const fr: Record<keyof typeof en, string> = {
   'files.colUploaded': 'Envoyé',
   'files.none': 'Aucun fichier pour l’instant.',
   'files.invite.title': 'Inviter',
-  'files.invite.hint': 'Le lien est valable 7 jours et ne fonctionne qu’une fois. Il n’est affiché qu’une seule fois.',
+  'files.invite.hint': 'Le lien ne fonctionne qu’une fois et n’expire pas. Il n’est affiché qu’une seule fois.',
   'files.invite.create': 'Créer un lien d’invitation',
   'files.invite.error': 'Le lien d’invitation n’a pas pu être créé.',
-  'files.invite.created': 'Lien d’invitation créé, valable jusqu’au {{date}} :',
+  'files.invite.created': 'Lien d’invitation créé :',
 
   'admin.onlyAdmins': 'Réservé aux administrateurs.',
   'admin.title': 'Utilisateurs',
@@ -168,4 +168,9 @@ export const fr: Record<keyof typeof en, string> = {
   'prompt.copied': "Copié dans le presse-papiers.",
   'prompt.copyError': "Le texte n’a pas pu être copié. Sélectionnez-le et copiez-le à la main.",
   'prompt.loadError': "Le prompt maître n’a pas pu être chargé.",
+  'auth.register.inviteOnly': 'L’inscription n’est possible qu’avec un lien d’invitation.',
+  'ideas.edit': 'Modifier',
+  'ideas.editTitle': 'Modifier l’idée',
+  'ideas.existingImages': 'Images existantes',
+  'ideas.keepImage': 'Garder l’image {{n}}',
 }

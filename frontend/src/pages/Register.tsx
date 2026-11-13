@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react'
-import { Link, useNavigate, useSearchParams } from 'react-router'
+import { useNavigate, useSearchParams } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { ApiError } from '../api'
 import AuthForm from '../components/AuthForm'
 import { firebaseMessage, signOutFirebase, signUp } from '../auth/firebase'
 import { inviteUsable, registerAccount } from '../auth/session'
-import { h1, muted } from '../ui'
+import { errorText, h1 } from '../ui'
 
 export default function Register() {
   const navigate = useNavigate()
@@ -16,7 +16,7 @@ export default function Register() {
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
 
-  // With a link, check it before any account is created. Without a link, registration is open.
+  // Without a link there is no registration (F-012 Q-012-11). With a link, it is checked before any account is created.
   useEffect(() => {
     if (!invite) return
     let active = true
@@ -51,6 +51,15 @@ export default function Register() {
     }
   }
 
+  if (!invite) {
+    return (
+      <>
+        <h1 className={h1}>{t('auth.register.title')}</h1>
+        <p role="alert" className={errorText}>{t('auth.register.inviteOnly')}</p>
+      </>
+    )
+  }
+
   return (
     <>
       <h1 className={h1}>{t('auth.register.title')}</h1>
@@ -63,9 +72,6 @@ export default function Register() {
         passwordAutocomplete="new-password"
         passwordPlaceholder={t('auth.passwordNew')}
       />
-      <p className={muted}>
-        {t('auth.register.haveAccount')} <Link to="/login">{t('nav.login')}</Link>
-      </p>
     </>
   )
 }

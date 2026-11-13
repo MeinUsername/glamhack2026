@@ -43,15 +43,21 @@ func (s *server) currentUser(r *http.Request) (sessionUser, bool) {
 	return sessionUser{ID: tok.UID, Email: email, Role: d.Role}, true
 }
 
-// loginPage and registerPage send signed-in users to the dashboard.
+// loginPage sends signed-in admins to the dashboard and other signed-in users to the start page (F-012 T3).
 func (s *server) loginPage(w http.ResponseWriter, r *http.Request) {
-	if _, ok := s.currentUser(r); ok {
-		redirect(w, r, "/dashboard")
+	if u, ok := s.currentUser(r); ok {
+		if u.Role == roleAdmin {
+			redirect(w, r, "/dashboard")
+		} else {
+			redirect(w, r, "/")
+		}
 		return
 	}
 	writeAppIndex(w)
 }
 
+// registerPage sends signed-in users to the dashboard. Without an invitation link the page
+// explains that registration is not possible (F-012 Q-012-11).
 func (s *server) registerPage(w http.ResponseWriter, r *http.Request) {
 	if _, ok := s.currentUser(r); ok {
 		redirect(w, r, "/dashboard")
@@ -145,19 +151,19 @@ func (s *server) register(w http.ResponseWriter, r *http.Request) {
 	}
 	email, _ := tok.Claims["email"].(string)
 
-	if body.Invite != "" {
-		if err := s.redeemInvitation(ctx, body.Invite, tok.UID, email); err != nil {
-			s.discardNewAccount(ctx, tok.UID)
-			if errors.Is(err, errInvalidInvite) {
-				writeJSONError(w, http.StatusGone, errInvalidInvite.Error())
-				return
-			}
-			log.Printf("redeem invitation: %v", err)
-			writeJSONError(w, http.StatusInternalServerError, "interner Fehler")
+	if body.Invite == "" {
+		// F-012 Q-012-11: sign-up is possible only with an invitation link.
+		s.discardNewAccount(ctx, tok.UID)
+		writeJSONError(w, http.StatusForbidden, "Registrierung nur mit Einladungslink.")
+		return
+	}
+	if err := s.redeemInvitation(ctx, body.Invite, tok.UID, email); err != nil {
+		s.discardNewAccount(ctx, tok.UID)
+		if errors.Is(err, errInvalidInvite) {
+			writeJSONError(w, http.StatusGone, errInvalidInvite.Error())
 			return
 		}
-	} else if _, err := s.loadOrCreateUser(ctx, tok.UID, email); err != nil {
-		log.Printf("create user %s: %v", tok.UID, err)
+		log.Printf("redeem invitation: %v", err)
 		writeJSONError(w, http.StatusInternalServerError, "interner Fehler")
 		return
 	}

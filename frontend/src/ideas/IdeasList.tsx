@@ -1,9 +1,8 @@
 import { useEffect, useState } from 'react'
-import { Link, Navigate } from 'react-router'
+import { Link } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { api } from '../api'
 import BasketButton from '../basket/BasketButton'
-import { useMe } from '../auth/useMe'
 import { errorText, h1, muted } from '../ui'
 
 interface IdeaRow {
@@ -12,12 +11,8 @@ interface IdeaRow {
   imageCount: number
 }
 
-// The overview of all ideas (F-011). Signed-in users only (D3); the basket button marks bought ideas (D1, D2).
+// The overview of all ideas (F-011). Public since F-012 (D1); the basket button marks bought ideas (D1, D2).
 export default function IdeasList() {
-  const me = useMe()
-  const { t } = useTranslation()
-  if (me.status === 'loading') return <p className={muted}>{t('common.loading')}</p>
-  if (me.status === 'anonymous') return <Navigate to="/login" replace />
   return <Overview />
 }
 

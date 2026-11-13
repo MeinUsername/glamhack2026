@@ -1,14 +1,13 @@
-import { useState, type ChangeEvent, type FormEvent, type ReactNode } from 'react'
-import { Navigate, useNavigate } from 'react-router'
+import { useEffect, useState, type ChangeEvent, type FormEvent, type ReactNode } from 'react'
+import { useNavigate, useParams } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { api, ApiError } from '../api'
-import { useMe } from '../auth/useMe'
 import { button, errorText, h1, input, muted } from '../ui'
 import EquipmentInput from './EquipmentInput'
 import { BUDGETS, imageProblem, MAX_IDEA_IMAGES } from './rules'
 import { CATEGORIES } from './categories'
 import CategoriesInfo from './CategoriesInfo'
-import type { Category } from '../types'
+import type { Category, Idea } from '../types'
 
 // Text fields of the form; the names are the English field names of the spec.
 interface Draft {
@@ -25,6 +24,23 @@ interface Draft {
   budget: string
 }
 
+// The form values of an existing idea, for editing (F-012 T8).
+function draftFrom(idea: Idea): Draft {
+  return {
+    title: idea.title,
+    description: idea.description,
+    audience: idea.audience,
+    areaM2: idea.space.areaM2 === null ? '' : String(idea.space.areaM2),
+    volumeM3: idea.space.volumeM3 === null ? '' : String(idea.space.volumeM3),
+    equipment: idea.equipment,
+    categories: idea.categories,
+    goal: idea.goal,
+    sustainability: idea.sustainability,
+    accessibility: idea.accessibility,
+    budget: idea.budget ?? '',
+  }
+}
+
 const emptyDraft: Draft = {
   title: '',
   description: '',
@@ -39,18 +55,39 @@ const emptyDraft: Draft = {
   budget: '',
 }
 
+// /ideas/new: no login needed (F-012 D1).
 export default function IdeaForm() {
-  const me = useMe()
-  const { t } = useTranslation()
-  if (me.status === 'loading') return <p className={muted}>{t('common.loading')}</p>
-  if (me.status === 'anonymous') return <Navigate to="/login" replace />
-  return <NewIdea />
+  return <IdeaEditor />
 }
 
-function NewIdea() {
+// /ideas/:id/edit (F-012 T6, T8): the same form, filled with the idea.
+export function IdeaEdit() {
+  const { id = '' } = useParams()
+  const { t } = useTranslation()
+  const [idea, setIdea] = useState<Idea | null>(null)
+  const [failed, setFailed] = useState(false)
+
+  useEffect(() => {
+    let active = true
+    api<Idea>(`/api/ideas/${encodeURIComponent(id)}`)
+      .then((loaded) => active && setIdea(loaded))
+      .catch(() => active && setFailed(true))
+    return () => {
+      active = false
+    }
+  }, [id])
+
+  if (failed) return <p className={errorText}>{t('ideas.loadError')}</p>
+  if (!idea) return <p className={muted}>{t('common.loading')}</p>
+  return <IdeaEditor edit={idea} />
+}
+
+function IdeaEditor({ edit }: { edit?: Idea }) {
   const navigate = useNavigate()
   const { t } = useTranslation()
-  const [draft, setDraft] = useState<Draft>(emptyDraft)
+  const [draft, setDraft] = useState<Draft>(() => (edit ? draftFrom(edit) : emptyDraft))
+  // Indices of the existing images that stay (keepImages). New ones are added with the file picker.
+  const [keep, setKeep] = useState<number[]>(() => (edit ? edit.images.map((_, n) => n) : []))
   const [images, setImages] = useState<File[]>([])
   const [imageError, setImageError] = useState('')
   const [inputKey, setInputKey] = useState(0) // remounts the file input after a rejected pick
@@ -59,6 +96,10 @@ function NewIdea() {
 
   function set<K extends keyof Draft>(key: K, value: Draft[K]) {
     setDraft((d) => ({ ...d, [key]: value }))
+  }
+
+  function toggleKeep(n: number) {
+    setKeep((k) => (k.includes(n) ? k.filter((i) => i !== n) : [...k, n]))
   }
 
   function toggleCategory(key: Category) {
@@ -91,26 +132,27 @@ function NewIdea() {
       return
     }
     const form = new FormData()
-    form.append(
-      'data',
-      JSON.stringify({
-        title: draft.title,
-        description: draft.description,
-        audience: draft.audience,
-        goal: draft.goal,
-        sustainability: draft.sustainability,
-        accessibility: draft.accessibility,
-        space: { areaM2: draft.areaM2, volumeM3: draft.volumeM3 },
-        equipment: draft.equipment,
-        categories: draft.categories,
-        budget: draft.budget,
-      }),
-    )
+    const data: Record<string, unknown> = {
+      title: draft.title,
+      description: draft.description,
+      audience: draft.audience,
+      goal: draft.goal,
+      sustainability: draft.sustainability,
+      accessibility: draft.accessibility,
+      space: { areaM2: draft.areaM2, volumeM3: draft.volumeM3 },
+      equipment: draft.equipment,
+      categories: draft.categories,
+      budget: draft.budget,
+    }
+    if (edit) data.keepImages = keep
+    form.append('data', JSON.stringify(data))
     for (const file of images) form.append('images', file)
 
     setBusy(true)
     try {
-      const { id } = await api<{ id: string }>('/api/ideas', { method: 'POST', body: form })
+      const { id } = edit
+        ? await api<{ id: string }>(`/api/ideas/${edit.id}`, { method: 'PUT', body: form })
+        : await api<{ id: string }>('/api/ideas', { method: 'POST', body: form })
       navigate(`/ideas/${id}`)
     } catch (err) {
       setError(err instanceof ApiError ? err.message : t('ideas.saveError'))
@@ -120,8 +162,20 @@ function NewIdea() {
 
   return (
     <>
-      <h1 className={h1}>{t('ideas.new.title')}</h1>
+      <h1 className={h1}>{edit ? t('ideas.editTitle') : t('ideas.new.title')}</h1>
       <form onSubmit={handleSubmit} className="grid max-w-xl gap-4">
+        {edit && edit.images.length > 0 && (
+          <fieldset className="grid gap-2">
+            <legend className="font-medium">{t('ideas.existingImages')}</legend>
+            {edit.images.map((_, n) => (
+              <label key={n} className="flex items-center gap-3">
+                <input type="checkbox" checked={keep.includes(n)} onChange={() => toggleKeep(n)} />
+                <img src={`/api/ideas/${edit.id}/images/${n}`} alt="" className="h-12 w-12 rounded object-cover" />
+                <span>{t('ideas.keepImage', { n: n + 1 })}</span>
+              </label>
+            ))}
+          </fieldset>
+        )}
         <Field label={t('ideas.field.title')}>
           <input className={input} value={draft.title} onChange={(e) => set('title', e.target.value)} />
         </Field>

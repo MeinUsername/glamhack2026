@@ -15,8 +15,7 @@ export interface FileItem {
 }
 
 export interface Invitation {
-  link: string
-  expiresAt: string // RFC 3339
+  link: string // F-012 D5: no expiry any more
 }
 
 export interface AdminUser {

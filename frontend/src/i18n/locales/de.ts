@@ -63,10 +63,10 @@ export const de: Record<keyof typeof en, string> = {
   'files.colUploaded': 'Hochgeladen',
   'files.none': 'Noch keine Dateien.',
   'files.invite.title': 'Einladen',
-  'files.invite.hint': 'Der Link ist 7 Tage gültig und funktioniert nur einmal. Er wird nur einmal angezeigt.',
+  'files.invite.hint': 'Der Link funktioniert nur einmal und läuft nicht ab. Er wird nur einmal angezeigt.',
   'files.invite.create': 'Einladungslink erzeugen',
   'files.invite.error': 'Der Einladungslink konnte nicht erzeugt werden.',
-  'files.invite.created': 'Einladungslink erstellt, gültig bis {{date}}:',
+  'files.invite.created': 'Einladungslink erstellt:',
 
   'admin.onlyAdmins': 'Nur für Admins.',
   'admin.title': 'Benutzer',
@@ -167,4 +167,9 @@ export const de: Record<keyof typeof en, string> = {
   'prompt.copied': "In die Zwischenablage kopiert.",
   'prompt.copyError': "Der Text konnte nicht kopiert werden. Markiere ihn und kopiere ihn von Hand.",
   'prompt.loadError': "Der Master-Prompt konnte nicht geladen werden.",
+  'auth.register.inviteOnly': 'Registrierung ist nur mit einem Einladungslink möglich.',
+  'ideas.edit': 'Bearbeiten',
+  'ideas.editTitle': 'Idee bearbeiten',
+  'ideas.existingImages': 'Bestehende Bilder',
+  'ideas.keepImage': 'Bild {{n}} behalten',
 }

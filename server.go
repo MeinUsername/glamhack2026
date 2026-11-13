@@ -67,6 +67,10 @@ func newServer(ctx context.Context) (*server, error) {
 		authc:  authc,
 		mux:    http.NewServeMux(),
 	}
+	// F-012 T1: the initial admin exists after the start. A failure is logged, the app still starts.
+	if err := s.ensureInitialAdmin(ctx); err != nil {
+		log.Printf("initial admin: %v", err)
+	}
 	s.routes()
 	return s, nil
 }
@@ -85,8 +89,9 @@ func (s *server) routes() {
 	m.HandleFunc("GET /dashboard", s.dashboard)
 	m.HandleFunc("GET /ideas/new", serveApp)
 	m.HandleFunc("GET /ideas/{id}", serveApp)
-	m.HandleFunc("GET /basket", serveApp) // F-006: public, no redirect
-	m.HandleFunc("GET /ideas", serveApp)  // F-011: overview
+	m.HandleFunc("GET /ideas/{id}/edit", serveApp) // F-012 T6
+	m.HandleFunc("GET /basket", serveApp)          // F-006: public, no redirect
+	m.HandleFunc("GET /ideas", serveApp)           // F-011: overview
 	m.HandleFunc("GET /admin/users", s.requireAdmin(s.adminPage))
 	m.HandleFunc("GET /admin/master-prompt", s.requireAdmin(s.adminPage)) // F-008: editor page
 	m.HandleFunc("GET /app/{$}", func(w http.ResponseWriter, r *http.Request) {
@@ -100,15 +105,17 @@ func (s *server) routes() {
 	m.HandleFunc("POST /logout", s.logout)
 
 	// Files.
-	m.HandleFunc("GET /files/{id}", s.download)
+	// F-012 T4: files are admin-only.
+	m.HandleFunc("GET /files/{id}", s.requireAdmin(anyUser(s.download)))
 	m.HandleFunc("GET /api/me", s.apiMe)
-	m.HandleFunc("GET /api/files", s.apiListFiles)
-	m.HandleFunc("POST /api/files", s.apiUpload)
+	m.HandleFunc("GET /api/files", s.requireAdmin(anyUser(s.apiListFiles)))
+	m.HandleFunc("POST /api/files", s.requireAdmin(anyUser(s.apiUpload)))
 
 	// Ideas (F-002).
 	m.HandleFunc("POST /api/ideas", s.apiCreateIdea)
 	m.HandleFunc("GET /api/ideas", s.apiListIdeas)
 	m.HandleFunc("GET /api/ideas/{id}", s.apiGetIdea)
+	m.HandleFunc("PUT /api/ideas/{id}", s.apiUpdateIdea) // F-012 T6: editing without login
 	m.HandleFunc("GET /api/ideas/{id}/images/{n}", s.apiIdeaImage)
 	m.HandleFunc("GET /api/equipment", s.apiEquipment)
 
@@ -119,7 +126,7 @@ func (s *server) routes() {
 	m.HandleFunc("POST /api/admin/master-prompt/versions/{n}/restore", s.requireAdmin(s.apiRestoreMasterPrompt))
 
 	// Invitations.
-	m.HandleFunc("POST /api/invitations", s.apiCreateInvitation)
+	m.HandleFunc("POST /api/invitations", s.requireAdmin(s.apiCreateInvitation)) // F-012 D8
 	m.HandleFunc("GET /api/invitations/{token}", s.apiCheckInvitation)
 
 	// Admin.

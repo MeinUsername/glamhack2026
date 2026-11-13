@@ -3,42 +3,7 @@ package app
 import (
 	"strings"
 	"testing"
-	"time"
 )
-
-// AC-001-2: an invitation is usable once and for 7 days.
-func TestAC001_2_InvitationIsSingleUseAndExpiresAfter7Days(t *testing.T) {
-	now := time.Date(2026, 11, 13, 9, 0, 0, 0, time.UTC)
-	d := newInvitationDoc("uid-1", now)
-
-	if want := now.Add(7 * 24 * time.Hour); !d.ExpiresAt.Equal(want) {
-		t.Fatalf("ExpiresAt = %v, want %v", d.ExpiresAt, want)
-	}
-	if !d.usable(now) {
-		t.Error("fresh invitation must be usable")
-	}
-	if !d.usable(now.Add(7*24*time.Hour - time.Second)) {
-		t.Error("invitation must still be usable one second before expiry")
-	}
-
-	used := now.Add(time.Hour)
-	d.UsedAt = &used
-	if d.usable(now.Add(time.Hour)) {
-		t.Error("used invitation must not be usable again")
-	}
-}
-
-// AC-001-3: an expired invitation is rejected.
-func TestAC001_3_ExpiredInvitationIsRejected(t *testing.T) {
-	now := time.Date(2026, 11, 13, 9, 0, 0, 0, time.UTC)
-	d := newInvitationDoc("uid-1", now)
-	if d.usable(now.Add(7 * 24 * time.Hour)) {
-		t.Error("invitation must be rejected at and after expiry")
-	}
-	if d.usable(now.Add(8 * 24 * time.Hour)) {
-		t.Error("invitation must be rejected after expiry")
-	}
-}
 
 // The token is never stored: only its hash is the document ID.
 func TestHashTokenIsDeterministicAndHidesToken(t *testing.T) {

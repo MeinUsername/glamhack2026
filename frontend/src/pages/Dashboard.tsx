@@ -17,6 +17,7 @@ export default function Dashboard() {
   const { t } = useTranslation()
   if (me.status === 'loading') return <p className={muted}>{t('common.loading')}</p>
   if (me.status === 'anonymous') return <Navigate to="/login" replace />
+  if (me.me.role !== 'admin') return <p role="alert" className={errorText}>{t('admin.onlyAdmins')}</p>
   return <Files email={me.me.email} />
 }
 
@@ -137,7 +138,7 @@ function Files({ email }: { email: string }) {
       {invite && (
         <div className="mt-3">
           <p className={noticeText}>
-            {t('files.invite.created', { date: new Date(invite.expiresAt).toLocaleString(i18n.language) })}
+            {t('files.invite.created')}
           </p>
           <code className={`${input} mt-2 block break-all`}>{invite.link}</code>
         </div>

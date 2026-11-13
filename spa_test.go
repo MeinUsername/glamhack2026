@@ -112,3 +112,13 @@ func TestIdeasOverviewRouteServesReactIndex(t *testing.T) {
 		t.Errorf("GET /ideas: status %d, want 200 with the React page", rec.Code)
 	}
 }
+
+// F-012 T6: the edit page of an idea is a React page too.
+func TestIdeaEditRouteServesReactIndex(t *testing.T) {
+	s := newRouteServer(t)
+	rec := httptest.NewRecorder()
+	s.mux.ServeHTTP(rec, httptest.NewRequest("GET", "/ideas/abc/edit", nil))
+	if rec.Code != http.StatusOK || !strings.Contains(rec.Body.String(), `<div id="root">`) {
+		t.Errorf("GET /ideas/abc/edit: status %d, want 200 with the React page", rec.Code)
+	}
+}

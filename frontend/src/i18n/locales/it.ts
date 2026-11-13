@@ -64,10 +64,10 @@ export const it: Record<keyof typeof en, string> = {
   'files.colUploaded': 'Caricato',
   'files.none': 'Nessun file ancora.',
   'files.invite.title': 'Invita',
-  'files.invite.hint': 'Il link è valido per 7 giorni e funziona una sola volta. Viene mostrato solo una volta.',
+  'files.invite.hint': 'Il link funziona una sola volta e non scade. Viene mostrato una sola volta.',
   'files.invite.create': 'Crea link di invito',
   'files.invite.error': 'Impossibile creare il link di invito.',
-  'files.invite.created': 'Link di invito creato, valido fino al {{date}}:',
+  'files.invite.created': 'Link di invito creato:',
 
   'admin.onlyAdmins': 'Solo per amministratori.',
   'admin.title': 'Utenti',
@@ -168,4 +168,9 @@ export const it: Record<keyof typeof en, string> = {
   'prompt.copied': "Copiato negli appunti.",
   'prompt.copyError': "Il testo non è stato copiato. Selezionalo e copialo a mano.",
   'prompt.loadError': "Il prompt master non è stato caricato.",
+  'auth.register.inviteOnly': 'La registrazione è possibile solo con un link di invito.',
+  'ideas.edit': 'Modifica',
+  'ideas.editTitle': 'Modifica idea',
+  'ideas.existingImages': 'Immagini esistenti',
+  'ideas.keepImage': 'Mantieni immagine {{n}}',
 }

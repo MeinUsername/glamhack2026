@@ -3,10 +3,12 @@ import { screen, within } from '@testing-library/react'
 import { renderAt, routeFetch, unauthorized } from '../test/helpers'
 
 describe('Layout', () => {
-  it('AC-005-6 zeigt die Benutzer-Navigation nur für Admins', async () => {
+  // F-012 D1/T7: Dateien and Benutzer are admin-only links.
+  it('AC-005-6 zeigt die Benutzer- und Dateinavigation nur für Admins', async () => {
     routeFetch({ 'GET /api/me': () => ({ json: { email: 'u@example.ch', role: 'user' } }) })
     renderAt('/')
-    expect(await screen.findByRole('link', { name: 'Files' })).toBeInTheDocument()
+    await within(await screen.findByRole('banner')).findByRole('link', { name: 'Ideas' })
+    expect(screen.queryByRole('link', { name: 'Files' })).not.toBeInTheDocument()
     expect(screen.queryByRole('link', { name: 'Users' })).not.toBeInTheDocument()
   })
 
@@ -16,11 +18,13 @@ describe('Layout', () => {
     expect(await screen.findByRole('link', { name: 'Users' })).toHaveAttribute('href', '/admin/users')
   })
 
-  it('AC-005-8 zeigt Anmelden und Registrieren ohne Sitzung', async () => {
+  // AC-012-6: the public interface has no link to /login or /register (D6).
+  it('AC-012-6 zeigt ohne Sitzung keine Anmelde- oder Registrierlinks', async () => {
     routeFetch({ 'GET /api/me': () => unauthorized })
     renderAt('/')
     const header = within(await screen.findByRole('banner'))
-    expect(header.getByRole('link', { name: 'Sign in' })).toBeInTheDocument()
-    expect(header.getByRole('link', { name: 'Register' })).toBeInTheDocument()
+    await header.findByRole('link', { name: 'Ideas' })
+    expect(header.queryByRole('link', { name: 'Sign in' })).not.toBeInTheDocument()
+    expect(header.queryByRole('link', { name: 'Register' })).not.toBeInTheDocument()
   })
 })

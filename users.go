@@ -49,6 +49,11 @@ func newUser(email string) userDoc {
 	return userDoc{Email: email, Role: roleUser, CreatedAt: time.Now().UTC()}
 }
 
+// newAdminUser is the state of an account that redeemed an invitation (F-012 Q-012-10).
+func newAdminUser(email string) userDoc {
+	return userDoc{Email: email, Role: roleAdmin, CreatedAt: time.Now().UTC()}
+}
+
 // loadOrCreateUser returns the users document of uid and creates it with role
 // user if it is missing. Accounts from before F-001 get their document on first use.
 func (s *server) loadOrCreateUser(ctx context.Context, uid, email string) (userDoc, error) {

@@ -9,7 +9,7 @@ describe('Login', () => {
   it('AC-005-3 leitet nach Login auf /dashboard', async () => {
     let signedIn = false
     const { calls } = routeFetch({
-      'GET /api/me': () => (signedIn ? { json: { email: 'a@example.ch', role: 'user' } } : unauthorized),
+      'GET /api/me': () => (signedIn ? { json: { email: 'a@example.ch', role: 'admin' } } : unauthorized),
       'POST /session': () => {
         signedIn = true
         return { status: 204 }

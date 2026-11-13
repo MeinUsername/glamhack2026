@@ -242,11 +242,7 @@ func nameKey(name string) string {
 
 // apiCreateIdea handles POST /api/ideas (multipart: "data" JSON, "images" files).
 func (s *server) apiCreateIdea(w http.ResponseWriter, r *http.Request) {
-	u, ok := s.currentUser(r)
-	if !ok {
-		writeJSONError(w, http.StatusUnauthorized, "not signed in")
-		return
-	}
+	u, _ := s.currentUser(r) // F-012 D1: no login needed; created_by stays empty without one
 	r.Body = http.MaxBytesReader(w, r.Body, maxIdeaBodyBytes)
 	if err := r.ParseMultipartForm(maxIdeaBodyBytes); err != nil {
 		var mbe *http.MaxBytesError
@@ -285,7 +281,7 @@ func (s *server) apiCreateIdea(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	doc.Images = stored
-	doc.CreatedBy = u.ID
+	doc.CreatedBy = u.ID // "" for anonymous users
 	doc.CreatedAt = time.Now().UTC()
 
 	err = s.db.RunTransaction(ctx, func(ctx context.Context, tx *firestore.Transaction) error {
@@ -356,10 +352,6 @@ func readIdeaImages(form *multipart.Form) ([]checkedImage, error) {
 
 // apiGetIdea handles GET /api/ideas/{id}.
 func (s *server) apiGetIdea(w http.ResponseWriter, r *http.Request) {
-	if _, ok := s.currentUser(r); !ok {
-		writeJSONError(w, http.StatusUnauthorized, "not signed in")
-		return
-	}
 	snap, err := s.db.Collection("ideas").Doc(r.PathValue("id")).Get(r.Context())
 	if err != nil {
 		if isNotFound(err) {
@@ -409,10 +401,6 @@ func toIdeaView(id string, d ideaDoc) ideaView {
 
 // apiIdeaImage handles GET /api/ideas/{id}/images/{n}; n is 0-based.
 func (s *server) apiIdeaImage(w http.ResponseWriter, r *http.Request) {
-	if _, ok := s.currentUser(r); !ok {
-		writeJSONError(w, http.StatusUnauthorized, "not signed in")
-		return
-	}
 	ctx := r.Context()
 	snap, err := s.db.Collection("ideas").Doc(r.PathValue("id")).Get(ctx)
 	if err != nil {
@@ -448,10 +436,6 @@ func (s *server) apiIdeaImage(w http.ResponseWriter, r *http.Request) {
 
 // apiEquipment handles GET /api/equipment?q=... (autocomplete over the catalog).
 func (s *server) apiEquipment(w http.ResponseWriter, r *http.Request) {
-	if _, ok := s.currentUser(r); !ok {
-		writeJSONError(w, http.StatusUnauthorized, "not signed in")
-		return
-	}
 	q := nameKey(r.URL.Query().Get("q"))
 	names := []string{}
 	if q == "" {
@@ -502,10 +486,6 @@ type ideaSummary struct {
 
 // apiListIdeas handles GET /api/ideas: all ideas, newest first (F-011).
 func (s *server) apiListIdeas(w http.ResponseWriter, r *http.Request) {
-	if _, ok := s.currentUser(r); !ok {
-		writeJSONError(w, http.StatusUnauthorized, "not signed in")
-		return
-	}
 	it := s.db.Collection("ideas").OrderBy("created_at", firestore.Desc).Documents(r.Context())
 	defer it.Stop()
 	out := []ideaSummary{}

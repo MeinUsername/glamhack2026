@@ -11,18 +11,12 @@ export default function Home() {
     <>
       <h1 className={h1}>{t('home.title')}</h1>
       <p className={muted}>{t('home.intro')}</p>
-      {me.status === 'ready' && (
-        <>
-          <p className="mt-4">{t('home.signedInAs', { email: me.me.email })}</p>
-          <p className="mt-2">
-            <Link to="/dashboard">{t('home.toFiles')}</Link>
-          </p>
-        </>
-      )}
-      {me.status === 'anonymous' && (
-        <p className="mt-4">
-          <Link to="/login">{t('nav.login')}</Link> {t('home.or')}{' '}
-          <Link to="/register">{t('home.createAccount')}</Link>.
+      <p className="mt-4">
+        <Link to="/ideas">{t('nav.ideas')}</Link>
+      </p>
+      {me.status === 'ready' && me.me.role === 'admin' && (
+        <p className="mt-2">
+          <Link to="/dashboard">{t('home.toFiles')}</Link>
         </p>
       )}
     </>

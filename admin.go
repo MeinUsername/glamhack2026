@@ -42,6 +42,11 @@ func guardAdmin(resolve func(*http.Request) (sessionUser, bool), next func(http.
 	}
 }
 
+// anyUser adapts a handler that does not need the user to the guard signature.
+func anyUser(h http.HandlerFunc) func(http.ResponseWriter, *http.Request, sessionUser) {
+	return func(w http.ResponseWriter, r *http.Request, _ sessionUser) { h(w, r) }
+}
+
 // requireSignedIn checks only the login, not the role (F-008: the master prompt is readable by every role).
 func (s *server) requireSignedIn(next func(http.ResponseWriter, *http.Request, sessionUser)) http.HandlerFunc {
 	return guardSignedIn(s.currentUser, next)

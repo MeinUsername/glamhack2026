@@ -1,11 +1,12 @@
 import { useState } from 'react'
-import { Link, useNavigate } from 'react-router'
+import { useNavigate } from 'react-router'
 import { useTranslation } from 'react-i18next'
-import { ApiError } from '../api'
+import { api, ApiError } from '../api'
 import AuthForm from '../components/AuthForm'
 import { firebaseMessage, signIn, signOutFirebase } from '../auth/firebase'
 import { createSession } from '../auth/session'
-import { h1, muted } from '../ui'
+import { h1 } from '../ui'
+import type { Me } from '../types'
 
 export default function Login() {
   const navigate = useNavigate()
@@ -19,7 +20,8 @@ export default function Login() {
     try {
       const user = await signIn(email.trim(), password)
       await createSession(await user.getIdToken())
-      navigate('/dashboard')
+      const me = await api<Me>('/api/me')
+      navigate(me.role === 'admin' ? '/dashboard' : '/') // F-012 T3
     } catch (err) {
       // The server refused the session (for example a blocked account): drop the Firebase sign-in too.
       await signOutFirebase().catch(() => {})
@@ -39,9 +41,6 @@ export default function Login() {
         passwordAutocomplete="current-password"
         passwordPlaceholder={t('auth.password')}
       />
-      <p className={muted}>
-        {t('auth.login.noAccount')} <Link to="/register">{t('auth.login.registerNow')}</Link>
-      </p>
     </>
   )
 }

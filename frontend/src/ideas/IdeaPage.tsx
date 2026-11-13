@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Navigate, useParams } from 'react-router'
+import { Link, useParams } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { api, ApiError } from '../api'
 import type { Idea } from '../types'
@@ -11,7 +11,6 @@ type State =
   | { status: 'loading' }
   | { status: 'ready'; idea: Idea }
   | { status: 'missing' }
-  | { status: 'signedOut' }
   | { status: 'failed' }
 
 // The idea page at /ideas/:id. Images are fetched through the server; the bucket stays private.
@@ -26,8 +25,7 @@ export default function IdeaPage() {
       .then((idea) => active && setState({ status: 'ready', idea }))
       .catch((err: unknown) => {
         if (!active) return
-        if (err instanceof ApiError && err.status === 401) setState({ status: 'signedOut' })
-        else if (err instanceof ApiError && err.status === 404) setState({ status: 'missing' })
+        if (err instanceof ApiError && err.status === 404) setState({ status: 'missing' })
         else setState({ status: 'failed' })
       })
     return () => {
@@ -36,7 +34,6 @@ export default function IdeaPage() {
   }, [id])
 
   if (state.status === 'loading') return <p className={muted}>{t('common.loading')}</p>
-  if (state.status === 'signedOut') return <Navigate to="/login" replace />
   if (state.status === 'missing') return <p className={errorText}>{t('ideas.notFound')}</p>
   if (state.status === 'failed') return <p className={errorText}>{t('ideas.loadError')}</p>
   return <Show idea={state.idea} />
@@ -50,6 +47,9 @@ function Show({ idea }: { idea: Idea }) {
     <article className="grid max-w-2xl gap-4">
       <h1 className={h1}>{title}</h1>
       <BasketButton ideaId={idea.id} />
+      <p>
+        <Link to={`/ideas/${idea.id}/edit`}>{t('ideas.edit')}</Link>
+      </p>
       {idea.categories.length > 0 && (
         <ul aria-label={t('ideas.categories.chips')} className="flex flex-wrap gap-2">
           {idea.categories.map((key) => (

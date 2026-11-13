@@ -62,10 +62,10 @@ export const en = {
   'files.colUploaded': 'Uploaded',
   'files.none': 'No files yet.',
   'files.invite.title': 'Invite',
-  'files.invite.hint': 'The link is valid for 7 days and works only once. It is shown only once.',
+  'files.invite.hint': 'The link works only once and does not expire. It is shown only once.',
   'files.invite.create': 'Create invitation link',
   'files.invite.error': 'The invitation link could not be created.',
-  'files.invite.created': 'Invitation link created, valid until {{date}}:',
+  'files.invite.created': 'Invitation link created:',
 
   'admin.onlyAdmins': 'Admins only.',
   'admin.title': 'Users',
@@ -166,4 +166,9 @@ export const en = {
   'prompt.copied': "Copied to the clipboard.",
   'prompt.copyError': "The text could not be copied. Select it and copy it by hand.",
   'prompt.loadError': "The master prompt could not be loaded.",
+  'auth.register.inviteOnly': 'Registration is only possible with an invitation link.',
+  'ideas.edit': 'Edit',
+  'ideas.editTitle': 'Edit idea',
+  'ideas.existingImages': 'Existing images',
+  'ideas.keepImage': 'Keep image {{n}}',
 } as const

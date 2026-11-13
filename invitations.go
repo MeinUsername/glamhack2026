@@ -11,10 +11,8 @@ import (
 	"cloud.google.com/go/firestore"
 )
 
-const (
-	inviteTTL       = 7 * 24 * time.Hour
-	inviteTokenSize = 32 // bytes of randomness; the link carries 64 hex characters
-)
+// F-012 D5: invitation links have no expiry. Only the single use is enforced.
+const inviteTokenSize = 32 // bytes of randomness; the link carries 64 hex characters
 
 var errInvalidInvite = userError("Der Einladungslink ist ungültig oder abgelaufen.")
 
@@ -23,19 +21,20 @@ var errInvalidInvite = userError("Der Einladungslink ist ungültig oder abgelauf
 type invitationDoc struct {
 	CreatedBy string     `firestore:"created_by"`
 	CreatedAt time.Time  `firestore:"created_at"`
-	ExpiresAt time.Time  `firestore:"expires_at"`
+	ExpiresAt time.Time  `firestore:"expires_at,omitempty"` // F-001 field; no longer set (F-012 D5)
 	UsedAt    *time.Time `firestore:"used_at"`
 	UsedBy    *string    `firestore:"used_by"`
 }
 
-// newInvitationDoc returns an unused invitation that is valid for inviteTTL from now.
+// newInvitationDoc returns an unused invitation.
 func newInvitationDoc(uid string, now time.Time) invitationDoc {
-	return invitationDoc{CreatedBy: uid, CreatedAt: now, ExpiresAt: now.Add(inviteTTL)}
+	return invitationDoc{CreatedBy: uid, CreatedAt: now}
 }
 
-// usable reports whether the invitation is neither used nor expired at now.
+// usable reports whether the invitation has not been used yet (AC-012-7, AC-012-8, AC-012-9).
+// There is no expiry, so now does not matter; it stays in the signature for the callers.
 func (d invitationDoc) usable(now time.Time) bool {
-	return d.UsedAt == nil && now.Before(d.ExpiresAt)
+	return d.UsedAt == nil
 }
 
 // hashToken is the document ID under which a token is stored.
@@ -49,13 +48,13 @@ func invitationRef(db *firestore.Client, token string) *firestore.DocumentRef {
 }
 
 // newInvitation stores a new invitation for uid and returns the token, shown only once.
-func (s *server) newInvitation(ctx context.Context, uid string) (string, time.Time, error) {
+func (s *server) newInvitation(ctx context.Context, uid string) (string, error) {
 	token := randomHex(inviteTokenSize)
 	doc := newInvitationDoc(uid, time.Now().UTC())
 	if _, err := invitationRef(s.db, token).Create(ctx, doc); err != nil {
-		return "", time.Time{}, err
+		return "", err
 	}
-	return token, doc.ExpiresAt, nil
+	return token, nil
 }
 
 // checkInvitation reports whether a token can still be used.
@@ -78,7 +77,7 @@ func (s *server) checkInvitation(ctx context.Context, token string) (bool, error
 }
 
 // redeemInvitation marks the invitation as used and creates the users document
-// with role user. Both writes happen in one transaction, so a link works only once.
+// with role admin (Q-012-10). Both writes happen in one transaction, so a link works only once.
 func (s *server) redeemInvitation(ctx context.Context, token, uid, email string) error {
 	ref := invitationRef(s.db, token)
 	return s.db.RunTransaction(ctx, func(ctx context.Context, tx *firestore.Transaction) error {
@@ -103,7 +102,7 @@ func (s *server) redeemInvitation(ctx context.Context, token, uid, email string)
 		}); err != nil {
 			return err
 		}
-		return tx.Create(s.db.Collection("users").Doc(uid), newUser(email))
+		return tx.Create(s.db.Collection("users").Doc(uid), newAdminUser(email))
 	})
 }
 
@@ -116,23 +115,15 @@ func inviteLink(r *http.Request, token string) string {
 	return scheme + "://" + r.Host + "/register?invite=" + token
 }
 
-// apiCreateInvitation is the JSON endpoint: {"link", "expiresAt"} (RFC 3339).
-func (s *server) apiCreateInvitation(w http.ResponseWriter, r *http.Request) {
-	u, ok := s.currentUser(r)
-	if !ok {
-		writeJSONError(w, http.StatusUnauthorized, "nicht angemeldet")
-		return
-	}
-	token, expires, err := s.newInvitation(r.Context(), u.ID)
+// apiCreateInvitation is the JSON endpoint: {"link"}. Only admins reach it (F-012 D8).
+func (s *server) apiCreateInvitation(w http.ResponseWriter, r *http.Request, u sessionUser) {
+	token, err := s.newInvitation(r.Context(), u.ID)
 	if err != nil {
 		log.Printf("api create invitation: %v", err)
 		writeJSONError(w, http.StatusInternalServerError, "interner Fehler")
 		return
 	}
-	writeJSON(w, http.StatusCreated, map[string]string{
-		"link":      inviteLink(r, token),
-		"expiresAt": expires.Format(time.RFC3339),
-	})
+	writeJSON(w, http.StatusCreated, map[string]string{"link": inviteLink(r, token)})
 }
 
 // apiCheckInvitation tells the registration page whether a link is still usable,

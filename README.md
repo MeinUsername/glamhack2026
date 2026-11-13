@@ -28,12 +28,35 @@ für Rollen und Sperren (F-001).
 
 ## Ersten Admin einrichten
 
-Einmalig pro Projekt, nachdem das Konto registriert ist. Das Kommando legt `system/setup` an und
-bricht bei einem zweiten Aufruf ab.
+Der Initialadmin entsteht beim Start der Function (F-012). Die Adresse steht in
+`INITIAL_ADMIN_EMAIL` (Standard: `glamhack@x99.ch`). Das Passwort kommt aus
+`INITIAL_ADMIN_PASSWORD`, nur wenn der Account neu angelegt wird. Ein bestehender Account
+behält sein Passwort und bekommt nur die Rolle `admin`. Ohne Passwort und ohne Account startet
+die App trotzdem, legt aber keinen Admin an.
+
+Anmelden geht über die nicht verlinkte Seite `/login` mit E-Mail und Passwort.
+
+Weitere Admins kommen über Einladungslinks (Admin-Bereich `/dashboard`). Jeder Link ist
+einmal einlösbar und läuft nicht ab; wer ihn einlöst, wird Admin.
+
+Der frühere Befehl `cmd/setup-admin` macht einen bestehenden Account einmalig zum Admin. Er
+bleibt für Projekte, die vor F-012 angelegt wurden.
 
 ```sh
 go run ./cmd/setup-admin -project glamhack-hack-2026 admin@example.ch
 ```
+
+### Konfiguration
+
+| Variable | Zweck |
+| --- | --- |
+| `INITIAL_ADMIN_EMAIL` | Adresse des Initialadmins (Standard `glamhack@x99.ch`) |
+| `INITIAL_ADMIN_PASSWORD` | Passwort, nur beim Neuanlegen. Gehört in den Secret Manager, nicht in den Quelltext |
+
+Vor dem ersten Deploy mit F-012 muss `INITIAL_ADMIN_PASSWORD` im Secret Manager liegen und
+am Cloud-Run-Dienst als Secret eingebunden sein, zum Beispiel über
+`--set-secrets INITIAL_ADMIN_PASSWORD=<secret-name>:latest`. Die Zeile fehlt im Deploy-Befehl
+von `cloudbuild.yaml`, bis das Secret existiert, weil ein fehlendes Secret den Deploy abbricht.
 
 ## Lokal bauen und testen
 

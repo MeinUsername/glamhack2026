@@ -140,13 +140,13 @@ func TestAC002_3_ImageCountAndSizeLimits(t *testing.T) {
 	}
 }
 
-// AC-002-7: without a session, the endpoints answer 401 before any Firestore or bucket access.
-// The server has no clients, so reaching them would panic.
-func TestAC002_7_IdeaEndpointsRequireSignIn(t *testing.T) {
+// AC-012-1 (replaces AC-002-7): without a session the idea endpoints do not answer 401 any more (F-012 D1).
+// The test server has no Firestore client, so a request reaches the handler only up to the first
+// database call, which panics here. A 401 would be written before that, so a 401 means the login check is back.
+func TestAC012_1_IdeaEndpointsNeedNoSignIn(t *testing.T) {
 	s := &server{mux: http.NewServeMux()}
 	s.routes()
 	cases := []struct{ method, path string }{
-		{"POST", "/api/ideas"},
 		{"GET", "/api/ideas"},
 		{"GET", "/api/ideas/abc"},
 		{"GET", "/api/ideas/abc/images/0"},
@@ -154,9 +154,12 @@ func TestAC002_7_IdeaEndpointsRequireSignIn(t *testing.T) {
 	}
 	for _, c := range cases {
 		rec := httptest.NewRecorder()
-		s.mux.ServeHTTP(rec, httptest.NewRequest(c.method, c.path, nil))
-		if rec.Code != http.StatusUnauthorized {
-			t.Errorf("%s %s: status %d, want 401", c.method, c.path, rec.Code)
+		func() {
+			defer func() { _ = recover() }() // the nil client panics after the login check
+			s.mux.ServeHTTP(rec, httptest.NewRequest(c.method, c.path, nil))
+		}()
+		if rec.Code == http.StatusUnauthorized {
+			t.Errorf("%s %s: status 401, want no login check", c.method, c.path)
 		}
 	}
 }
