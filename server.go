@@ -83,6 +83,8 @@ func (s *server) routes() {
 	m.HandleFunc("GET /login", s.loginPage)
 	m.HandleFunc("GET /register", s.registerPage)
 	m.HandleFunc("GET /dashboard", s.dashboard)
+	m.HandleFunc("GET /ideas/new", serveApp)
+	m.HandleFunc("GET /ideas/{id}", serveApp)
 	m.HandleFunc("GET /admin/users", s.requireAdmin(s.adminPage))
 	m.HandleFunc("GET /app/{$}", func(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "/", http.StatusSeeOther) // the old /app/ URL; the pages live at /
@@ -99,6 +101,12 @@ func (s *server) routes() {
 	m.HandleFunc("GET /api/me", s.apiMe)
 	m.HandleFunc("GET /api/files", s.apiListFiles)
 	m.HandleFunc("POST /api/files", s.apiUpload)
+
+	// Ideas (F-002).
+	m.HandleFunc("POST /api/ideas", s.apiCreateIdea)
+	m.HandleFunc("GET /api/ideas/{id}", s.apiGetIdea)
+	m.HandleFunc("GET /api/ideas/{id}/images/{n}", s.apiIdeaImage)
+	m.HandleFunc("GET /api/equipment", s.apiEquipment)
 
 	// Invitations.
 	m.HandleFunc("POST /api/invitations", s.apiCreateInvitation)

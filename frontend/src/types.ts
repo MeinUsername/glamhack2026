@@ -25,3 +25,26 @@ export interface AdminUser {
   role: Role
   disabled: boolean
 }
+
+// F-002: an idea page as returned by GET /api/ideas/{id}.
+export type Budget = 'S' | 'M' | 'L' | 'XL'
+
+export interface IdeaImage {
+  contentType: string
+  bytes: number
+}
+
+export interface Idea {
+  id: string
+  title: string
+  description: string
+  audience: string
+  goal: string
+  sustainability: string
+  accessibility: string
+  space: { areaM2: number | null; volumeM3: number | null }
+  equipment: string[]
+  budget: Budget | null
+  images: IdeaImage[]
+  createdAt: string
+}
