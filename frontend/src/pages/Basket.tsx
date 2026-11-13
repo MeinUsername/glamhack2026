@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { api, ApiError } from '../api'
 import { useBasket } from '../basket/useBasket'
 import type { Idea } from '../types'
+import PromptGenerator from '../prompt/PromptGenerator'
 import { button, errorText, h1, muted } from '../ui'
 
 // The basket page. Public: visitors without login see it too (Q-006-06).
@@ -23,6 +24,7 @@ export default function Basket() {
           ))}
         </ul>
       )}
+      <PromptGenerator ids={ids} />
     </>
   )
 }

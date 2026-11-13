@@ -109,3 +109,14 @@ func TestMasterPromptTextLimits(t *testing.T) {
 		t.Error("text over the rune limit accepted")
 	}
 }
+
+// AC-003-5: without a session, the read endpoint answers 401 before any Firestore access.
+func TestAC003_5_MasterPromptReadNeedsSignIn(t *testing.T) {
+	s := &server{mux: http.NewServeMux()}
+	s.routes()
+	rec := httptest.NewRecorder()
+	s.mux.ServeHTTP(rec, httptest.NewRequest("GET", "/api/master-prompt", nil))
+	if rec.Code != http.StatusUnauthorized {
+		t.Errorf("status %d, want 401", rec.Code)
+	}
+}
