@@ -1,5 +1,6 @@
 import { useState, type ChangeEvent, type FormEvent, type ReactNode } from 'react'
 import { Navigate, useNavigate } from 'react-router'
+import { useTranslation } from 'react-i18next'
 import { api, ApiError } from '../api'
 import { useMe } from '../auth/useMe'
 import { button, errorText, h1, input, muted } from '../ui'
@@ -40,13 +41,15 @@ const emptyDraft: Draft = {
 
 export default function IdeaForm() {
   const me = useMe()
-  if (me.status === 'loading') return <p className={muted}>Loading…</p>
+  const { t } = useTranslation()
+  if (me.status === 'loading') return <p className={muted}>{t('common.loading')}</p>
   if (me.status === 'anonymous') return <Navigate to="/login" replace />
   return <NewIdea />
 }
 
 function NewIdea() {
   const navigate = useNavigate()
+  const { t } = useTranslation()
   const [draft, setDraft] = useState<Draft>(emptyDraft)
   const [images, setImages] = useState<File[]>([])
   const [imageError, setImageError] = useState('')
@@ -67,7 +70,7 @@ function NewIdea() {
 
   function handlePickImages(event: ChangeEvent<HTMLInputElement>) {
     const picked = Array.from(event.target.files ?? [])
-    const problem = imageProblem(picked)
+    const problem = imageProblem(picked, t)
     setImageError(problem)
     if (problem) {
       // Rejected files are not kept, so the user sees what is left to fix.
@@ -82,7 +85,7 @@ function NewIdea() {
     event.preventDefault()
     if (busy) return
     setError('')
-    const problem = imageProblem(images)
+    const problem = imageProblem(images, t)
     if (problem) {
       setImageError(problem)
       return
@@ -110,22 +113,22 @@ function NewIdea() {
       const { id } = await api<{ id: string }>('/api/ideas', { method: 'POST', body: form })
       navigate(`/ideas/${id}`)
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : 'The idea could not be saved.')
+      setError(err instanceof ApiError ? err.message : t('ideas.saveError'))
       setBusy(false) // the entered values stay in the form
     }
   }
 
   return (
     <>
-      <h1 className={h1}>New idea</h1>
+      <h1 className={h1}>{t('ideas.new.title')}</h1>
       <form onSubmit={handleSubmit} className="grid max-w-xl gap-4">
-        <Field label="Title">
+        <Field label={t('ideas.field.title')}>
           <input className={input} value={draft.title} onChange={(e) => set('title', e.target.value)} />
         </Field>
-        <Field label="Description">
+        <Field label={t('ideas.field.description')}>
           <textarea className={input} rows={4} value={draft.description} onChange={(e) => set('description', e.target.value)} />
         </Field>
-        <Field label={`Images (up to ${MAX_IDEA_IMAGES}, JPG, PNG or WebP, 5 MB each)`}>
+        <Field label={t('ideas.field.images', { max: MAX_IDEA_IMAGES })}>
           <input
             key={inputKey}
             type="file"
@@ -136,26 +139,26 @@ function NewIdea() {
           />
           {imageError && <span className={errorText}>{imageError}</span>}
         </Field>
-        <Field label="Target audience">
+        <Field label={t('ideas.field.audience')}>
           <input className={input} value={draft.audience} onChange={(e) => set('audience', e.target.value)} />
         </Field>
         <fieldset className="grid gap-2">
-          <legend className="font-medium">Needed space</legend>
+          <legend className="font-medium">{t('ideas.space.legend')}</legend>
           <div className="grid grid-cols-2 gap-3">
-            <Field label="Area (m²)">
+            <Field label={t('ideas.space.area')}>
               <input className={input} inputMode="decimal" value={draft.areaM2} onChange={(e) => set('areaM2', e.target.value)} />
             </Field>
-            <Field label="Volume (m³)">
+            <Field label={t('ideas.space.volume')}>
               <input className={input} inputMode="decimal" value={draft.volumeM3} onChange={(e) => set('volumeM3', e.target.value)} />
             </Field>
           </div>
         </fieldset>
-        <Field label="Needed equipment">
+        <Field label={t('ideas.equipment.label')}>
           <EquipmentInput value={draft.equipment} onChange={(next) => set('equipment', next)} />
         </Field>
         <fieldset className="grid gap-2">
           <legend className="font-medium">
-            Categories of critical art mediation
+            {t('ideas.categories.legend')}
             <CategoriesInfo />
           </legend>
           {CATEGORIES.map((c) => (
@@ -170,16 +173,16 @@ function NewIdea() {
             </label>
           ))}
         </fieldset>
-        <Field label="Goal">
+        <Field label={t('ideas.goal')}>
           <textarea className={input} rows={3} value={draft.goal} onChange={(e) => set('goal', e.target.value)} />
         </Field>
-        <Field label="Sustainability">
+        <Field label={t('ideas.sustainability')}>
           <textarea className={input} rows={3} value={draft.sustainability} onChange={(e) => set('sustainability', e.target.value)} />
         </Field>
-        <Field label="Accessibility">
+        <Field label={t('ideas.accessibility')}>
           <textarea className={input} rows={3} value={draft.accessibility} onChange={(e) => set('accessibility', e.target.value)} />
         </Field>
-        <Field label="Budget">
+        <Field label={t('ideas.budget')}>
           <select className={input} value={draft.budget} onChange={(e) => set('budget', e.target.value)}>
             <option value="">—</option>
             {BUDGETS.map((b) => (
@@ -192,7 +195,7 @@ function NewIdea() {
         {error && <p className={errorText}>{error}</p>}
         <div>
           <button type="submit" className={button} disabled={busy || !!imageError}>
-            {busy ? 'Saving…' : 'Save idea'}
+            {busy ? t('ideas.saving') : t('ideas.save')}
           </button>
         </div>
       </form>

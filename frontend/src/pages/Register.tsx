@@ -1,15 +1,15 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router'
+import { useTranslation } from 'react-i18next'
 import { ApiError } from '../api'
 import AuthForm from '../components/AuthForm'
 import { firebaseMessage, signOutFirebase, signUp } from '../auth/firebase'
 import { inviteUsable, registerAccount } from '../auth/session'
 import { h1, muted } from '../ui'
 
-const INVALID_INVITE = 'Der Einladungslink ist ungültig oder abgelaufen.'
-
 export default function Register() {
   const navigate = useNavigate()
+  const { t } = useTranslation()
   const [params] = useSearchParams()
   const invite = params.get('invite') ?? ''
   const [inviteOk, setInviteOk] = useState(true)
@@ -24,12 +24,12 @@ export default function Register() {
       .then((ok) => {
         if (!active) return
         setInviteOk(ok)
-        if (!ok) setError(INVALID_INVITE)
+        if (!ok) setError(t('auth.inviteInvalid'))
       })
       .catch(() => {
         if (!active) return
         setInviteOk(false)
-        setError(INVALID_INVITE)
+        setError(t('auth.inviteInvalid'))
       })
     return () => {
       active = false
@@ -53,18 +53,18 @@ export default function Register() {
 
   return (
     <>
-      <h1 className={h1}>Konto erstellen</h1>
+      <h1 className={h1}>{t('auth.register.title')}</h1>
       <AuthForm
-        submitLabel="Registrieren"
+        submitLabel={t('auth.register.submit')}
         busy={busy}
         disabled={!inviteOk}
         error={error}
         onSubmit={handleSubmit}
         passwordAutocomplete="new-password"
-        passwordPlaceholder="Passwort (mind. 8 Zeichen)"
+        passwordPlaceholder={t('auth.passwordNew')}
       />
       <p className={muted}>
-        Schon registriert? <Link to="/login">Anmelden</Link>
+        {t('auth.register.haveAccount')} <Link to="/login">{t('nav.login')}</Link>
       </p>
     </>
   )

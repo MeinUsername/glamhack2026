@@ -12,7 +12,7 @@ describe('AdminUsers', () => {
   it('AC-005-6 zeigt für Nicht-Admins keine Nutzerliste und ruft die Admin-API nicht auf', async () => {
     const { calls } = routeFetch({ 'GET /api/me': () => ({ json: { email: 'u@example.ch', role: 'user' } }) })
     renderAt('/admin/users')
-    expect(await screen.findByText('Nur für Admins.')).toBeInTheDocument()
+    expect(await screen.findByText('Admins only.')).toBeInTheDocument()
     expect(calls.some((c) => c.url === '/api/admin/users')).toBe(false)
   })
 
@@ -25,10 +25,10 @@ describe('AdminUsers', () => {
       }),
     })
     renderAt('/admin/users')
-    const select = await screen.findByLabelText('Rolle von user@example.ch')
+    const select = await screen.findByLabelText('Role of user@example.ch')
     await userEvent.setup().selectOptions(select, 'admin')
 
-    expect(await screen.findByText('Rolle gespeichert.')).toBeInTheDocument()
+    expect(await screen.findByText('Role saved.')).toBeInTheDocument()
     await waitFor(() => {
       const post = calls.find((c) => c.url === '/api/admin/users/b/role')
       expect(JSON.parse(post?.body as string)).toEqual({ role: 'admin' })
@@ -45,7 +45,7 @@ describe('AdminUsers', () => {
       }),
     })
     renderAt('/admin/users')
-    const [ownBlock] = await screen.findAllByRole('button', { name: 'Sperren' }) // first row: the admin's own account
+    const [ownBlock] = await screen.findAllByRole('button', { name: 'Block' }) // first row: the admin's own account
     await userEvent.setup().click(ownBlock)
     expect(await screen.findByText('Du kannst dich nicht selbst sperren.')).toBeInTheDocument()
   })

@@ -2,7 +2,16 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import userEvent from '@testing-library/user-event'
 import { render, screen } from '@testing-library/react'
 import CategoriesInfo from './CategoriesInfo'
-import { CATEGORIES, CATEGORY_SOURCE } from './categories'
+import { CATEGORIES } from './categories'
+
+const EXPLANATION: Record<string, string> = {
+  affirmative: 'Mediation communicates the museum’s tasks to the outside.',
+  reproductive: 'Mediation trains the audience of tomorrow',
+  deconstructive: 'Mediation questions the museum, art and canonisation',
+  transformation: 'Mediation extends the institution’s functions',
+}
+
+const SOURCE = 'Source: Carmen Mörsch, 2009, documenta 12 mediation' // English, the test runs in English
 
 function stubHover(matches: boolean) {
   vi.stubGlobal(
@@ -20,12 +29,12 @@ describe('CategoriesInfo', () => {
     await userEvent.setup().hover(screen.getByRole('button', { name: 'About the categories' }))
 
     const tip = await screen.findByRole('tooltip')
-    expect(tip).toHaveTextContent('Am Kreuzungspunkt von vier Diskursen')
+    expect(tip).toHaveTextContent('At the intersection of four discourses')
     for (const c of CATEGORIES) {
       expect(tip).toHaveTextContent(c.label)
-      expect(tip).toHaveTextContent(c.explanation)
+      expect(tip).toHaveTextContent(EXPLANATION[c.key])
     }
-    expect(tip).toHaveTextContent(CATEGORY_SOURCE)
+    expect(tip).toHaveTextContent(SOURCE)
   })
 
   it('verknüpft den Auslöser mit dem Tooltip', () => {

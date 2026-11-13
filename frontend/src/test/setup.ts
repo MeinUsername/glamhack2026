@@ -1,14 +1,20 @@
 import '@testing-library/jest-dom/vitest'
-import { afterEach, vi } from 'vitest'
+import { afterEach, beforeEach, vi } from 'vitest'
 import { cleanup } from '@testing-library/react'
+import i18n from '../i18n'
 
 // Firebase never runs in tests. Each test sets the return values of these mocks.
 vi.mock('../auth/firebase', () => ({
   signIn: vi.fn(),
   signUp: vi.fn(),
   signOutFirebase: vi.fn(async () => {}),
-  firebaseMessage: () => 'Es ist ein Fehler aufgetreten. Bitte versuche es erneut.',
+  firebaseMessage: () => 'An error occurred. Please try again.',
 }))
+
+// The tests check English texts (the source language). Each test starts in English.
+beforeEach(async () => {
+  await i18n.changeLanguage('en')
+})
 
 afterEach(() => {
   cleanup()

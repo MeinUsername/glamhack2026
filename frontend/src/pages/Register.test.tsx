@@ -5,7 +5,7 @@ import { signUp } from '../auth/firebase'
 import { renderAt, routeFetch, unauthorized } from '../test/helpers'
 import type { User } from 'firebase/auth'
 
-const INVALID = 'Der Einladungslink ist ungültig oder abgelaufen.'
+const INVALID = 'The invitation link is invalid or has expired.'
 
 describe('Register', () => {
   it('AC-005-4 sperrt das Formular bei abgelaufenem oder benutztem Link', async () => {
@@ -16,8 +16,8 @@ describe('Register', () => {
     renderAt('/register?invite=abc')
 
     expect(await screen.findByText(INVALID)).toBeInTheDocument()
-    expect(screen.getByLabelText('E-Mail')).toBeDisabled()
-    expect(screen.getByRole('button', { name: 'Registrieren' })).toBeDisabled()
+    expect(screen.getByLabelText('Email')).toBeDisabled()
+    expect(screen.getByRole('button', { name: 'Register' })).toBeDisabled()
     expect(signUp).not.toHaveBeenCalled()
   })
 
@@ -31,10 +31,10 @@ describe('Register', () => {
 
     renderAt('/register?invite=abc')
     const user = userEvent.setup()
-    await waitFor(() => expect(screen.getByRole('button', { name: 'Registrieren' })).toBeEnabled())
-    await user.type(screen.getByLabelText('E-Mail'), 'neu@example.ch')
-    await user.type(screen.getByLabelText('Passwort'), 'geheim123')
-    await user.click(screen.getByRole('button', { name: 'Registrieren' }))
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Register' })).toBeEnabled())
+    await user.type(screen.getByLabelText('Email'), 'neu@example.ch')
+    await user.type(screen.getByLabelText('Password'), 'geheim123')
+    await user.click(screen.getByRole('button', { name: 'Register' }))
 
     await waitFor(() => {
       const register = calls.find((c) => c.url === '/register')
@@ -53,10 +53,10 @@ describe('Register', () => {
 
     renderAt('/register?invite=abc')
     const user = userEvent.setup()
-    await waitFor(() => expect(screen.getByRole('button', { name: 'Registrieren' })).toBeEnabled())
-    await user.type(screen.getByLabelText('E-Mail'), 'neu@example.ch')
-    await user.type(screen.getByLabelText('Passwort'), 'geheim123')
-    await user.click(screen.getByRole('button', { name: 'Registrieren' }))
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Register' })).toBeEnabled())
+    await user.type(screen.getByLabelText('Email'), 'neu@example.ch')
+    await user.type(screen.getByLabelText('Password'), 'geheim123')
+    await user.click(screen.getByRole('button', { name: 'Register' }))
 
     expect(await screen.findByText(INVALID)).toBeInTheDocument()
   })

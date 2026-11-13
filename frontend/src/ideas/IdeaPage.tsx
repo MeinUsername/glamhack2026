@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react'
 import { Navigate, useParams } from 'react-router'
+import { useTranslation } from 'react-i18next'
 import { api, ApiError } from '../api'
 import type { Idea } from '../types'
-import { CATEGORY_LABEL } from './categories'
 import { errorText, h1, h2, muted } from '../ui'
+import { CATEGORY_LABEL } from './categories'
 
 type State =
   | { status: 'loading' }
@@ -15,6 +16,7 @@ type State =
 // The idea page at /ideas/:id. Images are fetched through the server; the bucket stays private.
 export default function IdeaPage() {
   const { id = '' } = useParams()
+  const { t } = useTranslation()
   const [state, setState] = useState<State>({ status: 'loading' })
 
   useEffect(() => {
@@ -32,20 +34,22 @@ export default function IdeaPage() {
     }
   }, [id])
 
-  if (state.status === 'loading') return <p className={muted}>Loading…</p>
+  if (state.status === 'loading') return <p className={muted}>{t('common.loading')}</p>
   if (state.status === 'signedOut') return <Navigate to="/login" replace />
-  if (state.status === 'missing') return <p className={errorText}>This idea does not exist.</p>
-  if (state.status === 'failed') return <p className={errorText}>The idea could not be loaded.</p>
+  if (state.status === 'missing') return <p className={errorText}>{t('ideas.notFound')}</p>
+  if (state.status === 'failed') return <p className={errorText}>{t('ideas.loadError')}</p>
   return <Show idea={state.idea} />
 }
 
 function Show({ idea }: { idea: Idea }) {
+  const { t } = useTranslation()
   const { space } = idea
+  const title = idea.title || t('ideas.untitled')
   return (
     <article className="grid max-w-2xl gap-4">
-      <h1 className={h1}>{idea.title || 'Untitled idea'}</h1>
+      <h1 className={h1}>{title}</h1>
       {idea.categories.length > 0 && (
-        <ul aria-label="Categories" className="flex flex-wrap gap-2">
+        <ul aria-label={t('ideas.categories.chips')} className="flex flex-wrap gap-2">
           {idea.categories.map((key) => (
             <li key={key} className="rounded-full border border-gray-400/50 px-3 py-1 text-sm">
               {CATEGORY_LABEL[key]}
@@ -59,28 +63,28 @@ function Show({ idea }: { idea: Idea }) {
             <li key={n}>
               <img
                 src={`/api/ideas/${idea.id}/images/${n}`}
-                alt={`${idea.title || 'Idea'} image ${n + 1}`}
+                alt={t('ideas.imageAlt', { title, n: n + 1 })}
                 className="w-full rounded-lg object-cover"
               />
             </li>
           ))}
         </ul>
       )}
-      <Section title="Description" text={idea.description} />
-      <Section title="Target audience" text={idea.audience} />
-      <Section title="Goal" text={idea.goal} />
-      <Section title="Sustainability" text={idea.sustainability} />
-      <Section title="Accessibility" text={idea.accessibility} />
+      <Section title={t('ideas.field.description')} text={idea.description} />
+      <Section title={t('ideas.field.audience')} text={idea.audience} />
+      <Section title={t('ideas.goal')} text={idea.goal} />
+      <Section title={t('ideas.sustainability')} text={idea.sustainability} />
+      <Section title={t('ideas.accessibility')} text={idea.accessibility} />
       <section>
-        <h2 className={h2}>Needed space</h2>
+        <h2 className={h2}>{t('ideas.space.legend')}</h2>
         <p>
           {space.areaM2 == null ? '—' : `${space.areaM2} m²`} · {space.volumeM3 == null ? '—' : `${space.volumeM3} m³`}
         </p>
       </section>
       <section>
-        <h2 className={h2}>Needed equipment</h2>
+        <h2 className={h2}>{t('ideas.equipment.label')}</h2>
         {idea.equipment.length === 0 ? (
-          <p className={muted}>None</p>
+          <p className={muted}>{t('ideas.equipment.none')}</p>
         ) : (
           <ul className="list-disc pl-5">
             {idea.equipment.map((name) => (
@@ -90,8 +94,8 @@ function Show({ idea }: { idea: Idea }) {
         )}
       </section>
       <section>
-        <h2 className={h2}>Budget</h2>
-        <p>{idea.budget ?? 'Not set'}</p>
+        <h2 className={h2}>{t('ideas.budget')}</h2>
+        <p>{idea.budget ?? t('ideas.budget.notSet')}</p>
       </section>
     </article>
   )

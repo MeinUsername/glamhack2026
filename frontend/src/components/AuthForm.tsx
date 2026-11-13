@@ -1,4 +1,5 @@
 import type { FormEvent } from 'react'
+import { useTranslation } from 'react-i18next'
 import { button, errorText, input } from '../ui'
 
 interface Props {
@@ -13,6 +14,8 @@ interface Props {
 
 // The e-mail/password form shared by login and registration.
 export default function AuthForm(props: Props) {
+  const { t } = useTranslation()
+
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     const form = event.currentTarget
@@ -27,8 +30,8 @@ export default function AuthForm(props: Props) {
         <input
           name="email"
           type="email"
-          placeholder="E-Mail"
-          aria-label="E-Mail"
+          placeholder={t('auth.email')}
+          aria-label={t('auth.email')}
           autoComplete="email"
           required
           disabled={props.disabled}
@@ -38,7 +41,7 @@ export default function AuthForm(props: Props) {
           name="password"
           type="password"
           placeholder={props.passwordPlaceholder}
-          aria-label="Passwort"
+          aria-label={t('auth.password')}
           autoComplete={props.passwordAutocomplete}
           minLength={props.passwordAutocomplete === 'new-password' ? 8 : undefined}
           required

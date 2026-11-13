@@ -1,5 +1,6 @@
 import { useEffect, useState, type ChangeEvent, type FormEvent } from 'react'
 import { Navigate } from 'react-router'
+import { useTranslation } from 'react-i18next'
 import { api, ApiError } from '../api'
 import { useMe } from '../auth/useMe'
 import type { FileItem, Invitation } from '../types'
@@ -13,12 +14,14 @@ export function formatSize(bytes: number): string {
 
 export default function Dashboard() {
   const me = useMe()
-  if (me.status === 'loading') return <p className={muted}>Lade…</p>
+  const { t } = useTranslation()
+  if (me.status === 'loading') return <p className={muted}>{t('common.loading')}</p>
   if (me.status === 'anonymous') return <Navigate to="/login" replace />
   return <Files email={me.me.email} />
 }
 
 function Files({ email }: { email: string }) {
+  const { t, i18n } = useTranslation()
   const [files, setFiles] = useState<FileItem[]>([])
   const [picked, setPicked] = useState<File | null>(null)
   const [inputKey, setInputKey] = useState(0) // remounts the file input after a reset
@@ -31,8 +34,8 @@ function Files({ email }: { email: string }) {
   useEffect(() => {
     api<FileItem[]>('/api/files')
       .then(setFiles)
-      .catch(() => setError('Die Dateien konnten nicht geladen werden.'))
-  }, [])
+      .catch(() => setError(t('files.loadError')))
+  }, [t])
 
   function resetPicker() {
     setPicked(null)
@@ -44,7 +47,7 @@ function Files({ email }: { email: string }) {
     setError('')
     const file = event.target.files?.[0] ?? null
     if (file && file.size > MAX_UPLOAD_BYTES) {
-      setError('Die Datei ist größer als 1 MB.')
+      setError(t('files.tooLarge'))
       resetPicker()
       return
     }
@@ -62,10 +65,10 @@ function Files({ email }: { email: string }) {
     try {
       const saved = await api<FileItem>('/api/files', { method: 'POST', body: form })
       setFiles((prev) => [saved, ...prev])
-      setMessage(`„${saved.name}“ hochgeladen.`)
+      setMessage(t('files.uploaded', { name: saved.name }))
       resetPicker()
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : 'Upload fehlgeschlagen.')
+      setError(err instanceof ApiError ? err.message : t('files.uploadError'))
     } finally {
       setBusy(false)
     }
@@ -76,19 +79,25 @@ function Files({ email }: { email: string }) {
     try {
       setInvite(await api<Invitation>('/api/invitations', { method: 'POST' }))
     } catch (err) {
-      setInviteError(err instanceof ApiError ? err.message : 'Der Einladungslink konnte nicht erzeugt werden.')
+      setInviteError(err instanceof ApiError ? err.message : t('files.invite.error'))
     }
   }
 
   return (
     <>
-      <h1 className={h1}>Meine Dateien</h1>
-      <p className={muted}>Angemeldet als {email}. Maximale Grösse pro Datei: 1 MB.</p>
+      <h1 className={h1}>{t('files.title')}</h1>
+      <p className={muted}>{t('files.intro', { email })}</p>
 
       <form onSubmit={handleUpload} className="my-4 flex flex-wrap items-center gap-3">
-        <input key={inputKey} type="file" aria-label="Datei" onChange={handlePick} className="text-sm" />
+        <input
+          key={inputKey}
+          type="file"
+          aria-label={t('files.pick')}
+          onChange={handlePick}
+          className="text-sm"
+        />
         <button type="submit" className={button} disabled={!picked || busy}>
-          {busy ? 'Lade hoch…' : 'Hochladen'}
+          {busy ? t('files.uploading') : t('files.upload')}
         </button>
       </form>
       {message && <p role="status" className={noticeText}>{message}</p>}
@@ -98,9 +107,9 @@ function Files({ email }: { email: string }) {
         <table className={table}>
           <thead>
             <tr>
-              <th className={cell}>Datei</th>
-              <th className={cell}>Grösse</th>
-              <th className={cell}>Hochgeladen</th>
+              <th className={cell}>{t('files.colFile')}</th>
+              <th className={cell}>{t('files.colSize')}</th>
+              <th className={cell}>{t('files.colUploaded')}</th>
             </tr>
           </thead>
           <tbody>
@@ -116,19 +125,19 @@ function Files({ email }: { email: string }) {
           </tbody>
         </table>
       ) : (
-        <p className={muted}>Noch keine Dateien.</p>
+        <p className={muted}>{t('files.none')}</p>
       )}
 
-      <h2 className={h2}>Einladen</h2>
-      <p className={muted}>Der Link ist 7 Tage gültig und funktioniert nur einmal. Er wird nur einmal angezeigt.</p>
+      <h2 className={h2}>{t('files.invite.title')}</h2>
+      <p className={muted}>{t('files.invite.hint')}</p>
       <button type="button" className={`${button} mt-2`} onClick={handleInvite}>
-        Einladungslink erzeugen
+        {t('files.invite.create')}
       </button>
       {inviteError && <p role="alert" className={errorText}>{inviteError}</p>}
       {invite && (
         <div className="mt-3">
           <p className={noticeText}>
-            Einladungslink erstellt, gültig bis {new Date(invite.expiresAt).toLocaleString('de-CH')}:
+            {t('files.invite.created', { date: new Date(invite.expiresAt).toLocaleString(i18n.language) })}
           </p>
           <code className={`${input} mt-2 block break-all`}>{invite.link}</code>
         </div>

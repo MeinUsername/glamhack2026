@@ -7,6 +7,8 @@ import {
   signOut,
   type User,
 } from 'firebase/auth'
+import i18n from '../i18n'
+import type { MessageKey } from '../i18n/messages'
 
 const app = initializeApp({
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
@@ -28,17 +30,19 @@ export function signOutFirebase(): Promise<void> {
   return signOut(auth)
 }
 
-const messages: Record<string, string> = {
-  'auth/invalid-credential': 'E-Mail oder Passwort ist falsch.',
-  'auth/invalid-email': 'Bitte gib eine gültige E-Mail-Adresse ein.',
-  'auth/missing-password': 'Bitte gib ein Passwort ein.',
-  'auth/weak-password': 'Das Passwort muss mindestens 6 Zeichen lang sein (empfohlen: 8).',
-  'auth/email-already-in-use': 'Für diese E-Mail-Adresse existiert bereits ein Konto.',
-  'auth/too-many-requests': 'Zu viele Versuche. Bitte warte kurz und versuche es erneut.',
-  'auth/network-request-failed': 'Keine Verbindung. Bitte prüfe dein Netzwerk.',
+const messages: Record<string, MessageKey> = {
+  'auth/invalid-credential': 'error.firebase.invalidCredential',
+  'auth/invalid-email': 'error.firebase.invalidEmail',
+  'auth/missing-password': 'error.firebase.missingPassword',
+  'auth/weak-password': 'error.firebase.weakPassword',
+  'auth/email-already-in-use': 'error.firebase.emailInUse',
+  'auth/too-many-requests': 'error.firebase.tooManyRequests',
+  'auth/network-request-failed': 'error.firebase.network',
 }
 
+// The message in the current language. Firebase codes map to keys; anything else is generic.
 export function firebaseMessage(err: unknown): string {
   const code = (err as { code?: string } | null)?.code
-  return (code && messages[code]) || 'Es ist ein Fehler aufgetreten. Bitte versuche es erneut.'
+  const key = (code && messages[code]) || 'error.generic'
+  return i18n.t(key)
 }

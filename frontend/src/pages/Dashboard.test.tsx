@@ -13,13 +13,13 @@ describe('Dashboard', () => {
       'GET /api/files': () => ({ json: [] }),
     })
     renderAt('/dashboard')
-    const picker = await screen.findByLabelText('Datei')
+    const picker = await screen.findByLabelText('File')
 
     const big = new File([new Uint8Array(MAX_UPLOAD_BYTES + 1)], 'gross.bin')
     await userEvent.setup().upload(picker, big)
 
-    expect(await screen.findByText('Die Datei ist größer als 1 MB.')).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Hochladen' })).toBeDisabled()
+    expect(await screen.findByText('The file is larger than 1 MB.')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Upload' })).toBeDisabled()
     expect(calls.some((c) => c.method === 'POST')).toBe(false)
   })
 
@@ -33,11 +33,11 @@ describe('Dashboard', () => {
       }),
     })
     renderAt('/dashboard')
-    const picker = await screen.findByLabelText('Datei')
+    const picker = await screen.findByLabelText('File')
 
     const u = userEvent.setup()
     await u.upload(picker, new File(['hallo'], 'hallo.txt', { type: 'text/plain' }))
-    await u.click(screen.getByRole('button', { name: 'Hochladen' }))
+    await u.click(screen.getByRole('button', { name: 'Upload' }))
 
     expect(await screen.findByRole('link', { name: 'hallo.txt' })).toHaveAttribute('href', '/files/f1')
     expect(calls.filter((c) => c.method === 'POST')).toHaveLength(1)

@@ -20,11 +20,11 @@ describe('Login', () => {
 
     renderAt('/login')
     const user = userEvent.setup()
-    await user.type(screen.getByLabelText('E-Mail'), 'a@example.ch')
-    await user.type(screen.getByLabelText('Passwort'), 'geheim123')
-    await user.click(screen.getByRole('button', { name: 'Anmelden' }))
+    await user.type(screen.getByLabelText('Email'), 'a@example.ch')
+    await user.type(screen.getByLabelText('Password'), 'geheim123')
+    await user.click(screen.getByRole('button', { name: 'Sign in' }))
 
-    expect(await screen.findByRole('heading', { name: 'Meine Dateien' })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: 'My files' })).toBeInTheDocument()
     const session = calls.find((c) => c.url === '/session')
     expect(JSON.parse(session?.body as string)).toEqual({ idToken: 'id-token' })
   })
@@ -38,11 +38,11 @@ describe('Login', () => {
 
     renderAt('/login')
     const user = userEvent.setup()
-    await user.type(screen.getByLabelText('E-Mail'), 'b@example.ch')
-    await user.type(screen.getByLabelText('Passwort'), 'geheim123')
-    await user.click(screen.getByRole('button', { name: 'Anmelden' }))
+    await user.type(screen.getByLabelText('Email'), 'b@example.ch')
+    await user.type(screen.getByLabelText('Password'), 'geheim123')
+    await user.click(screen.getByRole('button', { name: 'Sign in' }))
 
     expect(await screen.findByText('Dieses Konto ist gesperrt.')).toBeInTheDocument()
-    await waitFor(() => expect(screen.getByRole('button', { name: 'Anmelden' })).toBeEnabled())
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Sign in' })).toBeEnabled())
   })
 })
