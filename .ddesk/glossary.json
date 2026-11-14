@@ -3,6 +3,14 @@
   "language": "de",
   "terms": [
     {
+      "id": 60,
+      "de": "Feedback-Prompt",
+      "en": "Feedback prompt",
+      "definition_de": "Prompt der Kategorie Feedback, öffentlich abrufbar; {{allideas}} wird serverseitig durch alle Ideen ersetzt.",
+      "definition_en": "Prompt of the category feedback, publicly available; {{allideas}} is replaced by all ideas on the server.",
+      "context": ""
+    },
+    {
       "id": 59,
       "de": "Mediation Concept",
       "en": "Mediation concept",

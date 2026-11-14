@@ -1,7 +1,7 @@
 ---
 id: F-025
 title: Mutiplile Entry Doors
-status: plan-ready
+status: done
 ---
 
 # F-025 Mutiplile Entry Doors
