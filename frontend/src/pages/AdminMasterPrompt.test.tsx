@@ -10,6 +10,15 @@ const versions = [
   { number: 2, text: 'Neu {{ideas}}', authorEmail: 'admin@example.ch', createdAt: '2026-11-13T10:00:00Z' },
   { number: 1, text: 'Alt', authorEmail: 'admin@example.ch', createdAt: '2026-11-12T10:00:00Z' },
 ]
+const level = (versionList: typeof versions, extra = {}) => ({
+  id: 'standard',
+  titles: { en: 'Standard' },
+  descriptions: { en: 'Std' },
+  text: versionList[0].text,
+  version: versionList[0].number,
+  versions: versionList,
+  ...extra,
+})
 const idea = (id: string, title: string) => ({
   id,
   title,
@@ -37,9 +46,9 @@ describe('AdminMasterPrompt', () => {
   })
 
   it('AC-008-4 speichert nicht, solange der Text dem aktuellen Stand entspricht', async () => {
-    routeFetch({ ...admin, 'GET /api/admin/master-prompt': () => ({ json: { versions } }) })
+    routeFetch({ ...admin, 'GET /api/admin/prompt-levels': () => ({ json: [level(versions)] }) })
     renderAt('/admin/master-prompt')
-    const textarea = await screen.findByLabelText('Text')
+    const textarea = await screen.findByLabelText('Text', { selector: 'textarea' })
     await waitFor(() => expect(textarea).toHaveValue('Neu {{ideas}}'))
     expect(screen.getByRole('button', { name: 'Save' })).toBeDisabled()
 
@@ -50,20 +59,20 @@ describe('AdminMasterPrompt', () => {
   it('AC-008-4 meldet keine Änderung, wenn der Server keine Version anlegt', async () => {
     routeFetch({
       ...admin,
-      'GET /api/admin/master-prompt': () => ({ json: { versions } }),
-      'POST /api/admin/master-prompt': () => ({ json: { version: 2, created: false } }),
+      'GET /api/admin/prompt-levels': () => ({ json: [level(versions)] }),
+      'PUT /api/admin/prompt-levels/standard': () => ({ json: { version: 2, created: false } }),
     })
     renderAt('/admin/master-prompt')
     const user = userEvent.setup()
-    await user.type(await screen.findByLabelText('Text'), '!')
+    await user.type(await screen.findByLabelText('Text', { selector: 'textarea' }), '!')
     await user.click(screen.getByRole('button', { name: 'Save' }))
     expect(await screen.findByText('No change, no version was created.')).toBeInTheDocument()
   })
 
   it('AC-008-5 nennt unbekannte Variablen vor dem Absenden und sendet nicht', async () => {
-    const { calls } = routeFetch({ ...admin, 'GET /api/admin/master-prompt': () => ({ json: { versions } }) })
+    const { calls } = routeFetch({ ...admin, 'GET /api/admin/prompt-levels': () => ({ json: [level(versions)] }) })
     renderAt('/admin/master-prompt')
-    const textarea = await screen.findByLabelText('Text')
+    const textarea = await screen.findByLabelText('Text', { selector: 'textarea' })
     // fireEvent: user-event reads "{{" as a key escape, so the placeholder would not be typed as written.
     fireEvent.change(textarea, { target: { value: 'Hallo {{foo}}' } })
     await userEvent.setup().click(screen.getByRole('button', { name: 'Save' }))
@@ -76,8 +85,8 @@ describe('AdminMasterPrompt', () => {
     let current = versions
     const { calls } = routeFetch({
       ...admin,
-      'GET /api/admin/master-prompt': () => ({ json: { versions: current } }),
-      'POST /api/admin/master-prompt/versions/1/restore': () => {
+      'GET /api/admin/prompt-levels': () => ({ json: [level(current)] }),
+      'POST /api/admin/prompt-levels/standard/versions/1/restore': () => {
         current = [{ number: 3, text: 'Alt', authorEmail: 'admin@example.ch', createdAt: '2026-11-13T11:00:00Z' }, ...versions]
         return { json: { version: 3, created: true } }
       },
@@ -85,8 +94,8 @@ describe('AdminMasterPrompt', () => {
     renderAt('/admin/master-prompt')
     await userEvent.setup().click(await screen.findByRole('button', { name: 'Restore' }))
     expect(await screen.findByText('Version 1 restored as new version 3.')).toBeInTheDocument()
-    expect(calls.some((c) => c.method === 'POST' && c.url === '/api/admin/master-prompt/versions/1/restore')).toBe(true)
-    expect(screen.getByLabelText('Text')).toHaveValue('Alt')
+    expect(calls.some((c) => c.method === 'POST' && c.url === '/api/admin/prompt-levels/standard/versions/1/restore')).toBe(true)
+    expect(screen.getByLabelText('Text', { selector: 'textarea' })).toHaveValue('Alt')
   })
 
   it('AC-008-6 zeigt in der Vorschau die Ideen aus dem Korb und die Sprache auf Deutsch', async () => {
@@ -94,12 +103,12 @@ describe('AdminMasterPrompt', () => {
     await i18n.changeLanguage('de')
     routeFetch({
       ...admin,
-      'GET /api/admin/master-prompt': () => ({ json: { versions: [{ ...versions[0], text: 'Ideen: {{ideas}} Sprache: {{language}}' }] } }),
+      'GET /api/admin/prompt-levels': () => ({ json: [level([{ ...versions[0], text: 'Ideen: {{ideas}} Sprache: {{language}}' }])] }),
       'GET /api/ideas/a': () => ({ json: idea('a', 'Erste') }),
       'GET /api/ideas/b': () => ({ json: idea('b', 'Zweite') }),
     })
     renderAt('/admin/master-prompt')
-    await screen.findByLabelText('Text')
+    await screen.findByLabelText('Text', { selector: 'textarea' })
     await userEvent.setup().click(screen.getByRole('button', { name: 'Vorschau' }))
 
     expect(await screen.findByText(/### Erste/)).toBeInTheDocument()
@@ -109,10 +118,54 @@ describe('AdminMasterPrompt', () => {
 
   // AC-008-7: with an empty basket, {{ideas}} disappears from the preview.
   it('AC-008-7 ersetzt {{ideas}} in der Vorschau bei leerem Korb durch nichts', async () => {
-    routeFetch({ ...admin, 'GET /api/admin/master-prompt': () => ({ json: { versions: [{ ...versions[0], text: 'Start{{ideas}}Ende' }] } }) })
+    routeFetch({ ...admin, 'GET /api/admin/prompt-levels': () => ({ json: [level([{ ...versions[0], text: 'Start{{ideas}}Ende' }])] }) })
     renderAt('/admin/master-prompt')
-    await screen.findByLabelText('Text')
+    await screen.findByLabelText('Text', { selector: 'textarea' })
     await userEvent.setup().click(screen.getByRole('button', { name: 'Preview' }))
     await waitFor(() => expect(screen.getByText('StartEnde')).toBeInTheDocument())
+  })
+
+  // AC-018-1: a new level needs the English title and description, then it is created with POST.
+  it('AC-018-1 legt einen Detailgrad mit englischem Titel und Beschreibung an', async () => {
+    const { calls } = routeFetch({
+      ...admin,
+      'GET /api/admin/prompt-levels': () => ({ json: [level(versions)] }),
+      'POST /api/admin/prompt-levels': () => ({ status: 201, json: { id: 'n1', version: 1, created: true } }),
+    })
+    renderAt('/admin/master-prompt')
+    const user = userEvent.setup()
+    await user.click(await screen.findByRole('button', { name: 'New detail level' }))
+    expect(screen.getByRole('button', { name: 'Save' })).toBeDisabled()
+    await user.type(screen.getByLabelText('Title (English)'), 'Short')
+    await user.type(screen.getByLabelText('Description (English)'), 'Briefly')
+    await user.type(screen.getByLabelText('Text', { selector: 'textarea' }), 'Kurz')
+    await user.click(screen.getByRole('button', { name: 'Save' }))
+
+    expect(await screen.findByText('Detail level created.')).toBeInTheDocument()
+    const post = calls.find((c) => c.method === 'POST')
+    expect(JSON.parse(String(post?.body))).toEqual({ titles: { en: 'Short' }, descriptions: { en: 'Briefly' }, text: 'Kurz' })
+  })
+
+  // AC-018-2: the last level cannot be deleted; with two it can.
+  it('AC-018-2 sperrt das Löschen des letzten Detailgrads', async () => {
+    routeFetch({ ...admin, 'GET /api/admin/prompt-levels': () => ({ json: [level(versions)] }) })
+    renderAt('/admin/master-prompt')
+    expect(await screen.findByRole('button', { name: 'Delete' })).toBeDisabled()
+  })
+
+  it('AC-018-2 ändert die Reihenfolge über die API', async () => {
+    const two = [level(versions), level(versions, { id: 'b', titles: { en: 'Second' } })]
+    const { calls } = routeFetch({
+      ...admin,
+      'GET /api/admin/prompt-levels': () => ({ json: two }),
+      'PUT /api/admin/prompt-levels/order': () => ({ json: { ok: true } }),
+    })
+    renderAt('/admin/master-prompt')
+    const down = (await screen.findAllByRole('button', { name: 'Move down' }))[0]
+    await userEvent.setup().click(down)
+    await waitFor(() => {
+      const put = calls.find((c) => c.method === 'PUT')
+      expect(JSON.parse(String(put?.body))).toEqual({ ids: ['b', 'standard'] })
+    })
   })
 })

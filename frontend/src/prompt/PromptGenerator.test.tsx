@@ -7,7 +7,15 @@ import { fileName } from './PromptGenerator'
 
 const user = { 'GET /api/me': () => ({ json: { email: 'u@example.ch', role: 'user' } }) }
 const visitor = { 'GET /api/me': () => ({ status: 401, json: { error: 'nicht angemeldet' } }) }
-const master = (text: string) => ({ 'GET /api/master-prompt': () => ({ json: { version: 1, text, createdAt: '2026-11-13T10:00:00Z' } }) })
+const level = (id: string, title: string, text: string) => ({
+  id,
+  titles: { en: title, de: `${title} (de)` },
+  descriptions: { en: `About ${title}` },
+  text,
+  version: 1,
+})
+const levels = (...list: ReturnType<typeof level>[]) => ({ 'GET /api/prompt-levels': () => ({ json: list }) })
+const master = (text: string) => levels(level('standard', 'Standard', text))
 const idea = (id: string, title: string) => ({
   [`GET /api/ideas/${id}`]: () => ({
     json: {
@@ -116,7 +124,7 @@ describe('PromptGenerator', () => {
     renderAt('/basket')
     expect(await screen.findByText('Sign in to build the prompt from your basket.')).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Download' })).not.toBeInTheDocument()
-    expect(calls.some((c) => c.url === '/api/master-prompt')).toBe(false)
+    expect(calls.some((c) => c.url === '/api/prompt-levels')).toBe(false)
   })
 
   // AC-003-6: an empty basket disables both actions and explains why.
@@ -131,9 +139,66 @@ describe('PromptGenerator', () => {
   // Q-003-11 (draft): without a master prompt, the hint replaces the preview and both actions are off.
   it('deaktiviert die Aktionen ohne Master-Prompt-Version und zeigt einen Hinweis', async () => {
     setBasket(['a'])
-    routeFetch({ ...user, 'GET /api/master-prompt': () => ({ status: 404, json: { error: 'none' } }), ...idea('a', 'Erste') })
+    routeFetch({ ...user, 'GET /api/prompt-levels': () => ({ json: [] }), ...idea('a', 'Erste') })
     renderAt('/basket')
     expect(await screen.findByText('There is no master prompt yet. An admin has to save one.')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Download' })).toBeDisabled()
+  })
+
+  // AC-018-4: with two levels, copy asks first and runs with the chosen prompt.
+  it('AC-018-4 fragt bei zwei Detailgraden nach der Wahl und kopiert den gewählten Prompt', async () => {
+    setBasket(['a'])
+    const writeText = vi.fn(async () => {})
+    routeFetch({ ...user, ...levels(level('l1', 'Short', 'Kurz {{ideas}}'), level('l2', 'Long', 'Lang {{ideas}}')), ...idea('a', 'Erste') })
+    renderAt('/basket')
+    const clicks = userEvent.setup()
+    Object.defineProperty(navigator, 'clipboard', { value: { writeText }, configurable: true })
+    await screen.findByText(/Kurz ### Erste/)
+    await clicks.click(screen.getByRole('button', { name: 'Copy to clipboard' }))
+
+    expect(writeText).not.toHaveBeenCalled()
+    const dialog = await screen.findByRole('dialog')
+    expect(dialog).toHaveTextContent('About Long')
+    expect(screen.getByRole('radio', { name: /Short/ })).toBeChecked()
+    await clicks.click(screen.getByRole('radio', { name: /Long/ }))
+    await clicks.click(screen.getByRole('button', { name: 'Confirm' }))
+
+    expect(writeText).toHaveBeenCalledWith('Lang ### Erste\n- Beschreibung: Text Erste')
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+  })
+
+  it('AC-018-4 zeigt Titel und Beschreibung in der UI-Sprache, Rückfall Englisch', async () => {
+    setBasket(['a'])
+    await i18n.changeLanguage('de')
+    routeFetch({ ...user, ...levels(level('l1', 'Short', 'K'), { ...level('l2', 'Long', 'L'), titles: { en: 'Long', de: '' } }), ...idea('a', 'Erste') })
+    renderAt('/basket')
+    await userEvent.setup().click(await screen.findByRole('button', { name: 'In die Zwischenablage' }))
+    expect(await screen.findByRole('radio', { name: /Short \(de\)/ })).toBeInTheDocument()
+    expect(screen.getByRole('radio', { name: /Long/ })).toBeInTheDocument()
+  })
+
+  it('AC-018-4 bricht ohne Aktion ab', async () => {
+    setBasket(['a'])
+    const writeText = vi.fn(async () => {})
+    routeFetch({ ...user, ...levels(level('l1', 'Short', 'K'), level('l2', 'Long', 'L')), ...idea('a', 'Erste') })
+    renderAt('/basket')
+    const clicks = userEvent.setup()
+    Object.defineProperty(navigator, 'clipboard', { value: { writeText }, configurable: true })
+    await clicks.click(await screen.findByRole('button', { name: 'Copy to clipboard' }))
+    await clicks.click(await screen.findByRole('button', { name: 'Cancel' }))
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    expect(writeText).not.toHaveBeenCalled()
+  })
+
+  // AC-018-5: a single level runs without a dialog.
+  it('AC-018-5 führt die Aktion bei einem Detailgrad ohne Dialog aus', async () => {
+    setBasket(['a'])
+    routeFetch({ ...user, ...master('X {{ideas}}'), ...idea('a', 'Erste') })
+    vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {})
+    renderAt('/basket')
+    await screen.findByText(/### Erste/)
+    await userEvent.setup().click(screen.getByRole('button', { name: 'Download' }))
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    expect(URL.createObjectURL).toHaveBeenCalled()
   })
 })

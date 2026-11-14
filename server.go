@@ -71,6 +71,10 @@ func newServer(ctx context.Context) (*server, error) {
 	if err := s.ensureInitialAdmin(ctx); err != nil {
 		log.Printf("initial admin: %v", err)
 	}
+	// F-018 D6: the F-008 master prompt becomes the level "Standard". A failure is logged.
+	if err := s.migrateMasterPrompt(ctx); err != nil {
+		log.Printf("migrate master prompt: %v", err)
+	}
 	s.routes()
 	return s, nil
 }
@@ -117,11 +121,14 @@ func (s *server) routes() {
 	m.HandleFunc("GET /api/ideas/{id}/images/{n}", s.apiIdeaImage)
 	m.HandleFunc("GET /api/equipment", s.apiEquipment)
 
-	// Master prompt (F-008). Reading the current text is open to every signed-in role (Q-008-13).
-	m.HandleFunc("GET /api/master-prompt", s.requireSignedIn(s.apiCurrentMasterPrompt))
-	m.HandleFunc("GET /api/admin/master-prompt", s.requireAdmin(s.apiAdminMasterPrompt))
-	m.HandleFunc("POST /api/admin/master-prompt", s.requireAdmin(s.apiSaveMasterPrompt))
-	m.HandleFunc("POST /api/admin/master-prompt/versions/{n}/restore", s.requireAdmin(s.apiRestoreMasterPrompt))
+	// Prompt levels (F-018, replaces the single master prompt of F-008). Reading is open to every signed-in role.
+	m.HandleFunc("GET /api/prompt-levels", s.requireSignedIn(s.apiPromptLevels))
+	m.HandleFunc("GET /api/admin/prompt-levels", s.requireAdmin(s.apiAdminPromptLevels))
+	m.HandleFunc("POST /api/admin/prompt-levels", s.requireAdmin(s.apiCreatePromptLevel))
+	m.HandleFunc("PUT /api/admin/prompt-levels/order", s.requireAdmin(s.apiReorderPromptLevels))
+	m.HandleFunc("PUT /api/admin/prompt-levels/{id}", s.requireAdmin(s.apiSavePromptLevel))
+	m.HandleFunc("DELETE /api/admin/prompt-levels/{id}", s.requireAdmin(s.apiDeletePromptLevel))
+	m.HandleFunc("POST /api/admin/prompt-levels/{id}/versions/{n}/restore", s.requireAdmin(s.apiRestorePromptLevel))
 
 	// Invitations.
 	m.HandleFunc("POST /api/invitations", s.requireAdmin(s.apiCreateInvitation)) // F-012 D8

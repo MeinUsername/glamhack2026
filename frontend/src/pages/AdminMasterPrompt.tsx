@@ -5,10 +5,12 @@ import { api, ApiError } from '../api'
 import { useMe } from '../auth/useMe'
 import { useBasket } from '../basket/useBasket'
 import { localeFor, renderPrompt, unknownVariables } from '../prompt/render'
+import { pickLocalized } from '../prompt/localized'
+import { LANGUAGES, LANGUAGE_NAMES } from '../i18n'
 import type { Idea } from '../types'
-import { button, cell, errorText, h1, h2, input, linkButton, muted, noticeText, table } from '../ui'
+import { button, card, cell, errorText, h1, h2, input, linkButton, muted, noticeText, table } from '../ui'
 
-// F-008: editor for the master prompt. Only admins get here (the server checks too).
+// F-008/F-018: editor for the prompt levels (Detailgrade). Only admins get here (the server checks too).
 interface Version {
   number: number
   text: string
@@ -16,14 +18,22 @@ interface Version {
   createdAt: string
 }
 
-interface Listing {
+interface Level {
+  id: string
+  titles: Record<string, string>
+  descriptions: Record<string, string>
+  text: string
+  version: number
   versions: Version[]
 }
 
 interface VersionResult {
   version: number
   created: boolean
+  id?: string
 }
+
+const NEW = 'new'
 
 export default function AdminMasterPrompt() {
   const me = useMe()
@@ -31,36 +41,132 @@ export default function AdminMasterPrompt() {
   if (me.status === 'loading') return <p className={muted}>{t('common.loading')}</p>
   if (me.status === 'anonymous') return <Navigate to="/login" replace />
   if (me.me.role !== 'admin') return <p role="alert" className={errorText}>{t('admin.onlyAdmins')}</p>
-  return <Editor />
+  return <Levels />
 }
 
-function Editor() {
+function Levels() {
+  const { t, i18n } = useTranslation()
+  const [levels, setLevels] = useState<Level[] | null>(null)
+  const [selected, setSelected] = useState<string>('')
+  const [message, setMessage] = useState('')
+  const [error, setError] = useState('')
+
+  const load = useCallback(async (): Promise<Level[]> => {
+    const list = await api<Level[]>('/api/admin/prompt-levels')
+    setLevels(list)
+    return list
+  }, [])
+
+  useEffect(() => {
+    load()
+      .then((list) => setSelected((cur) => cur || list[0]?.id || NEW))
+      .catch((err) => setError(err instanceof ApiError ? err.message : t('masterPrompt.loadError')))
+  }, [load, t])
+
+  async function move(index: number, delta: number) {
+    if (!levels) return
+    const ids = levels.map((l) => l.id)
+    const target = index + delta
+    if (target < 0 || target >= ids.length) return
+    ;[ids[index], ids[target]] = [ids[target], ids[index]]
+    setMessage('')
+    setError('')
+    try {
+      await api('/api/admin/prompt-levels/order', { method: 'PUT', json: { ids } })
+      await load()
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : t('masterPrompt.orderError'))
+    }
+  }
+
+  async function remove(level: Level) {
+    if (!window.confirm(t('masterPrompt.deleteConfirm', { title: pickLocalized(level.titles, i18n.resolvedLanguage) }))) return
+    setMessage('')
+    setError('')
+    try {
+      await api(`/api/admin/prompt-levels/${level.id}`, { method: 'DELETE' })
+      const list = await load()
+      setSelected(list[0]?.id ?? NEW)
+      setMessage(t('masterPrompt.deleted'))
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : t('masterPrompt.deleteError'))
+    }
+  }
+
+  const current = levels?.find((l) => l.id === selected)
+
+  return (
+    <>
+      <h1 className={h1}>{t('masterPrompt.title')}</h1>
+      <p className={muted}>{t('masterPrompt.intro')}</p>
+
+      <h2 className={h2}>{t('masterPrompt.levels')}</h2>
+      {levels !== null && levels.length === 0 && <p className={muted}>{t('masterPrompt.noLevels')}</p>}
+      <ul className="grid gap-2">
+        {levels?.map((l, i) => (
+          <li key={l.id} className={`${card} flex items-center gap-2 py-2`}>
+            <button
+              type="button"
+              aria-pressed={selected === l.id}
+              onClick={() => setSelected(l.id)}
+              className={`flex-1 cursor-pointer bg-transparent text-left ${selected === l.id ? 'font-semibold' : ''}`}
+            >
+              {pickLocalized(l.titles, i18n.resolvedLanguage)}
+            </button>
+            <button type="button" className={linkButton} disabled={i === 0} onClick={() => move(i, -1)} aria-label={t('masterPrompt.moveUp')}>
+              ↑
+            </button>
+            <button type="button" className={linkButton} disabled={i === levels.length - 1} onClick={() => move(i, 1)} aria-label={t('masterPrompt.moveDown')}>
+              ↓
+            </button>
+            <button type="button" className={linkButton} disabled={levels.length <= 1} onClick={() => remove(l)} aria-label={t('masterPrompt.delete')}>
+              {t('masterPrompt.delete')}
+            </button>
+          </li>
+        ))}
+      </ul>
+      <div className="mt-3">
+        <button type="button" className={button} onClick={() => setSelected(NEW)}>
+          {t('masterPrompt.new')}
+        </button>
+      </div>
+      {message && <p role="status" className={`${noticeText} mt-2`}>{message}</p>}
+      {error && <p role="alert" className={`${errorText} mt-2`}>{error}</p>}
+
+      {levels !== null && (selected === NEW || current) && (
+        <LevelEditor
+          key={selected}
+          level={selected === NEW ? undefined : current}
+          onSaved={async (id, msg) => {
+            await load()
+            setSelected(id)
+            setMessage(msg)
+            setError('')
+          }}
+        />
+      )}
+    </>
+  )
+}
+
+function LevelEditor({ level, onSaved }: { level?: Level; onSaved: (id: string, message: string) => Promise<void> }) {
   const { t, i18n } = useTranslation()
   const basket = useBasket()
-  const [versions, setVersions] = useState<Version[] | null>(null)
-  const [text, setText] = useState('')
+  const [titles, setTitles] = useState<Record<string, string>>(level?.titles ?? {})
+  const [descs, setDescs] = useState<Record<string, string>>(level?.descriptions ?? {})
+  const [text, setText] = useState(level?.text ?? '')
+  const [versions, setVersions] = useState<Version[]>(level?.versions ?? [])
   const [mode, setMode] = useState<'source' | 'preview'>('source')
   const [ideas, setIdeas] = useState<Idea[]>([])
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
 
-  // The list is newest first, so the first entry is the current text.
-  const currentText = versions?.[0]?.text ?? ''
-  const unchanged = text === currentText
-  const empty = text.trim() === ''
-
-  const load = useCallback(async (): Promise<Version[]> => {
-    const data = await api<Listing>('/api/admin/master-prompt')
-    setVersions(data.versions)
-    return data.versions
-  }, [])
-
-  useEffect(() => {
-    load()
-      .then((vs) => setText(vs[0]?.text ?? ''))
-      .catch((err) => setError(err instanceof ApiError ? err.message : t('masterPrompt.loadError')))
-  }, [load, t])
+  const changed =
+    !level ||
+    text !== level.text ||
+    LANGUAGES.some((l) => (titles[l] ?? '') !== (level.titles[l] ?? '') || (descs[l] ?? '') !== (level.descriptions[l] ?? ''))
+  const incomplete = text.trim() === '' || !(titles.en ?? '').trim() || !(descs.en ?? '').trim()
 
   // The preview uses the ideas in this browser's basket (D4 of F-008).
   const idsKey = basket.ids.join(',')
@@ -87,9 +193,12 @@ function Editor() {
     }
     setBusy(true)
     try {
-      const res = await api<VersionResult>('/api/admin/master-prompt', { method: 'POST', json: { text } })
-      await load()
-      setMessage(res.created ? t('masterPrompt.saved', { n: res.version }) : t('masterPrompt.unchanged'))
+      const body = { titles, descriptions: descs, text }
+      const res = level
+        ? await api<VersionResult>(`/api/admin/prompt-levels/${level.id}`, { method: 'PUT', json: body })
+        : await api<VersionResult>('/api/admin/prompt-levels', { method: 'POST', json: body })
+      const msg = !level ? t('masterPrompt.created') : res.created ? t('masterPrompt.saved', { n: res.version }) : t('masterPrompt.unchanged')
+      await onSaved(level?.id ?? res.id ?? '', msg)
     } catch (err) {
       setError(err instanceof ApiError ? err.message : t('masterPrompt.saveError'))
     } finally {
@@ -98,13 +207,18 @@ function Editor() {
   }
 
   async function restore(v: Version) {
+    if (!level) return
     setMessage('')
     setError('')
     setBusy(true)
     try {
-      const res = await api<VersionResult>(`/api/admin/master-prompt/versions/${v.number}/restore`, { method: 'POST' })
-      const list = await load()
-      setText(list[0]?.text ?? '')
+      const res = await api<VersionResult>(`/api/admin/prompt-levels/${level.id}/versions/${v.number}/restore`, { method: 'POST' })
+      const list = await api<Level[]>('/api/admin/prompt-levels')
+      const fresh = list.find((l) => l.id === level.id)
+      if (fresh) {
+        setVersions(fresh.versions)
+        setText(fresh.text)
+      }
       setMessage(res.created ? t('masterPrompt.restored', { from: v.number, n: res.version }) : t('masterPrompt.alreadyCurrent'))
     } catch (err) {
       setError(err instanceof ApiError ? err.message : t('masterPrompt.restoreError'))
@@ -125,9 +239,31 @@ function Editor() {
   )
 
   return (
-    <>
-      <h1 className={h1}>{t('masterPrompt.title')}</h1>
-      <p className={muted}>{t('masterPrompt.intro')}</p>
+    <section>
+      <h2 className={h2}>{level ? t('masterPrompt.edit') : t('masterPrompt.new')}</h2>
+      <div className="grid gap-3">
+        {LANGUAGES.map((lang) => (
+          <fieldset key={lang} className="grid gap-2 rounded-lg border border-slate-200 p-3 dark:border-slate-700">
+            <legend className="px-1 text-sm font-medium">
+              {LANGUAGE_NAMES[lang]}
+              {lang === 'en' && <span className={muted}> ({t('masterPrompt.required')})</span>}
+            </legend>
+            <input
+              aria-label={t('masterPrompt.titleField', { lang: LANGUAGE_NAMES[lang] })}
+              className={input}
+              value={titles[lang] ?? ''}
+              onChange={(e) => setTitles({ ...titles, [lang]: e.target.value })}
+            />
+            <textarea
+              aria-label={t('masterPrompt.descField', { lang: LANGUAGE_NAMES[lang] })}
+              className={input}
+              rows={2}
+              value={descs[lang] ?? ''}
+              onChange={(e) => setDescs({ ...descs, [lang]: e.target.value })}
+            />
+          </fieldset>
+        ))}
+      </div>
 
       <div className="mt-4 flex gap-2">
         {modeButton('source', t('masterPrompt.modeSource'))}
@@ -152,45 +288,46 @@ function Editor() {
       )}
 
       <div className="mt-3">
-        <button type="button" className={button} disabled={busy || unchanged || empty} onClick={save}>
+        <button type="button" className={button} disabled={busy || !changed || incomplete} onClick={save}>
           {t('masterPrompt.save')}
         </button>
       </div>
       {message && <p role="status" className={`${noticeText} mt-2`}>{message}</p>}
       {error && <p role="alert" className={`${errorText} mt-2`}>{error}</p>}
 
-      <h2 className={h2}>{t('masterPrompt.versions')}</h2>
-      {versions !== null && versions.length === 0 && <p className={muted}>{t('masterPrompt.none')}</p>}
-      {versions !== null && versions.length > 0 && (
-        <table className={table}>
-          <thead>
-            <tr>
-              <th className={cell}>{t('masterPrompt.colVersion')}</th>
-              <th className={cell}>{t('masterPrompt.colDate')}</th>
-              <th className={cell}>{t('masterPrompt.colAuthor')}</th>
-              <th className={cell} />
-            </tr>
-          </thead>
-          <tbody>
-            {versions.map((v, i) => (
-              <tr key={v.number}>
-                <td className={cell}>
-                  {v.number} {i === 0 && <span className={muted}>({t('masterPrompt.current')})</span>}
-                </td>
-                <td className={cell}>{new Date(v.createdAt).toLocaleString(i18n.language)}</td>
-                <td className={cell}>{v.authorEmail}</td>
-                <td className={cell}>
-                  {i > 0 && (
-                    <button type="button" className={linkButton} disabled={busy} onClick={() => restore(v)}>
-                      {t('masterPrompt.restore')}
-                    </button>
-                  )}
-                </td>
+      {level && (
+        <>
+          <h2 className={h2}>{t('masterPrompt.versions')}</h2>
+          <table className={table}>
+            <thead>
+              <tr>
+                <th className={cell}>{t('masterPrompt.colVersion')}</th>
+                <th className={cell}>{t('masterPrompt.colDate')}</th>
+                <th className={cell}>{t('masterPrompt.colAuthor')}</th>
+                <th className={cell} />
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {versions.map((v, i) => (
+                <tr key={v.number}>
+                  <td className={cell}>
+                    {v.number} {i === 0 && <span className={muted}>({t('masterPrompt.current')})</span>}
+                  </td>
+                  <td className={cell}>{new Date(v.createdAt).toLocaleString(i18n.language)}</td>
+                  <td className={cell}>{v.authorEmail}</td>
+                  <td className={cell}>
+                    {i > 0 && (
+                      <button type="button" className={linkButton} disabled={busy} onClick={() => restore(v)}>
+                        {t('masterPrompt.restore')}
+                      </button>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </>
       )}
-    </>
+    </section>
   )
 }

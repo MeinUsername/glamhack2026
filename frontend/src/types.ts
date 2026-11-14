@@ -52,3 +52,12 @@ export interface Idea {
   images: IdeaImage[]
   createdAt: string
 }
+
+// F-018: a prompt level (Detailgrad). Titles and descriptions per language, English always present.
+export interface PromptLevel {
+  id: string
+  titles: Record<string, string>
+  descriptions: Record<string, string>
+  text: string
+  version: number
+}
