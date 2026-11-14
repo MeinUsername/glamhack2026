@@ -1,7 +1,7 @@
 ---
 id: F-016
 title: Cleanup Page
-status: plan-ready
+status: done
 ---
 
 # F-016 Cleanup Page

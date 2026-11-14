@@ -1,7 +1,7 @@
 ---
 id: F-015
 title: Schreibe einen Importer auf der Admin Seite um ein Intial CSV zum Importieren
-status: plan-ready
+status: done
 ---
 
 # F-015 Schreibe einen Importer auf der Admin Seite um ein Intial CSV zum Importieren
