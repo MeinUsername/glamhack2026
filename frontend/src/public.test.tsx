@@ -19,7 +19,7 @@ const idea = {
   equipment: [],
   categories: [],
   budget: null,
-  images: [{ contentType: 'image/png', bytes: 10 }],
+  images: [{ contentType: 'image/png', bytes: 10, version: 'v1' }],
   createdAt: '2026-11-13T10:00:00Z',
 }
 

@@ -60,6 +60,16 @@ func (s *server) storeIdeaImages(ctx context.Context, ideaID string, images []ch
 	return stored, nil
 }
 
+// imageVersion is the random part of the object name (ideas/<id>/<random>.<ext>). It changes with every
+// new upload, so the browser does not reuse a cached image at the same index (F-029).
+func imageVersion(object string) string {
+	name := object[strings.LastIndex(object, "/")+1:]
+	if i := strings.LastIndex(name, "."); i > 0 {
+		name = name[:i]
+	}
+	return name
+}
+
 // deleteObjects removes uploaded images after a failed save. Errors are logged only.
 func (s *server) deleteObjects(ctx context.Context, images []imageDoc) {
 	for _, img := range images {

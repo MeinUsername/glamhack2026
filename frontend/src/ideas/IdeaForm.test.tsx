@@ -219,7 +219,7 @@ describe('IdeaForm', () => {
   })
 
   // F-020: editing an idea with images.
-  const fiveImages = { json: { ...savedIdea.json, title: 'Licht', goal: 'Ziel', targetGroup: 'Schulen', images: Array.from({ length: 5 }, () => ({ contentType: 'image/png', bytes: 1 })) } }
+  const fiveImages = { json: { ...savedIdea.json, title: 'Licht', goal: 'Ziel', targetGroup: 'Schulen', images: Array.from({ length: 5 }, (_, i) => ({ contentType: 'image/png', bytes: 1, version: `v${i}` })) } }
 
   it('AC-020-3 belegt Felder und Bilder beim Bearbeiten vor', async () => {
     routeFetch({ 'GET /api/me': () => user, 'GET /api/ideas/i1': () => fiveImages })
@@ -265,5 +265,42 @@ describe('IdeaForm', () => {
     expect(screen.queryByText(/stay, you can add/)).toBeNull()
     expect(screen.getByRole('button', { name: 'Save idea' })).toBeEnabled()
     expect(calls.some((c) => c.method === 'PUT')).toBe(false)
+  })
+
+  it('AC-029-1/5 Ersetzen und alle Bilder abwählen; Vorschaubilder tragen die Version', async () => {
+    const one = { json: { ...savedIdea.json, images: [{ contentType: 'image/png', bytes: 1, version: 'alt' }] } }
+    const { calls } = routeFetch({
+      'GET /api/me': () => user,
+      'GET /api/ideas/i1': () => one,
+      'PUT /api/ideas/i1': () => ({ json: { id: 'i1' } }),
+    })
+    renderAt('/ideas/i1/edit')
+    const u = userEvent.setup()
+    await screen.findByLabelText('Title')
+    const box = screen.getAllByRole('checkbox').find((b) => b.closest('label')?.querySelector('img')) as HTMLElement
+    expect(box.closest('label')?.querySelector('img')).toHaveAttribute('src', '/api/ideas/i1/images/0?v=alt')
+    await u.click(box)
+    await u.upload(screen.getByLabelText(/^Images/), new File(['x'], 'neu.png', { type: 'image/png' }))
+    await u.click(screen.getByRole('button', { name: 'Save idea' }))
+    const put = calls.find((c) => c.method === 'PUT')
+    expect(JSON.parse(String(formData(put?.body).get('data'))).keepImages).toEqual([])
+    expect(formData(put?.body).getAll('images')).toHaveLength(1)
+  })
+
+  it('AC-029-5 speichert ohne Bilder, wenn alle abgewählt sind', async () => {
+    const one = { json: { ...savedIdea.json, images: [{ contentType: 'image/png', bytes: 1, version: 'alt' }] } }
+    const { calls } = routeFetch({
+      'GET /api/me': () => user,
+      'GET /api/ideas/i1': () => one,
+      'PUT /api/ideas/i1': () => ({ json: { id: 'i1' } }),
+    })
+    renderAt('/ideas/i1/edit')
+    const u = userEvent.setup()
+    await screen.findByLabelText('Title')
+    await u.click(screen.getAllByRole('checkbox').find((b) => b.closest('label')?.querySelector('img')) as HTMLElement)
+    await u.click(screen.getByRole('button', { name: 'Save idea' }))
+    const put = calls.find((c) => c.method === 'PUT')
+    expect(JSON.parse(String(formData(put?.body).get('data'))).keepImages).toEqual([])
+    expect(formData(put?.body).getAll('images')).toHaveLength(0)
   })
 })

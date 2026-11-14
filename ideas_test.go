@@ -342,3 +342,31 @@ func TestAC023_7_SummaryHasNoConcept(t *testing.T) {
 		t.Errorf("summary: %s", b)
 	}
 }
+
+// AC-029-2: the version is the random part of the object name and changes with a new upload.
+func TestAC029_ImageVersion(t *testing.T) {
+	if got := imageVersion("ideas/x/abc123.png"); got != "abc123" {
+		t.Errorf("version = %q", got)
+	}
+	old := toIdeaView("x", ideaDoc{Images: []imageDoc{{Object: "ideas/x/aaa.png"}, {Object: "ideas/x/bbb.jpg"}}})
+	replaced := toIdeaView("x", ideaDoc{Images: []imageDoc{{Object: "ideas/x/bbb.jpg"}, {Object: "ideas/x/ccc.png"}}})
+	if old.Images[0].Version == replaced.Images[0].Version {
+		t.Error("replaced image at index 0 keeps its version")
+	}
+	if old.Images[1].Version != replaced.Images[0].Version {
+		t.Error("an unchanged image changed its version")
+	}
+}
+
+// AC-029-3..5: deselected images are removed, kept ones keep their order, none kept is allowed.
+func TestAC029_SelectKept(t *testing.T) {
+	old := []imageDoc{{Object: "a"}, {Object: "b"}, {Object: "c"}}
+	kept, removed, err := selectKeptImages(old, []int{2})
+	if err != nil || len(kept) != 1 || kept[0].Object != "c" || len(removed) != 2 {
+		t.Fatalf("kept=%v removed=%v err=%v", kept, removed, err)
+	}
+	kept, removed, err = selectKeptImages(old, nil)
+	if err != nil || len(kept) != 0 || len(removed) != 3 {
+		t.Errorf("none kept: kept=%v removed=%v err=%v", kept, removed, err)
+	}
+}

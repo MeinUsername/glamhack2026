@@ -126,6 +126,7 @@ type spaceView struct {
 type imageView struct {
 	ContentType string `json:"contentType"`
 	Bytes       int64  `json:"bytes"`
+	Version     string `json:"version"`
 }
 
 // validateIdeaInput checks the JSON input without touching Firestore and returns the
@@ -428,7 +429,7 @@ func toIdeaView(id string, d ideaDoc) ideaView {
 	}
 	v.Images = make([]imageView, 0, len(d.Images))
 	for _, img := range d.Images {
-		v.Images = append(v.Images, imageView{ContentType: img.ContentType, Bytes: img.Size})
+		v.Images = append(v.Images, imageView{ContentType: img.ContentType, Bytes: img.Size, Version: imageVersion(img.Object)})
 	}
 	return v
 }
@@ -518,6 +519,8 @@ type ideaSummary struct {
 	ImageCount int    `json:"imageCount"`
 	// Description is the full text of the field "Beschreibung" (Q-014-08).
 	Description string `json:"description"`
+	// CoverVersion is the version of the first image, for its cache-proof URL (F-029).
+	CoverVersion string `json:"coverVersion,omitempty"`
 }
 
 // apiListIdeas handles GET /api/ideas: all ideas, newest first (F-011).
@@ -540,7 +543,11 @@ func (s *server) apiListIdeas(w http.ResponseWriter, r *http.Request) {
 			log.Printf("decode idea %s: %v", snap.Ref.ID, err)
 			continue
 		}
-		out = append(out, ideaSummary{ID: snap.Ref.ID, Title: d.Title, ImageCount: len(d.Images), Description: d.Description})
+		row := ideaSummary{ID: snap.Ref.ID, Title: d.Title, ImageCount: len(d.Images), Description: d.Description}
+		if len(d.Images) > 0 {
+			row.CoverVersion = imageVersion(d.Images[0].Object)
+		}
+		out = append(out, row)
 	}
 	writeJSON(w, http.StatusOK, out)
 }

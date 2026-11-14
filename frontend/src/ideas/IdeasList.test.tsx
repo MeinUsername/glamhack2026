@@ -6,7 +6,7 @@ import { readBasket } from '../basket/basket'
 
 const user = { json: { email: 'a@example.ch', role: 'user' } }
 const rows = [
-  { id: 'a', title: 'Lichtinstallation', imageCount: 2, description: 'Licht im Raum\nzweite Zeile' },
+  { id: 'a', title: 'Lichtinstallation', imageCount: 2, coverVersion: 'v1', description: 'Licht im Raum\nzweite Zeile' },
   { id: 'b', title: 'Klangraum', imageCount: 0, description: '' },
 ]
 
@@ -24,7 +24,7 @@ describe('IdeasList (F-011)', () => {
 
     const first = await screen.findByRole('link', { name: 'Lichtinstallation' })
     const firstRow = first.closest('li') as HTMLElement
-    expect(firstRow.querySelector('img')?.getAttribute('src')).toBe('/api/ideas/a/images/0')
+    expect(firstRow.querySelector('img')?.getAttribute('src')).toBe('/api/ideas/a/images/0?v=v1')
     expect(within(firstRow).getByRole('button', { name: 'Add to basket' })).toBeInTheDocument()
 
     const second = screen.getByRole('link', { name: 'Klangraum' }).closest('li') as HTMLElement

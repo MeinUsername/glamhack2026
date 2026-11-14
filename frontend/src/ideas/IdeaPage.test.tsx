@@ -91,3 +91,19 @@ describe('IdeaPage edit entry', () => {
   })
 })
 })
+
+describe('IdeaPage image URLs (F-029)', () => {
+  it('AC-029-1/2 nutzt die Version in der Bild-URL, eine neue Version ergibt eine neue URL', async () => {
+    const withImage = (version: string) => ({
+      json: { ...base, categories: [], images: [{ contentType: 'image/png', bytes: 1, version }] },
+    })
+    routeFetch({ 'GET /api/ideas/i1': () => withImage('alt') })
+    const first = renderAt('/ideas/i1')
+    expect((await screen.findAllByRole('img'))[0]).toHaveAttribute('src', '/api/ideas/i1/images/0?v=alt')
+    first.unmount()
+
+    routeFetch({ 'GET /api/ideas/i1': () => withImage('neu') })
+    renderAt('/ideas/i1')
+    expect((await screen.findAllByRole('img'))[0]).toHaveAttribute('src', '/api/ideas/i1/images/0?v=neu')
+  })
+})

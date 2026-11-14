@@ -7,6 +7,7 @@ import EquipmentInput from './EquipmentInput'
 import { BUDGETS, imageProblem, MAX_IDEA_IMAGES } from './rules'
 import { CATEGORIES } from './categories'
 import CategoriesInfo from './CategoriesInfo'
+import { imageUrl } from './imageUrl'
 import MarkdownEditor from './MarkdownEditor'
 import type { Category, Idea } from '../types'
 
@@ -190,7 +191,7 @@ function IdeaEditor({ edit }: { edit?: Idea }) {
             {edit.images.map((_, n) => (
               <label key={n} className="flex items-center gap-3">
                 <input type="checkbox" checked={keep.includes(n)} onChange={() => toggleKeep(n)} />
-                <img src={`/api/ideas/${edit.id}/images/${n}`} alt="" className="h-12 w-12 rounded object-cover" />
+                <img src={imageUrl(edit.id, n, edit.images[n].version)} alt="" className="h-12 w-12 rounded object-cover" />
                 <span>{t('ideas.keepImage', { n: n + 1 })}</span>
               </label>
             ))}

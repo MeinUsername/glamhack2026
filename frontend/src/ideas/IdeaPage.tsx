@@ -6,6 +6,7 @@ import type { Idea } from '../types'
 import { button, errorText, h1, h2, muted } from '../ui'
 import { CATEGORY_LABEL } from './categories'
 import BasketButton from '../basket/BasketButton'
+import { imageUrl } from './imageUrl'
 import MarkdownView from '../components/MarkdownView'
 
 type State =
@@ -67,7 +68,7 @@ function Show({ idea }: { idea: Idea }) {
           {idea.images.map((_, n) => (
             <li key={n}>
               <img
-                src={`/api/ideas/${idea.id}/images/${n}`}
+                src={imageUrl(idea.id, n, idea.images[n].version)}
                 alt={t('ideas.imageAlt', { title, n: n + 1 })}
                 className="w-full rounded-lg object-cover"
               />

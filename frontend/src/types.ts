@@ -32,6 +32,7 @@ export type Category = 'affirmative' | 'reproductive' | 'deconstructive' | 'tran
 export interface IdeaImage {
   contentType: string
   bytes: number
+  version: string
 }
 
 export interface Idea {
