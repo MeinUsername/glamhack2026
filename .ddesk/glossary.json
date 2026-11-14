@@ -1,0 +1,14 @@
+{
+  "v": 2,
+  "language": "de",
+  "terms": [
+    {
+      "id": 59,
+      "de": "Mediation Concept",
+      "en": "Mediation concept",
+      "definition_de": "Ausführliches Vermittlungskonzept einer Idee als Markdown-Text; nur auf der Detailseite sichtbar.",
+      "definition_en": "Detailed mediation concept of an idea as Markdown text; only shown on the detail page.",
+      "context": ""
+    }
+  ]
+}
