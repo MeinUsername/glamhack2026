@@ -12,7 +12,7 @@ import (
 )
 
 func init() {
-	functions.HTTP("Handler", handler)
+	functions.HTTP("Handler", botGuard(http.HandlerFunc(handler)).ServeHTTP) // F-032
 }
 
 var (

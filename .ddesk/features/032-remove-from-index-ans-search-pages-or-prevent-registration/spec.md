@@ -1,7 +1,7 @@
 ---
 id: F-032
 title: Remove from Index ans Search Pages or prevent registration
-status: plan-ready
+status: done
 ---
 
 # F-032 Remove from Index ans Search Pages or prevent registration
