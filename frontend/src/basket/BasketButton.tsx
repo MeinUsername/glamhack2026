@@ -1,41 +1,43 @@
 import { useTranslation } from 'react-i18next'
-import { button } from '../ui'
 import { useBasket } from './useBasket'
 
 interface Props {
   ideaId: string
-  // 'bar': full-width strip at the bottom of an idea card; 'inline': a normal button (idea page).
+  // 'bar': full-width pill at the bottom of an idea card; 'inline': a normal button (idea page).
   variant?: 'bar' | 'inline'
 }
 
-const barBase =
-  'm-0 flex h-[52px] w-full items-center justify-center border-t-2 border-ink font-mono text-sm font-medium uppercase tracking-[0.06em]'
+// The round knob at the right end of the pill (+ to add, ✓ when it is in the basket).
+const knob = 'inline-flex h-[38px] w-[38px] shrink-0 items-center justify-center rounded-full text-xl leading-none'
 
 // «In den Korb» for an idea; once it is in the basket, it is marked and cannot be chosen again.
 // Used on the idea page and in the overview of F-011.
 export default function BasketButton({ ideaId, variant = 'inline' }: Props) {
   const { t } = useTranslation()
   const { has, add } = useBasket()
+  const width = variant === 'bar' ? 'w-full' : 'self-start'
   if (has(ideaId)) {
-    return variant === 'bar' ? (
-      <p className={`${barBase} bg-paper text-accent`}>{t('basket.bought')}</p>
-    ) : (
-      <p className="m-0 inline-flex min-h-11 items-center self-start border-2 border-accent px-5 font-mono text-sm font-medium uppercase tracking-[0.04em] text-accent">
-        {t('basket.bought')}
+    return (
+      <p
+        className={`m-0 inline-flex min-h-[52px] items-center justify-between gap-3 rounded-full border-2 border-accent bg-paper py-1 pr-1.5 pl-6 font-bold text-accent ${width}`}
+      >
+        <span>{t('basket.bought')}</span>
+        <span aria-hidden="true" className={`${knob} bg-accent text-base text-on-accent`}>
+          ✓
+        </span>
       </p>
     )
   }
   return (
     <button
       type="button"
-      className={
-        variant === 'bar'
-          ? `${barBase} cursor-pointer bg-accent text-on-accent transition-colors hover:bg-ink`
-          : `${button} self-start`
-      }
+      className={`inline-flex min-h-[52px] cursor-pointer items-center justify-between gap-3 rounded-full border-2 border-accent bg-accent py-1 pr-1.5 pl-6 font-sans text-base font-bold text-on-accent transition-colors hover:border-ink hover:bg-ink ${width}`}
       onClick={() => add(ideaId)}
     >
-      {t('basket.add')}
+      <span>{t('basket.add')}</span>
+      <span aria-hidden="true" className={`${knob} bg-coral text-ink`}>
+        +
+      </span>
     </button>
   )
 }

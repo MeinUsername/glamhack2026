@@ -220,10 +220,21 @@ export const it: Record<keyof typeof en, string> = {
   // F-021: ICOM filter
   'ideas.filter.title': 'Filtri',
   'ideas.filter.categories': 'Categorie ICOM',
+  'ideas.filter.expandAll': 'Mostra tutte le sottocategorie',
   'ideas.filter.reset': 'Azzera filtri',
   'ideas.filter.count': '{{shown}} di {{total}} idee',
   'ideas.filter.noMatch': 'Nessuna idea corrisponde a questo filtro.',
   'ideas.filter.hint': 'Basta una corrispondenza tra le categorie o tra i luoghi; categoria e luogo devono corrispondere entrambi.',
   'admin.import.icomTitle': 'Colonne per categorie ICOM e luogo',
   'admin.import.icomHint': 'Colonne facoltative «ICOM categories» e «Location»: ID separati da «;». Un ID sconosciuto rende la riga non valida.',
+  // Gallery on the idea page
+  'ideas.list.images': '{{count}} immagini',
+  'gallery.label': 'Immagini',
+  'gallery.dialog': '{{title}}: immagini',
+  'gallery.open': 'Ingrandisci {{title}}, immagine {{n}} di {{count}}',
+  'gallery.show': 'Mostra immagine {{n}} di {{count}}',
+  'gallery.counter': '{{n}} / {{count}}',
+  'gallery.close': 'Chiudi',
+  'gallery.prev': 'Immagine precedente',
+  'gallery.next': 'Immagine successiva',
 }

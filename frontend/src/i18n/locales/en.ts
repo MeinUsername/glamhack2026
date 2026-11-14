@@ -218,10 +218,21 @@ export const en = {
   // F-021: ICOM filter
   'ideas.filter.title': 'Filter',
   'ideas.filter.categories': 'ICOM categories',
+  'ideas.filter.expandAll': 'Show all subcategories',
   'ideas.filter.reset': 'Reset filters',
   'ideas.filter.count': '{{shown}} of {{total}} ideas',
   'ideas.filter.noMatch': 'No idea matches this filter.',
   'ideas.filter.hint': 'One match within the categories or within the locations is enough; category and location must both match.',
   'admin.import.icomTitle': 'Columns for ICOM categories and location',
   'admin.import.icomHint': 'Optional columns «ICOM categories» and «Location»: IDs separated by «;». An unknown ID makes the row invalid.',
+  // Gallery on the idea page
+  'ideas.list.images': '{{count}} images',
+  'gallery.label': 'Pictures',
+  'gallery.dialog': '{{title}}: pictures',
+  'gallery.open': 'Enlarge {{title}}, image {{n}} of {{count}}',
+  'gallery.show': 'Show image {{n}} of {{count}}',
+  'gallery.counter': '{{n}} / {{count}}',
+  'gallery.close': 'Close',
+  'gallery.prev': 'Previous image',
+  'gallery.next': 'Next image',
 } as const

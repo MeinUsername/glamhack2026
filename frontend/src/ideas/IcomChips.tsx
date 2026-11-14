@@ -7,7 +7,10 @@ import { ICOM_GROUPS, LOCATION_LABEL, LOCATIONS, pick } from './icom'
 // active = accent background with white text.
 
 const chipFace =
-  'inline-flex min-h-11 items-center border-2 border-ink px-3 py-2 text-left text-[15px] leading-tight font-medium transition-colors'
+  'inline-flex min-h-11 items-center gap-2 rounded-full border-2 border-ink px-[18px] py-2 text-left text-[15px] leading-tight font-bold transition-colors'
+
+// The cross after an active chip (click again to remove); hidden from screen readers, which hear the state anyway.
+const Tick = ({ on }: { on: boolean }) => (on ? <span aria-hidden="true">✕</span> : null)
 
 // A toggle chip for the filter bar (button with aria-pressed).
 export function FilterChip({
@@ -27,9 +30,10 @@ export function FilterChip({
       aria-pressed={pressed}
       title={title}
       onClick={onClick}
-      className={`${chipFace} cursor-pointer bg-paper text-ink hover:bg-[#eef0fb] aria-pressed:bg-accent aria-pressed:text-on-accent aria-pressed:hover:bg-ink`}
+      className={`${chipFace} cursor-pointer bg-paper text-ink hover:bg-coral-soft aria-pressed:bg-ink aria-pressed:text-on-accent aria-pressed:hover:bg-accent`}
     >
       {children}
+      <Tick on={pressed} />
     </button>
   )
 }
@@ -50,9 +54,10 @@ export function ChipCheckbox({
     <label title={title} className="inline-flex cursor-pointer">
       <input type="checkbox" className="peer sr-only" checked={checked} onChange={onChange} />
       <span
-        className={`${chipFace} bg-paper text-ink hover:bg-[#eef0fb] peer-checked:bg-accent peer-checked:text-on-accent peer-checked:hover:bg-ink peer-focus-visible:outline-3 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-accent`}
+        className={`${chipFace} bg-paper text-ink hover:bg-coral-soft peer-checked:bg-ink peer-checked:text-on-accent peer-checked:hover:bg-accent peer-focus-visible:outline-3 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-accent`}
       >
         {children}
+        <Tick on={checked} />
       </span>
     </label>
   )

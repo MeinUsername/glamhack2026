@@ -32,16 +32,16 @@ export default function LevelDialog({ levels, initialId, onConfirm, onCancel }: 
         role="dialog"
         aria-modal="true"
         aria-labelledby="level-dialog-title"
-        className="w-full max-w-md border-2 border-ink bg-paper p-6"
+        className="w-full max-w-md rounded-card border-2 border-ink bg-paper p-7"
       >
-        <h2 id="level-dialog-title" className="mt-0 mb-4 text-2xl font-bold tracking-[-0.02em]">
+        <h2 id="level-dialog-title" className="mt-0 mb-4 font-display text-[30px] leading-tight font-semibold tracking-[-0.03em]">
           {t('prompt.level.title')}
         </h2>
         <div role="radiogroup" className="grid gap-2">
           {levels.map((l, i) => (
             <label
               key={l.id}
-              className="group flex cursor-pointer items-start gap-3 border-2 border-ink p-3 hover:bg-[#eef0fb] has-checked:bg-accent has-checked:text-on-accent"
+              className="group flex cursor-pointer items-start gap-3 rounded-field border-2 border-ink p-3 hover:bg-coral-soft has-checked:bg-accent has-checked:text-on-accent"
             >
               <input
                 ref={i === 0 ? first : undefined}

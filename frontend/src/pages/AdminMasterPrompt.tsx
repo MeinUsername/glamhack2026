@@ -104,22 +104,22 @@ function Levels() {
       {levels !== null && levels.length === 0 && <p className={muted}>{t('masterPrompt.noLevels')}</p>}
       <ul className="grid max-w-3xl gap-3">
         {levels?.map((l, i) => (
-          <li key={l.id} className="flex items-stretch border-2 border-ink bg-paper">
+          <li key={l.id} className="flex items-center gap-1 rounded-full border-2 border-ink bg-paper p-1">
             <button
               type="button"
               aria-pressed={selected === l.id}
               onClick={() => setSelected(l.id)}
-              className="min-h-11 flex-1 cursor-pointer bg-paper px-4 py-2 text-left font-medium hover:bg-accent hover:text-on-accent aria-pressed:bg-ink aria-pressed:font-bold aria-pressed:text-on-accent"
+              className="min-h-11 flex-1 cursor-pointer rounded-full bg-transparent px-4 py-2 text-left font-medium hover:bg-accent-soft aria-pressed:bg-accent aria-pressed:text-on-accent"
             >
               {pickLocalized(l.titles, i18n.resolvedLanguage)}
             </button>
-            <button type="button" className={`${iconButton} border-l-2 border-ink`} disabled={i === 0} onClick={() => move(i, -1)} aria-label={t('masterPrompt.moveUp')}>
+            <button type="button" className={iconButton} disabled={i === 0} onClick={() => move(i, -1)} aria-label={t('masterPrompt.moveUp')}>
               ↑
             </button>
-            <button type="button" className={`${iconButton} border-l-2 border-ink`} disabled={i === levels.length - 1} onClick={() => move(i, 1)} aria-label={t('masterPrompt.moveDown')}>
+            <button type="button" className={iconButton} disabled={i === levels.length - 1} onClick={() => move(i, 1)} aria-label={t('masterPrompt.moveDown')}>
               ↓
             </button>
-            <button type="button" className={`${iconButton} border-l-2 border-ink`} disabled={levels.length <= 1} onClick={() => remove(l)} aria-label={t('masterPrompt.delete')}>
+            <button type="button" className={iconButton} disabled={levels.length <= 1} onClick={() => remove(l)} aria-label={t('masterPrompt.delete')}>
               {t('masterPrompt.delete')}
             </button>
           </li>
@@ -232,7 +232,7 @@ function LevelEditor({ level, onSaved }: { level?: Level; onSaved: (id: string, 
       type="button"
       aria-pressed={mode === value}
       onClick={() => setMode(value)}
-      className="min-h-11 cursor-pointer border-2 border-ink bg-paper px-4 font-mono text-sm uppercase tracking-[0.04em] text-ink hover:bg-accent hover:text-on-accent aria-pressed:bg-ink aria-pressed:text-on-accent"
+      className="min-h-11 cursor-pointer rounded-full border-2 border-ink bg-paper px-5 font-sans text-base font-medium text-ink hover:bg-coral-soft aria-pressed:bg-coral"
     >
       {label}
     </button>
@@ -243,7 +243,7 @@ function LevelEditor({ level, onSaved }: { level?: Level; onSaved: (id: string, 
       <h2 className={h2}>{level ? t('masterPrompt.edit') : t('masterPrompt.new')}</h2>
       <div className="grid gap-3">
         {LANGUAGES.map((lang) => (
-          <fieldset key={lang} className="grid gap-3 border-2 border-ink p-4">
+          <fieldset key={lang} className="grid gap-3 rounded-card border-2 border-ink bg-paper p-5">
             <legend className={`${label} px-2`}>
               {LANGUAGE_NAMES[lang]}
               {lang === 'en' && <span className={muted}> ({t('masterPrompt.required')})</span>}
@@ -281,7 +281,7 @@ function LevelEditor({ level, onSaved }: { level?: Level; onSaved: (id: string, 
       ) : (
         <>
           <p className={`${muted} mt-3`}>{t('masterPrompt.previewNote', { n: ideas.length })}</p>
-          <pre className="mt-2 border-2 border-ink bg-paper p-4 font-mono text-sm leading-[1.6] whitespace-pre-wrap">
+          <pre className="mt-2 rounded-card border-2 border-ink bg-paper p-5 font-mono text-sm leading-[1.6] whitespace-pre-wrap">
             {renderPrompt(text, ideas, localeFor(i18n.resolvedLanguage))}
           </pre>
         </>

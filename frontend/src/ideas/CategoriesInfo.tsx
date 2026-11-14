@@ -34,7 +34,7 @@ export default function CategoriesInfo() {
         type="button"
         aria-label={t('ideas.categories.about')}
         aria-describedby={id}
-        className="ml-2 inline-flex h-7 w-7 cursor-pointer items-center justify-center border-2 border-ink bg-paper font-mono text-xs normal-case hover:bg-accent hover:text-on-accent"
+        className="ml-2 inline-flex h-7 w-7 cursor-pointer items-center justify-center rounded-full border-2 border-ink bg-paper font-display text-sm font-bold normal-case hover:bg-coral"
         onMouseEnter={() => setOpen(true)}
         onMouseLeave={() => setOpen(false)}
         onFocus={handleFocus}
@@ -47,7 +47,7 @@ export default function CategoriesInfo() {
         role="tooltip"
         id={id}
         hidden={!open}
-        className="absolute top-full left-0 z-10 mt-2 grid w-80 max-w-[80vw] gap-2 border-2 border-ink bg-paper p-4 font-sans text-sm font-normal normal-case tracking-normal text-ink"
+        className="absolute top-full left-0 z-10 mt-2 grid w-80 max-w-[80vw] gap-2 rounded-field border-2 border-ink bg-paper p-4 font-sans text-sm font-normal normal-case tracking-normal text-ink"
       >
         <span>{t('categories.intro')}</span>
         {CATEGORIES.map((c) => (

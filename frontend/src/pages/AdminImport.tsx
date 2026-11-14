@@ -15,8 +15,8 @@ function IcomColumnsHelp() {
     { id: 'location', title: pick(LOCATION_LABEL, lang), items: LOCATIONS },
   ]
   return (
-    <details className="mt-4 max-w-3xl border-2 border-ink">
-      <summary className={`${label} flex min-h-11 cursor-pointer items-center px-4 py-2 hover:bg-[#eef0fb]`}>
+    <details className="mt-4 max-w-3xl overflow-hidden rounded-card border-2 border-ink bg-paper">
+      <summary className={`${label} flex min-h-11 cursor-pointer items-center px-5 py-2 hover:bg-coral-soft`}>
         {t('admin.import.icomTitle')}
       </summary>
       <div className="grid gap-4 border-t-2 border-ink px-4 py-4">

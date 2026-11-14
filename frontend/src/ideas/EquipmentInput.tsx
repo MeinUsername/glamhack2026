@@ -55,12 +55,12 @@ export default function EquipmentInput({ value, onChange }: Props) {
     <div className="grid gap-2">
       <ul className="flex flex-wrap gap-2" aria-label={t('ideas.equipment.label')}>
         {value.map((name) => (
-          <li key={name} className="flex items-center border-2 border-ink pl-3 font-mono text-sm">
+          <li key={name} className="flex items-center rounded-full border-2 border-ink bg-paper pl-4 text-[15px] font-medium">
             {name}
             <button
               type="button"
               aria-label={t('ideas.equipment.remove', { name })}
-              className={`${iconButton} ml-2 border-l-2 border-ink`}
+              className={`${iconButton} ml-1`}
               onClick={() => onChange(value.filter((v) => v !== name))}
             >
               ×

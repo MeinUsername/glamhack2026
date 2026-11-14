@@ -58,7 +58,7 @@ function BasketEntry({ id, onGone }: { id: string; onGone: () => void }) {
   if (entry.status === 'loading') return <li className={muted}>{t('common.loading')}</li>
   if (entry.status === 'failed') {
     return (
-      <li className="flex flex-wrap items-center justify-between gap-3 border-2 border-ink bg-paper p-3">
+      <li className="flex flex-wrap items-center justify-between gap-3 rounded-card border-2 border-ink bg-paper p-4">
         <span className={errorText}>{t('ideas.loadError')}</span>
         <RemoveButton title={id} onClick={onGone} />
       </li>
@@ -67,15 +67,15 @@ function BasketEntry({ id, onGone }: { id: string; onGone: () => void }) {
   const { idea } = entry
   const title = idea.title || t('ideas.untitled')
   return (
-    <li className="flex flex-wrap items-center gap-4 border-2 border-ink bg-paper p-3">
+    <li className="flex flex-wrap items-center gap-4 rounded-card border-2 border-ink bg-paper p-4">
       {idea.images.length > 0 && (
         <img
           src={`/api/ideas/${idea.id}/images/0`}
           alt=""
-          className="aspect-[16/10] w-24 border-2 border-ink object-cover"
+          className="aspect-[16/10] w-28 rounded-field border-2 border-ink object-cover"
         />
       )}
-      <Link to={`/ideas/${idea.id}`} className="min-w-0 flex-1 text-xl font-bold tracking-[-0.02em] text-ink no-underline hover:text-ink hover:underline">
+      <Link to={`/ideas/${idea.id}`} className="min-w-0 flex-1 font-display text-[26px] leading-tight font-semibold tracking-[-0.03em] text-ink no-underline hover:text-accent">
         {title}
       </Link>
       <RemoveButton title={title} onClick={onGone} />

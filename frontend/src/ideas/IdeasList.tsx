@@ -1,13 +1,15 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useSearchParams } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { api } from '../api'
 import BasketButton from '../basket/BasketButton'
-import { buttonSecondary, errorText, h1, label, mark, muted } from '../ui'
+import { buttonOnAccent, errorText, h1, label, mark, muted } from '../ui'
 import { FilterChip } from './IcomChips'
 import {
   ICOM_CATEGORY_IDS,
   ICOM_GROUPS,
+  icomCategory,
+  location,
   LOCATION_IDS,
   LOCATION_LABEL,
   LOCATIONS,
@@ -39,6 +41,7 @@ function Overview() {
   const [rows, setRows] = useState<IdeaRow[] | null>(null)
   const [failed, setFailed] = useState(false)
   const [params, setParams] = useSearchParams()
+  const panel = useScrollable<HTMLElement>()
 
   const categories = parseIdList(params.get(CATEGORIES_PARAM), ICOM_CATEGORY_IDS)
   const locations = parseIdList(params.get(LOCATIONS_PARAM), LOCATION_IDS)
@@ -86,29 +89,63 @@ function Overview() {
       {rows === null && !failed && <p className={muted}>{t('common.loading')}</p>}
       {rows !== null && rows.length === 0 && <p className={muted}>{t('ideas.list.empty')}</p>}
       {rows !== null && rows.length > 0 && (
-        <>
-          <FilterBar
-            categories={categories}
-            locations={locations}
-            shown={shown.length}
-            total={rows.length}
-            onToggleCategory={(id) => update(CATEGORIES_PARAM, toggle(categories, id), ICOM_CATEGORY_IDS)}
-            onToggleLocation={(id) => update(LOCATIONS_PARAM, toggle(locations, id), LOCATION_IDS)}
-            onReset={reset}
-          />
-          {shown.length === 0 ? (
-            <p className={`${muted} mt-6`}>{t('ideas.filter.noMatch')}</p>
-          ) : (
-            <ul className="mt-8 grid grid-cols-[repeat(auto-fill,minmax(min(340px,100%),1fr))] gap-6">
-              {shown.map(({ row, number }) => (
-                <IdeaCard key={row.id} row={row} number={number} />
-              ))}
-            </ul>
-          )}
-        </>
+        // Filter as a side panel on the left; on narrow screens it stacks above the ideas.
+        <div className="flex flex-col gap-8 lg:flex-row lg:items-start">
+          {/* Scrolls on its own when taller than the window, without a visible scrollbar; the up/down
+              cursor shows that it can scroll (only when it really can). */}
+          <aside
+            ref={panel.ref}
+            className={`w-full [scrollbar-width:none] lg:sticky lg:top-6 lg:max-h-[calc(100vh-3rem)] lg:w-[360px] lg:shrink-0 lg:overflow-y-auto lg:rounded-card 2xl:w-[400px] [&::-webkit-scrollbar]:hidden ${
+              panel.scrollable ? 'lg:cursor-ns-resize' : ''
+            }`}
+          >
+            <FilterBar
+              categories={categories}
+              locations={locations}
+              shown={shown.length}
+              total={rows.length}
+              onToggleCategory={(id) => update(CATEGORIES_PARAM, toggle(categories, id), ICOM_CATEGORY_IDS)}
+              onToggleLocation={(id) => update(LOCATIONS_PARAM, toggle(locations, id), LOCATION_IDS)}
+              onReset={reset}
+            />
+          </aside>
+          <div className="min-w-0 flex-1">
+            {shown.length === 0 ? (
+              <p className={`${muted} m-0 pt-2`}>{t('ideas.filter.noMatch')}</p>
+            ) : (
+              <ul className="m-0 grid grid-cols-[repeat(auto-fill,minmax(min(300px,100%),1fr))] gap-x-6 gap-y-10 p-0 pt-4">
+                {shown.map(({ row, number }) => (
+                  <IdeaCard key={row.id} row={row} number={number} />
+                ))}
+              </ul>
+            )}
+          </div>
+        </div>
       )}
     </>
   )
+}
+
+// Tells whether an element is taller than its visible area (so it can scroll). Follows resizes and
+// content changes; without ResizeObserver (old browsers, tests) it stays false.
+function useScrollable<T extends HTMLElement>() {
+  const ref = useRef<T>(null)
+  const [scrollable, setScrollable] = useState(false)
+  useEffect(() => {
+    const el = ref.current
+    if (!el || typeof ResizeObserver === 'undefined') return
+    const check = () => setScrollable(el.scrollHeight > el.clientHeight + 1)
+    const observer = new ResizeObserver(check)
+    observer.observe(el)
+    for (const child of Array.from(el.children)) observer.observe(child)
+    window.addEventListener('resize', check)
+    check()
+    return () => {
+      observer.disconnect()
+      window.removeEventListener('resize', check)
+    }
+  })
+  return { ref, scrollable }
 }
 
 function FilterBar({
@@ -131,43 +168,102 @@ function FilterBar({
   const { t, i18n } = useTranslation()
   const lang = i18n.resolvedLanguage
   const active = categories.length + locations.length > 0
+
+  // One switch shows or hides the sub-categories of all main categories at once; there is no
+  // single-group toggle. It starts off, and turns on when a category is chosen (e.g. from a shared link).
+  const [showAll, setShowAll] = useState(categories.length > 0)
+  const categoriesKey = categories.join(',')
+  useEffect(() => {
+    if (categoriesKey) setShowAll(true)
+  }, [categoriesKey])
+  const panelIds = ICOM_GROUPS.map((g) => `filter-panel-${g.id}`).join(' ')
+
   return (
-    <section aria-labelledby="idea-filter-title" className="border-2 border-ink bg-paper">
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b-2 border-ink px-4 py-3">
-        <h2 id="idea-filter-title" className={`${label} m-0`}>
+    <section aria-labelledby="idea-filter-title" className="overflow-hidden rounded-card border-2 border-ink bg-paper">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b-2 border-ink bg-accent px-5 py-3 text-on-accent">
+        <h2 id="idea-filter-title" className="m-0 font-mono text-[13px] font-medium tracking-[0.05em] uppercase">
           {t('ideas.filter.title')}
         </h2>
-        <div className="flex flex-wrap items-center gap-3">
-          <p role="status" aria-live="polite" className={`${label} m-0`}>
+        <div className="flex flex-wrap items-center gap-4">
+          <p role="status" aria-live="polite" className="m-0 rounded-full bg-coral px-3 py-1 font-mono text-[13px] text-ink">
             {t('ideas.filter.count', { shown, total })}
           </p>
-          <button type="button" className={buttonSecondary} disabled={!active} onClick={onReset}>
+          <button type="button" className={buttonOnAccent} disabled={!active} onClick={onReset}>
             {t('ideas.filter.reset')}
           </button>
         </div>
       </div>
-      <div className="grid gap-6 px-4 py-5 lg:grid-cols-2">
-        {ICOM_GROUPS.map((g) => (
-          <div key={g.id} role="group" aria-labelledby={`filter-group-${g.id}`} className="grid content-start gap-2">
-            <h3 id={`filter-group-${g.id}`} className={`${label} m-0`}>
-              {pick(g.label, lang)}
-            </h3>
-            <div className="flex flex-wrap gap-2">
-              {g.categories.map((c) => (
-                <FilterChip
-                  key={c.id}
-                  pressed={categories.includes(c.id)}
-                  onClick={() => onToggleCategory(c.id)}
-                  title={pick(c.description, lang)}
+      <div className="grid gap-4 px-5 py-5">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <h3 className={`${label} m-0`}>{t('ideas.filter.categories')}</h3>
+          {/* On/off switch: the whole pill is the control, the track shows the state. */}
+          <button
+            type="button"
+            role="switch"
+            aria-checked={showAll}
+            aria-controls={panelIds}
+            onClick={() => setShowAll((v) => !v)}
+            className="group inline-flex min-h-11 cursor-pointer items-center gap-3 rounded-full py-1 pr-1 pl-3 font-sans text-base font-semibold text-ink hover:bg-coral-soft"
+          >
+            <span>{t('ideas.filter.expandAll')}</span>
+            <span
+              aria-hidden="true"
+              className={`relative inline-flex h-8 w-14 shrink-0 items-center rounded-full border-2 border-ink transition-colors ${
+                showAll ? 'bg-accent' : 'bg-paper'
+              }`}
+            >
+              <span
+                className={`absolute left-[3px] h-[22px] w-[22px] rounded-full border-2 border-ink transition-transform duration-200 ${
+                  showAll ? 'translate-x-6 bg-coral' : 'translate-x-0 bg-paper'
+                }`}
+              />
+            </span>
+          </button>
+        </div>
+        {/* Each main category sits right above its own sub-categories (one column in the side panel). */}
+        <div className="grid items-start gap-y-4">
+          {ICOM_GROUPS.map((g) => {
+            const chosen = g.categories.filter((c) => categories.includes(c.id)).length
+            return (
+              <div key={g.id} className="grid gap-2">
+                <h4
+                  id={`filter-group-${g.id}`}
+                  className="m-0 flex min-h-11 items-center justify-between gap-2.5 rounded-full border-2 border-ink bg-ink py-2 pr-3 pl-5 font-display text-[17px] font-semibold tracking-[-0.01em] text-on-accent"
                 >
-                  {pick(c.label, lang)}
-                </FilterChip>
-              ))}
-            </div>
-          </div>
-        ))}
+                  <span>{pick(g.label, lang)}</span>
+                  {chosen > 0 && (
+                    <span
+                      aria-hidden="true"
+                      className="inline-flex h-6 min-w-6 items-center justify-center rounded-full bg-coral px-1.5 font-mono text-xs text-ink"
+                    >
+                      {chosen}
+                    </span>
+                  )}
+                </h4>
+                <div
+                  id={`filter-panel-${g.id}`}
+                  hidden={!showAll}
+                  role="group"
+                  aria-labelledby={`filter-group-${g.id}`}
+                  className="flex flex-wrap gap-2 px-1 pt-1 pb-2"
+                >
+                  {g.categories.map((c) => (
+                    <FilterChip
+                      key={c.id}
+                      pressed={categories.includes(c.id)}
+                      onClick={() => onToggleCategory(c.id)}
+                      title={pick(c.description, lang)}
+                    >
+                      {pick(c.label, lang)}
+                    </FilterChip>
+                  ))}
+                </div>
+              </div>
+            )
+          })}
+        </div>
       </div>
-      <div role="group" aria-labelledby="filter-group-location" className="grid gap-2 border-t-2 border-ink px-4 py-5">
+      <div role="group" aria-labelledby="filter-group-location" className="grid gap-2 border-t-2 border-ink px-5 py-5">
         <h3 id="filter-group-location" className={`${label} m-0`}>
           {pick(LOCATION_LABEL, lang)}
         </h3>
@@ -185,30 +281,72 @@ function FilterBar({
 }
 
 function IdeaCard({ row, number }: { row: IdeaRow; number: number }) {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
+  const lang = i18n.resolvedLanguage
+  const nr = String(number).padStart(2, '0')
+  const locations = (row.locations ?? []).flatMap((id) => {
+    const o = location(id)
+    return o ? [pick(o.label, lang)] : []
+  })
+  const categories = (row.icomCategories ?? []).flatMap((id) => {
+    const c = icomCategory(id)
+    return c ? [pick(c.label, lang)] : []
+  })
+  const odd = number % 2 === 1
   return (
-    <li className="flex flex-col border-2 border-ink bg-paper">
-      <div className={`${label} border-b-2 border-ink px-4 py-3`}>
-        {t('ideas.list.number', { n: String(number).padStart(2, '0') })}
+    <li className="relative flex flex-col rounded-card border-2 border-ink bg-paper">
+      {/* Number sticker, tilted a little; odd and even lean different ways. */}
+      <span
+        className={`absolute -top-4 left-5 z-[1] inline-flex h-[52px] w-[52px] items-center justify-center rounded-full border-2 border-ink bg-coral font-display text-lg font-bold tracking-[-0.02em] text-ink ${
+          odd ? '-rotate-[8deg]' : 'rotate-[6deg]'
+        }`}
+      >
+        <span className="sr-only">{t('ideas.list.number', { n: nr })}</span>
+        <span aria-hidden="true">{nr}</span>
+      </span>
+      {/* Fixed 16:10 frame, set in from the card edge: the photo is laid over it, so tall or wide
+          photos never change its size. */}
+      <div className="relative mx-3 mt-3 aspect-[16/10] shrink-0 overflow-hidden rounded-[18px]">
+        {row.imageCount > 0 ? (
+          <img src={`/api/ideas/${row.id}/images/0`} alt="" className="absolute inset-0 h-full w-full object-cover" />
+        ) : (
+          // No picture: soft shapes in the accents, so the grid stays even.
+          <div aria-hidden="true" className={`absolute inset-0 overflow-hidden ${odd ? 'bg-accent' : 'bg-coral-soft'}`}>
+            <div className="absolute top-[14%] -right-[8%] aspect-square w-[44%] rounded-full bg-coral" />
+            <div
+              className={`absolute top-[28%] left-[18%] aspect-square w-[26%] rounded-full border-2 ${odd ? 'border-paper' : 'border-ink'}`}
+            />
+          </div>
+        )}
+        {row.imageCount > 1 && (
+          <span className="absolute right-3 bottom-3 rounded-full border-2 border-ink bg-paper px-3 py-0.5 font-mono text-xs uppercase">
+            {t('ideas.list.images', { count: row.imageCount })}
+          </span>
+        )}
       </div>
-      {row.imageCount > 0 && (
-        <img
-          src={`/api/ideas/${row.id}/images/0`}
-          alt=""
-          className="aspect-[16/10] w-full border-b-2 border-ink object-cover"
-        />
-      )}
-      <div className="flex flex-1 flex-col gap-3 px-5 pt-5 pb-6">
-        <h2 className="m-0 text-[clamp(26px,2.2vw,28px)] leading-[1.1] font-bold tracking-[-0.02em]">
-          <Link to={`/ideas/${row.id}`} className="text-ink no-underline hover:text-ink hover:underline">
+      <div className="flex flex-1 flex-col gap-3 px-6 pt-5 pb-6">
+        {locations.length > 0 && (
+          <ul className="m-0 flex list-none flex-wrap gap-1.5 p-0">
+            {locations.map((name) => (
+              <li key={name} className="rounded-full border-2 border-ink px-3 py-0.5 font-mono text-xs">
+                {name}
+              </li>
+            ))}
+          </ul>
+        )}
+        <h2 className="m-0 font-display text-[30px] leading-[1.08] font-semibold tracking-[-0.03em]">
+          <Link to={`/ideas/${row.id}`} className="text-ink no-underline hover:text-accent">
             {row.title || t('ideas.untitled')}
           </Link>
         </h2>
         {row.description && (
-          <p className="m-0 whitespace-pre-line text-base leading-[1.55] text-ink-2">{row.description}</p>
+          <p className="m-0 whitespace-pre-line text-[17px] leading-[1.6] text-ink-2">{row.description}</p>
         )}
+        {categories.length > 0 && <p className={`${label} m-0 mt-auto pt-1 text-xs text-ink-2`}>{categories.join(' · ')}</p>}
       </div>
-      <BasketButton ideaId={row.id} variant="bar" />
+      <div className="px-6 pb-6">
+        <BasketButton ideaId={row.id} variant="bar" />
+      </div>
     </li>
   )
 }

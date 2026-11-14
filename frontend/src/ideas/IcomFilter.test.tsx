@@ -46,7 +46,8 @@ describe('ICOM filter (F-021)', () => {
     mockIdeas()
     renderAt('/ideas')
     const u = userEvent.setup()
-    await u.click(await screen.findByRole('button', { name: 'Accessibility & Access' }))
+    await u.click(await screen.findByRole('switch', { name: 'Show all subcategories' }))
+    await u.click(screen.getByRole('button', { name: 'Accessibility & Access' }))
     await u.click(screen.getByRole('button', { name: 'Digital Mediation' }))
     expect(screen.getByRole('button', { name: 'Accessibility & Access' })).toHaveAttribute('aria-pressed', 'true')
     expect(shownTitles()).toEqual(['Talking hour', 'Online archive'])
@@ -62,6 +63,8 @@ describe('ICOM filter (F-021)', () => {
     renderAt('/ideas?categories=dialogue-exchange&locations=online')
     expect(await screen.findByText('0 of 3 ideas')).toBeInTheDocument()
     expect(screen.getByText('No idea matches this filter.')).toBeInTheDocument()
+    // A chosen category turns the switch on by itself.
+    expect(screen.getByRole('switch', { name: 'Show all subcategories' })).toHaveAttribute('aria-checked', 'true')
     expect(screen.getByRole('button', { name: 'Dialogue & Exchange' })).toHaveAttribute('aria-pressed', 'true')
     expect(screen.getByRole('button', { name: 'Online' })).toHaveAttribute('aria-pressed', 'true')
   })
@@ -75,7 +78,8 @@ describe('ICOM filter (F-021)', () => {
       </MemoryRouter>,
     )
     const u = userEvent.setup()
-    await u.click(await screen.findByRole('button', { name: 'Digital Mediation' }))
+    await u.click(await screen.findByRole('switch', { name: 'Show all subcategories' }))
+    await u.click(screen.getByRole('button', { name: 'Digital Mediation' }))
     await u.click(screen.getByRole('button', { name: 'Accessibility & Access' }))
     await u.click(screen.getByRole('button', { name: 'Onsite' }))
     // Categories in the order of the JSON file, not in click order.
@@ -91,9 +95,40 @@ describe('ICOM filter (F-021)', () => {
     mockIdeas()
     renderAt('/ideas')
     const filter = within(await screen.findByRole('region', { name: 'Filter' }))
+    await userEvent.setup().click(filter.getByRole('switch', { name: 'Alle Unterkategorien zeigen' }))
     expect(filter.getByRole('group', { name: 'Zugang & Inklusion' })).toBeInTheDocument()
     expect(filter.getByRole('button', { name: 'Barrierefreiheit & Zugang' })).toBeInTheDocument()
     expect(filter.getByRole('button', { name: 'Im Museum' })).toBeInTheDocument()
+  })
+})
+
+describe('Schalter für alle Unterkategorien', () => {
+  beforeEach(() => localStorage.clear())
+
+  it('zeigt die Unterkategorien nur alle oder keine', async () => {
+    mockIdeas()
+    renderAt('/ideas')
+    const u = userEvent.setup()
+    const toggle = await screen.findByRole('switch', { name: 'Show all subcategories' })
+    expect(toggle).toHaveAttribute('aria-checked', 'false')
+    // Main categories are headings, not buttons: there is no way to open just one.
+    expect(screen.getByRole('heading', { name: 'Access & Inclusion' })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Access & Inclusion' })).toBeNull()
+    expect(screen.queryByRole('button', { name: 'Accessibility & Access' })).toBeNull()
+
+    await u.click(toggle)
+    expect(toggle).toHaveAttribute('aria-checked', 'true')
+    for (const name of ['Participation & Co-creation', 'Accessibility & Access', 'Digital Mediation', 'Sustainability & Climate']) {
+      expect(screen.getByRole('button', { name })).toBeInTheDocument()
+    }
+    await u.click(screen.getByRole('button', { name: 'Accessibility & Access' }))
+    expect(screen.getByText('1 of 3 ideas')).toBeInTheDocument()
+
+    // Switching off hides all chips but keeps the choice.
+    await u.click(toggle)
+    expect(toggle).toHaveAttribute('aria-checked', 'false')
+    expect(screen.queryByRole('button', { name: 'Sustainability & Climate' })).toBeNull()
+    expect(screen.getByText('1 of 3 ideas')).toBeInTheDocument()
   })
 })
 

@@ -7,9 +7,10 @@ import { buttonSecondary, chip, errorText, h1Compact, label, muted } from '../ui
 import { CATEGORY_LABEL } from './categories'
 import BasketButton from '../basket/BasketButton'
 import { icomCategory, location, LOCATION_LABEL, pick } from './icom'
+import Gallery from './Gallery'
 
 const tagLink =
-  'inline-flex min-h-11 items-center border-2 border-ink bg-paper px-3 py-2 text-[15px] leading-tight font-medium text-ink no-underline hover:bg-accent hover:text-on-accent'
+  'inline-flex min-h-11 items-center rounded-full border-2 border-ink bg-paper px-[18px] py-2 text-[15px] leading-tight font-medium text-ink no-underline hover:bg-coral hover:text-ink'
 
 // F-021: the ICOM categories and locations of the idea. Each one links to the overview filtered by it.
 function IcomTags({ idea }: { idea: Idea }) {
@@ -113,19 +114,7 @@ function Show({ idea }: { idea: Idea }) {
         </ul>
       )}
       <IcomTags idea={idea} />
-      {idea.images.length > 0 && (
-        <ul className="grid grid-cols-2 gap-3">
-          {idea.images.map((_, n) => (
-            <li key={n}>
-              <img
-                src={`/api/ideas/${idea.id}/images/${n}`}
-                alt={t('ideas.imageAlt', { title, n: n + 1 })}
-                className="aspect-[16/10] w-full border-2 border-ink object-cover"
-              />
-            </li>
-          ))}
-        </ul>
-      )}
+      <Gallery ideaId={idea.id} count={idea.images.length} title={title} />
       <Section title={t('ideas.field.description')} text={idea.description} />
       <Section title={t('ideas.field.descriptionOfInteraction')} text={idea.descriptionOfInteraction} />
       <Section title={t('ideas.field.targetGroup')} text={idea.targetGroup} />
@@ -161,7 +150,7 @@ function Show({ idea }: { idea: Idea }) {
 }
 
 // Section heads look like the metadata lines of an object label.
-const sectionHead = `${label} mb-2 border-t-2 border-ink pt-3`
+const sectionHead = `${label} mb-2 border-t border-ink/20 pt-4`
 
 function Section({ title, text }: { title: string; text: string }) {
   return (

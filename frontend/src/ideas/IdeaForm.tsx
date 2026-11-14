@@ -195,7 +195,7 @@ function IdeaEditor({ edit }: { edit?: Idea }) {
             {edit.images.map((_, n) => (
               <label key={n} className="flex min-h-11 cursor-pointer items-center gap-3">
                 <input type="checkbox" checked={keep.includes(n)} onChange={() => toggleKeep(n)} />
-                <img src={`/api/ideas/${edit.id}/images/${n}`} alt="" className="h-12 w-12 border-2 border-ink object-cover" />
+                <img src={`/api/ideas/${edit.id}/images/${n}`} alt="" className="h-12 w-12 rounded-[10px] border-2 border-ink object-cover" />
                 <span>{t('ideas.keepImage', { n: n + 1 })}</span>
               </label>
             ))}
