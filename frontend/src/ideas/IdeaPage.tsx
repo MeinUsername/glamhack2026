@@ -8,6 +8,7 @@ import { CATEGORY_LABEL } from './categories'
 import BasketButton from '../basket/BasketButton'
 import { icomCategory, location, LOCATION_LABEL, pick } from './icom'
 import Gallery from './Gallery'
+import StatusBadge from '../components/StatusBadge'
 import MarkdownView from '../components/MarkdownView'
 
 const tagLink =
@@ -99,6 +100,12 @@ function Show({ idea }: { idea: Idea }) {
   return (
     <article className="grid max-w-3xl gap-5">
       <h1 className={`${h1Compact} mb-0`}>{title}</h1>
+      <StatusBadge status={idea.status} />
+      {idea.status === 'rejected' && idea.rejectionReason && (
+        <p role="note" className="m-0">
+          <strong>{t('status.reason')}:</strong> {idea.rejectionReason}
+        </p>
+      )}
       <div className="flex flex-wrap items-center gap-3">
         <BasketButton ideaId={idea.id} />
         <Link to={`/ideas/${idea.id}/edit`} className={buttonSecondary}>

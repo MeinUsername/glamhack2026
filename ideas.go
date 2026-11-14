@@ -64,8 +64,11 @@ type ideaDoc struct {
 	Images                   []imageDoc `firestore:"images"`
 	// TermsAcceptedAt is when the author confirmed the Terms and Conditions (F-028); nil if never (old or imported ideas).
 	TermsAcceptedAt *time.Time `firestore:"terms_accepted_at"`
-	CreatedBy       string     `firestore:"created_by"`
-	CreatedAt       time.Time  `firestore:"created_at"`
+	// Status is pending, published or rejected; empty (saved before F-030) counts as published.
+	Status          string    `firestore:"status"`
+	RejectionReason string    `firestore:"rejection_reason"`
+	CreatedBy       string    `firestore:"created_by"`
+	CreatedAt       time.Time `firestore:"created_at"`
 }
 
 type spaceDoc struct {
@@ -140,6 +143,8 @@ type ideaView struct {
 	Budget                   *string     `json:"budget"`
 	Images                   []imageView `json:"images"`
 	CreatedAt                string      `json:"createdAt"`
+	Status                   string      `json:"status"`
+	RejectionReason          string      `json:"rejectionReason,omitempty"`
 }
 
 type spaceView struct {
@@ -377,7 +382,8 @@ func (s *server) apiCreateIdea(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	doc.Images = stored
-	doc.CreatedBy = u.ID // "" for anonymous users
+	doc.CreatedBy = u.ID       // "" for anonymous users
+	doc.Status = statusPending // F-030: an admin publishes it
 	doc.CreatedAt = time.Now().UTC()
 
 	err = s.db.RunTransaction(ctx, func(ctx context.Context, tx *firestore.Transaction) error {
@@ -408,7 +414,8 @@ func (s *server) apiCreateIdea(w http.ResponseWriter, r *http.Request) {
 		writeJSONError(w, http.StatusInternalServerError, "internal error")
 		return
 	}
-	writeJSON(w, http.StatusCreated, map[string]string{"id": ref.ID})
+	s.notifyAdminsPending(ctx, doc.Title)
+	writeJSON(w, http.StatusCreated, map[string]string{"id": ref.ID, "status": statusPending})
 }
 
 // readIdeaImages checks the uploaded files: count, size and format (by content, not by name).
@@ -464,6 +471,10 @@ func (s *server) apiGetIdea(w http.ResponseWriter, r *http.Request) {
 		writeJSONError(w, http.StatusInternalServerError, "internal error")
 		return
 	}
+	if !canViewStatus(effectiveStatus(d), s.viewerIsAdmin(r)) {
+		writeJSONError(w, http.StatusNotFound, "idea not found") // same answer as for an unknown ID (AC-030-2)
+		return
+	}
 	writeJSON(w, http.StatusOK, toIdeaView(snap.Ref.ID, d))
 }
 
@@ -491,6 +502,8 @@ func toIdeaView(id string, d ideaDoc) ideaView {
 		ICOMCategories:           emptyIfNil(d.ICOMCategories), // pages saved before F-024 have no field
 		Locations:                emptyIfNil(d.Locations),
 		CreatedAt:                d.CreatedAt.Format(time.RFC3339),
+		Status:                   effectiveStatus(d),
+		RejectionReason:          d.RejectionReason,
 	}
 	if v.TargetGroup == "" {
 		v.TargetGroup = d.LegacyAudience // no migration (Q-014-09)
@@ -523,6 +536,10 @@ func (s *server) apiIdeaImage(w http.ResponseWriter, r *http.Request) {
 	var d ideaDoc
 	if err := snap.DataTo(&d); err != nil {
 		writeJSONError(w, http.StatusInternalServerError, "internal error")
+		return
+	}
+	if !canViewStatus(effectiveStatus(d), s.viewerIsAdmin(r)) {
+		writeJSONError(w, http.StatusNotFound, "idea not found")
 		return
 	}
 	n, err := strconv.Atoi(r.PathValue("n"))
@@ -595,6 +612,8 @@ type ideaSummary struct {
 	Description string `json:"description"`
 	// CoverVersion is the version of the first image, for its cache-proof URL (F-029).
 	CoverVersion string `json:"coverVersion,omitempty"`
+	// Status is only set for ideas that are not published; only admins get those (F-030).
+	Status string `json:"status,omitempty"`
 	// F-024: for the filter bar of the overview.
 	ICOMCategories []string `json:"icomCategories"`
 	Locations      []string `json:"locations"`
@@ -604,6 +623,7 @@ type ideaSummary struct {
 func (s *server) apiListIdeas(w http.ResponseWriter, r *http.Request) {
 	it := s.db.Collection("ideas").OrderBy("created_at", firestore.Desc).Documents(r.Context())
 	defer it.Stop()
+	isAdmin := s.viewerIsAdmin(r)
 	out := []ideaSummary{}
 	for {
 		snap, err := it.Next()
@@ -620,6 +640,10 @@ func (s *server) apiListIdeas(w http.ResponseWriter, r *http.Request) {
 			log.Printf("decode idea %s: %v", snap.Ref.ID, err)
 			continue
 		}
+		status := effectiveStatus(d)
+		if !canViewStatus(status, isAdmin) {
+			continue
+		}
 		row := ideaSummary{
 			ID:             snap.Ref.ID,
 			Title:          d.Title,
@@ -627,6 +651,9 @@ func (s *server) apiListIdeas(w http.ResponseWriter, r *http.Request) {
 			Description:    d.Description,
 			ICOMCategories: emptyIfNil(d.ICOMCategories),
 			Locations:      emptyIfNil(d.Locations),
+		}
+		if status != statusPublished {
+			row.Status = status
 		}
 		if len(d.Images) > 0 {
 			row.CoverVersion = imageVersion(d.Images[0].Object)

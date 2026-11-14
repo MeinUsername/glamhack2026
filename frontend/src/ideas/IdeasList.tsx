@@ -4,6 +4,8 @@ import { useTranslation } from 'react-i18next'
 import { api } from '../api'
 import BasketButton from '../basket/BasketButton'
 import { imageUrl } from './imageUrl'
+import StatusBadge from '../components/StatusBadge'
+import type { IdeaStatus } from '../types'
 import { buttonOnAccent, errorText, h1, label, mark, muted } from '../ui'
 import { FilterChip } from './IcomChips'
 import {
@@ -25,6 +27,7 @@ interface IdeaRow {
   imageCount: number
   description: string
   coverVersion?: string
+  status?: IdeaStatus
   icomCategories?: string[]
   locations?: string[]
 }
@@ -336,6 +339,7 @@ function IdeaCard({ row, number }: { row: IdeaRow; number: number }) {
             ))}
           </ul>
         )}
+        <StatusBadge status={row.status} />
         <h2 className="m-0 font-display text-[30px] leading-[1.08] font-semibold tracking-[-0.03em]">
           <Link to={`/ideas/${row.id}`} className="text-ink no-underline hover:text-accent">
             {row.title || t('ideas.untitled')}

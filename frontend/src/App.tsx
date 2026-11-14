@@ -11,6 +11,8 @@ import IdeaPage from './ideas/IdeaPage'
 import Basket from './pages/Basket'
 import IdeasList from './ideas/IdeasList'
 import FeedbackPrompts from './pages/FeedbackPrompts'
+import AdminApprovals from './pages/AdminApprovals'
+import IdeaSubmitted from './pages/IdeaSubmitted'
 import Imprint from './pages/Imprint'
 import Terms from './pages/Terms'
 
@@ -31,6 +33,8 @@ export default function App() {
         <Route path="/basket" element={<Basket />} />
         <Route path="/ideas" element={<IdeasList />} />
         <Route path="/feedback-prompts" element={<FeedbackPrompts />} />
+        <Route path="/admin/approvals" element={<AdminApprovals />} />
+        <Route path="/ideas/submitted" element={<IdeaSubmitted />} />
         <Route path="/imprint" element={<Imprint />} />
         <Route path="/terms" element={<Terms />} />
       </Route>

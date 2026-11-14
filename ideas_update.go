@@ -101,6 +101,14 @@ func (s *server) apiUpdateIdea(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// F-030: pending and rejected ideas can only be changed by an admin (D3); everybody else gets 404.
+	if !canViewStatus(effectiveStatus(old), s.viewerIsAdmin(r)) {
+		writeJSONError(w, http.StatusNotFound, "idea not found")
+		return
+	}
+	newStatus, notify := nextStatusOnEdit(effectiveStatus(old))
+	doc.Status = newStatus // the reason of a rejection is dropped with the new review
+
 	kept, removed, err := selectKeptImages(old.Images, body.KeepImages)
 	if err != nil {
 		writeUserError(w, err)
@@ -128,7 +136,10 @@ func (s *server) apiUpdateIdea(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	s.deleteObjects(ctx, removed) // only after the new version is stored
-	writeJSON(w, http.StatusOK, map[string]string{"id": id})
+	if notify {
+		s.notifyAdminsPending(ctx, doc.Title)
+	}
+	writeJSON(w, http.StatusOK, map[string]string{"id": id, "status": newStatus})
 }
 
 // writeIdea stores the idea and adds the equipment catalog entries that are still missing,

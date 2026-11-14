@@ -131,3 +131,24 @@ describe('IdeaPage credit line (F-027)', () => {
     expect(screen.queryByRole('heading', { name: 'Credit line and contact information' })).toBeNull()
   })
 })
+
+describe('IdeaPage status (F-030)', () => {
+  it('AC-030-3 kennzeichnet eine Idee in Prüfung und zeigt die Begründung einer abgelehnten', async () => {
+    routeFetch({ 'GET /api/ideas/i1': () => ({ json: { ...base, categories: [], status: 'pending' } }) })
+    const first = renderAt('/ideas/i1')
+    expect(await screen.findByText('In review')).toBeInTheDocument()
+    first.unmount()
+
+    routeFetch({ 'GET /api/ideas/i1': () => ({ json: { ...base, categories: [], status: 'rejected', rejectionReason: 'zu vage' } }) })
+    renderAt('/ideas/i1')
+    expect(await screen.findByText('Rejected')).toBeInTheDocument()
+    expect(screen.getByRole('note')).toHaveTextContent('zu vage')
+  })
+
+  it('AC-030-10 zeigt bei veröffentlichten und alten Ideen keine Kennzeichnung', async () => {
+    routeFetch({ 'GET /api/ideas/i1': () => ({ json: { ...base, categories: [] } }) })
+    renderAt('/ideas/i1')
+    await screen.findByRole('heading', { name: 'Lichtinstallation' })
+    expect(screen.queryByText('In review')).toBeNull()
+  })
+})

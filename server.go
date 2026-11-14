@@ -32,6 +32,7 @@ type server struct {
 	bucket *storage.BucketHandle
 	authc  *auth.Client
 	mux    *http.ServeMux
+	mailer Mailer // F-030; logMailer until a provider is chosen
 }
 
 func newServer(ctx context.Context) (*server, error) {
@@ -66,6 +67,7 @@ func newServer(ctx context.Context) (*server, error) {
 		bucket: gcs.Bucket(bucketName),
 		authc:  authc,
 		mux:    http.NewServeMux(),
+		mailer: logMailer{},
 	}
 	// F-012 T1: the initial admin exists after the start. A failure is logged, the app still starts.
 	if err := s.ensureInitialAdmin(ctx); err != nil {
@@ -94,6 +96,7 @@ func (s *server) routes() {
 		redirect(w, r, "/ideas") // F-016: the dashboard is gone
 	})
 	m.HandleFunc("GET /ideas/new", serveApp)
+	m.HandleFunc("GET /ideas/submitted", serveApp) // F-030: confirmation after submitting
 	m.HandleFunc("GET /ideas/{id}", serveApp)
 	m.HandleFunc("GET /ideas/{id}/edit", serveApp)  // F-012 T6
 	m.HandleFunc("GET /basket", serveApp)           // F-006: public, no redirect
@@ -102,6 +105,10 @@ func (s *server) routes() {
 	m.HandleFunc("GET /imprint", serveApp)          // F-028: public legal pages
 	m.HandleFunc("GET /terms", serveApp)
 	m.HandleFunc("GET /admin/users", s.requireAdmin(s.adminPage))
+	m.HandleFunc("GET /admin/approvals", s.requireAdmin(s.adminPage)) // F-030
+	m.HandleFunc("GET /api/admin/approvals", s.requireAdmin(s.apiApprovals))
+	m.HandleFunc("POST /api/admin/approvals/{id}/publish", s.requireAdmin(s.apiPublishIdea))
+	m.HandleFunc("POST /api/admin/approvals/{id}/reject", s.requireAdmin(s.apiRejectIdea))
 	m.HandleFunc("GET /admin/import", s.requireAdmin(s.adminPage))        // F-015: CSV import page
 	m.HandleFunc("GET /admin/master-prompt", s.requireAdmin(s.adminPage)) // F-008: editor page
 	m.HandleFunc("GET /app/{$}", func(w http.ResponseWriter, r *http.Request) {

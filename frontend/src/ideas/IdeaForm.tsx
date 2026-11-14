@@ -2,6 +2,7 @@ import { useEffect, useState, type ChangeEvent, type FormEvent, type ReactNode }
 import { useNavigate, useParams } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { api, ApiError } from '../api'
+import { useMe } from '../auth/useMe'
 import { button, errorText, h1, input, label as labelClass, muted } from '../ui'
 import EquipmentInput from './EquipmentInput'
 import { BUDGETS, imageProblem, isValidEmail, MAX_IDEA_IMAGES } from './rules'
@@ -117,6 +118,7 @@ export function IdeaEdit() {
 
 function IdeaEditor({ edit }: { edit?: Idea }) {
   const navigate = useNavigate()
+  const me = useMe()
   const { t } = useTranslation()
   const [draft, setDraft] = useState<Draft>(() => (edit ? draftFrom(edit) : emptyDraft))
   // Indices of the existing images that stay (keepImages). New ones are added with the file picker.
@@ -210,10 +212,12 @@ function IdeaEditor({ edit }: { edit?: Idea }) {
 
     setBusy(true)
     try {
-      const { id } = edit
-        ? await api<{ id: string }>(`/api/ideas/${edit.id}`, { method: 'PUT', body: form })
-        : await api<{ id: string }>('/api/ideas', { method: 'POST', body: form })
-      navigate(`/ideas/${id}`)
+      const { id, status } = edit
+        ? await api<{ id: string; status?: string }>(`/api/ideas/${edit.id}`, { method: 'PUT', body: form })
+        : await api<{ id: string; status?: string }>('/api/ideas', { method: 'POST', body: form })
+      // F-030 O1: a pending idea is invisible to non-admins, so they get a confirmation instead of the idea page.
+      const isAdmin = me.status === 'ready' && me.me.role === 'admin'
+      navigate(status === 'pending' && !isAdmin ? '/ideas/submitted' : `/ideas/${id}`)
     } catch (err) {
       setError(err instanceof ApiError ? err.message : t('ideas.saveError'))
       setBusy(false) // the entered values stay in the form

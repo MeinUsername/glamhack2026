@@ -47,6 +47,9 @@ export default function Layout() {
                 <NavLink to="/admin/master-prompt" className={navClass}>
                   {t('nav.masterPrompt')}
                 </NavLink>
+                <NavLink to="/admin/approvals" className={navClass}>
+                  {t('nav.approvals')}
+                </NavLink>
                 <NavLink to="/admin/import" className={navClass}>
                   {t('nav.import')}
                 </NavLink>

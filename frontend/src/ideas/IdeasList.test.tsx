@@ -101,3 +101,17 @@ describe('IdeasList edit entry (F-020)', () => {
   })
 })
 })
+
+describe('IdeasList status (F-030)', () => {
+  it('AC-030-3 kennzeichnet Ideen in Prüfung für Admins', async () => {
+    routeFetch({
+      'GET /api/me': () => ({ json: { email: 'a@example.ch', role: 'admin' } }),
+      'GET /api/ideas': () => ({ json: [{ ...rows[0], status: 'pending' }, rows[1]] }),
+    })
+    renderAt('/ideas')
+    const first = (await screen.findByRole('link', { name: 'Lichtinstallation' })).closest('li') as HTMLElement
+    expect(within(first).getByText('In review')).toBeInTheDocument()
+    const second = screen.getByRole('link', { name: 'Klangraum' }).closest('li') as HTMLElement
+    expect(within(second).queryByText('In review')).toBeNull()
+  })
+})

@@ -125,6 +125,7 @@ func parseIdeaCSV(r io.Reader) ([]importRow, error) {
 		} else if doc, catalog, err := validateIdeaInput(in); err != nil {
 			row.Status, row.Message = importInvalid, err.Error()
 		} else {
+			doc.Status = statusPublished // F-030 D12
 			row.doc, row.catalog = doc, catalog
 		}
 		rows = append(rows, row)
@@ -268,6 +269,7 @@ func (s *server) apiImportIdeas(w http.ResponseWriter, r *http.Request, actor se
 		}
 		doc := row.doc
 		doc.CreatedBy = actor.ID
+		doc.Status = statusPublished // F-030 D12: the admin import publishes at once, no mail
 		doc.CreatedAt = now
 		batch.Set(s.db.Collection("ideas").NewDoc(), doc)
 		pending++

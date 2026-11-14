@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import userEvent from '@testing-library/user-event'
-import { screen, within } from '@testing-library/react'
+import { screen, waitFor, within } from '@testing-library/react'
 import { renderAt, routeFetch, saveIdea } from '../test/helpers'
 
 const user = { json: { email: 'a@example.ch', role: 'user' } }
@@ -369,5 +369,39 @@ describe('IdeaForm', () => {
     routeFetch({ 'GET /api/me': () => user, 'GET /api/ideas/i1': () => savedIdea })
     renderAt('/ideas/i1/edit')
     expect(await screen.findByRole('checkbox', { name: /I confirm that my content/ })).not.toBeChecked()
+  })
+
+  it('AC-030-1 leitet Nicht-Admins nach dem Einreichen auf die Bestätigungsseite', async () => {
+    routeFetch({
+      'GET /api/me': () => user,
+      'POST /api/ideas': () => ({ status: 201, json: { id: 'i1', status: 'pending' } }),
+    })
+    renderAt('/ideas/new')
+    await saveIdea(userEvent.setup())
+    expect(await screen.findByRole('heading', { name: 'Idea submitted' })).toBeInTheDocument()
+  })
+
+  it('AC-030-3 schickt Admins nach dem Speichern auf die Idee-Seite', async () => {
+    const { calls } = routeFetch({
+      'GET /api/me': () => ({ json: { email: 'a@example.ch', role: 'admin' } }),
+      'POST /api/ideas': () => ({ status: 201, json: { id: 'i1', status: 'pending' } }),
+      'GET /api/ideas/i1': () => savedIdea,
+    })
+    renderAt('/ideas/new')
+    await saveIdea(userEvent.setup())
+    await waitFor(() => expect(calls.some((c) => c.method === 'GET' && c.url === '/api/ideas/i1')).toBe(true))
+    expect(screen.queryByRole('heading', { name: 'Idea submitted' })).toBeNull()
+  })
+
+  it('AC-030-9 leitet auch nach dem Bearbeiten einer veröffentlichten Idee auf die Bestätigung', async () => {
+    routeFetch({
+      'GET /api/me': () => user,
+      'GET /api/ideas/i1': () => savedIdea,
+      'PUT /api/ideas/i1': () => ({ json: { id: 'i1', status: 'pending' } }),
+    })
+    renderAt('/ideas/i1/edit')
+    await screen.findByLabelText('Title')
+    await saveIdea(userEvent.setup())
+    expect(await screen.findByRole('heading', { name: 'Idea submitted' })).toBeInTheDocument()
   })
 })

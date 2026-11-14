@@ -35,11 +35,15 @@ export interface IdeaImage {
   version: string
 }
 
+export type IdeaStatus = 'pending' | 'published' | 'rejected'
+
 export interface Idea {
   id: string
   title: string
   description: string
   mediationConcept: string
+  status?: IdeaStatus // F-030; missing counts as published
+  rejectionReason?: string
   creditFirstName: string
   creditLastName: string
   creditInstitute: string

@@ -90,6 +90,10 @@ go vet ./... && go test ./...
 
 `npm run dev` startet den Vite-Entwicklungsserver (unter `/app/`).
 
+## Freigabe von Ideen (F-030)
+
+Neue und geänderte Ideen haben den Status `pending`. Nur Admins sehen sie (Übersicht, Detailseite, Bilder), für alle anderen antwortet die API mit 404. Admins veröffentlichen oder lehnen auf `/admin/approvals` ab. Ideen ohne Statusfeld gelten als `published`, der Admin-CSV-Import veröffentlicht sofort. Beim Einreichen geht eine Mail an alle aktiven Admins, mit Link aus `APP_BASE_URL`. **Der Mail-Anbieter ist noch nicht gewählt** (F-030 D8): bis dahin verwendet der Server `logMailer`, der nur ins Log schreibt. Ein echter Versand braucht eine Implementierung von `Mailer` (`ideas_status.go`) und die Auswahl in `newServer`.
+
 ## Keine Indexierung (F-032)
 
 Die App ist per `/robots.txt`, dem Header `X-Robots-Tag: noindex, nofollow` und `<meta name="robots">` von Suchmaschinen ausgenommen. Bekannte Crawler und KI-Bots (User-Agent, Liste in `robots.go`) bekommen auf allen Routen ausser `/robots.txt` ein 403. Neue Bots werden nur in `robots.go` ergänzt. Bereits indexierte Seiten müssen über die Search Console der Suchmaschinen entfernt werden.
