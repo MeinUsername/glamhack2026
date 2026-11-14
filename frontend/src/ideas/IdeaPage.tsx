@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Link, useParams } from 'react-router'
+import { Link, useNavigate, useParams } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { api, ApiError } from '../api'
 import type { Idea } from '../types'
@@ -10,6 +10,7 @@ import { icomCategory, location, LOCATION_LABEL, pick } from './icom'
 import Gallery from './Gallery'
 import StatusBadge from '../components/StatusBadge'
 import MarkdownView from '../components/MarkdownView'
+import { useMe } from '../auth/useMe'
 import { groupLinks } from './links'
 import { useLinkTypes } from './useLinkTypes'
 
@@ -113,6 +114,7 @@ function Show({ idea }: { idea: Idea }) {
         <Link to={`/ideas/${idea.id}/edit`} className={buttonSecondary}>
           {t('ideas.edit')}
         </Link>
+        <DeleteButton ideaId={idea.id} />
       </div>
       {idea.categories.length > 0 && (
         <ul aria-label={t('ideas.categories.chips')} className="flex flex-wrap gap-2">
@@ -164,6 +166,35 @@ function Show({ idea }: { idea: Idea }) {
         </section>
       )}
     </article>
+  )
+}
+
+// F-033: only admins see it. The idea goes to the trash (soft delete) and can be restored there.
+function DeleteButton({ ideaId }: { ideaId: string }) {
+  const { t } = useTranslation()
+  const me = useMe()
+  const navigate = useNavigate()
+  const [error, setError] = useState('')
+  if (me.status !== 'ready' || me.me.role !== 'admin') return null
+
+  async function remove() {
+    if (!window.confirm(t('ideas.delete.confirm'))) return
+    setError('')
+    try {
+      await api(`/api/ideas/${encodeURIComponent(ideaId)}`, { method: 'DELETE' })
+      navigate('/ideas')
+    } catch {
+      setError(t('ideas.delete.error'))
+    }
+  }
+
+  return (
+    <>
+      <button type="button" className={buttonSecondary} onClick={remove}>
+        {t('ideas.delete')}
+      </button>
+      {error && <p role="alert" className={`${errorText} m-0`}>{error}</p>}
+    </>
   )
 }
 

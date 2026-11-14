@@ -50,6 +50,9 @@ export default function Layout() {
                 <NavLink to="/admin/approvals" className={navClass}>
                   {t('nav.approvals')}
                 </NavLink>
+                <NavLink to="/admin/trash" className={navClass}>
+                  {t('nav.trash')}
+                </NavLink>
                 <NavLink to="/admin/link-types" className={navClass}>
                   {t('nav.linkTypes')}
                 </NavLink>

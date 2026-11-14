@@ -72,6 +72,8 @@ type ideaDoc struct {
 	RejectionReason string    `firestore:"rejection_reason"`
 	CreatedBy       string    `firestore:"created_by"`
 	CreatedAt       time.Time `firestore:"created_at"`
+	// DeletedAt is set when an admin removed the idea (F-033); nil means active. Nothing else is touched, so it can be restored.
+	DeletedAt *time.Time `firestore:"deleted_at"`
 }
 
 type spaceDoc struct {
@@ -486,7 +488,7 @@ func (s *server) apiGetIdea(w http.ResponseWriter, r *http.Request) {
 		writeJSONError(w, http.StatusInternalServerError, "internal error")
 		return
 	}
-	if !canViewStatus(effectiveStatus(d), s.viewerIsAdmin(r)) {
+	if !visibleTo(d, s.viewerIsAdmin(r)) {
 		writeJSONError(w, http.StatusNotFound, "idea not found") // same answer as for an unknown ID (AC-030-2)
 		return
 	}
@@ -554,7 +556,7 @@ func (s *server) apiIdeaImage(w http.ResponseWriter, r *http.Request) {
 		writeJSONError(w, http.StatusInternalServerError, "internal error")
 		return
 	}
-	if !canViewStatus(effectiveStatus(d), s.viewerIsAdmin(r)) {
+	if !visibleTo(d, s.viewerIsAdmin(r)) {
 		writeJSONError(w, http.StatusNotFound, "idea not found")
 		return
 	}
@@ -657,7 +659,7 @@ func (s *server) apiListIdeas(w http.ResponseWriter, r *http.Request) {
 			continue
 		}
 		status := effectiveStatus(d)
-		if !canViewStatus(status, isAdmin) {
+		if !visibleTo(d, isAdmin) {
 			continue
 		}
 		row := ideaSummary{

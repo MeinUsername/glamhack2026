@@ -352,4 +352,16 @@ export const en = {
   'linkTypes.delete': 'Delete',
   'linkTypes.deleted': 'Type deleted.',
   'linkTypes.confirmDelete': 'Delete the type "{{name}}"?',
+
+  'nav.trash': 'Trash',
+  'ideas.delete': 'Delete',
+  'ideas.delete.confirm': 'Move this idea to the trash? It disappears for everybody and an admin can restore it.',
+  'ideas.delete.error': 'The idea could not be deleted.',
+  'trash.title': 'Trash',
+  'trash.help': 'Deleted ideas. Restoring brings an idea back with all its content and images.',
+  'trash.empty': 'The trash is empty.',
+  'trash.loadError': 'The trash could not be loaded.',
+  'trash.error': 'This did not work.',
+  'trash.restore': 'Restore',
+  'trash.restored': '"{{title}}" restored.',
 } as const

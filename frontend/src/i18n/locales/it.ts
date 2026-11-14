@@ -354,4 +354,16 @@ export const it: Record<keyof typeof en, string> = {
   'linkTypes.delete': 'Elimina',
   'linkTypes.deleted': 'Tipo eliminato.',
   'linkTypes.confirmDelete': 'Eliminare il tipo «{{name}}»?',
+
+  'nav.trash': 'Cestino',
+  'ideas.delete': 'Elimina',
+  'ideas.delete.confirm': 'Spostare questa idea nel cestino? Scompare per tutti, un admin può ripristinarla.',
+  'ideas.delete.error': 'Non è stato possibile eliminare l’idea.',
+  'trash.title': 'Cestino',
+  'trash.help': 'Idee eliminate. Il ripristino riporta l’idea con tutti i contenuti e le immagini.',
+  'trash.empty': 'Il cestino è vuoto.',
+  'trash.loadError': 'Impossibile caricare il cestino.',
+  'trash.error': 'Non ha funzionato.',
+  'trash.restore': 'Ripristina',
+  'trash.restored': '«{{title}}» ripristinata.',
 }

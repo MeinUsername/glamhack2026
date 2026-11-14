@@ -1,5 +1,6 @@
-import { describe, expect, it } from 'vitest'
-import { screen } from '@testing-library/react'
+import { describe, expect, it, vi } from 'vitest'
+import userEvent from '@testing-library/user-event'
+import { screen, waitFor } from '@testing-library/react'
 import { renderAt, routeFetch } from '../test/helpers'
 
 const base = {
@@ -176,5 +177,33 @@ describe('IdeaPage links (F-031)', () => {
     renderAt('/ideas/i1')
     await screen.findByRole('heading', { name: 'Lichtinstallation' })
     expect(screen.queryByRole('heading', { name: 'Links' })).toBeNull()
+  })
+})
+
+describe('IdeaPage delete (F-033)', () => {
+  const idea = { ...base, categories: [] }
+  it('AC-033-1 nur Admins sehen «Delete»', async () => {
+    routeFetch({ 'GET /api/me': () => ({ json: { email: 'u@example.ch', role: 'user' } }), 'GET /api/ideas/i1': () => ({ json: idea }) })
+    renderAt('/ideas/i1')
+    await screen.findByRole('heading', { name: 'Lichtinstallation' })
+    expect(screen.queryByRole('button', { name: 'Delete' })).toBeNull()
+  })
+  it('AC-033-2 Bestätigen löscht und leitet um, Abbrechen sendet nichts', async () => {
+    const { calls } = routeFetch({
+      'GET /api/me': () => ({ json: { email: 'a@example.ch', role: 'admin' } }),
+      'GET /api/ideas/i1': () => ({ json: idea }),
+      'DELETE /api/ideas/i1': () => ({ status: 204 }),
+      'GET /api/ideas': () => ({ json: [] }),
+    })
+    const u = userEvent.setup()
+    renderAt('/ideas/i1')
+    const del = await screen.findByRole('button', { name: 'Delete' })
+    vi.stubGlobal('confirm', () => false)
+    await u.click(del)
+    expect(calls.some((c) => c.method === 'DELETE')).toBe(false)
+    vi.stubGlobal('confirm', () => true)
+    await u.click(del)
+    await waitFor(() => expect(calls.some((c) => c.method === 'DELETE' && c.url === '/api/ideas/i1')).toBe(true))
+    await waitFor(() => expect(screen.queryByRole('heading', { name: 'Lichtinstallation' })).toBeNull())
   })
 })

@@ -36,6 +36,14 @@ func effectiveStatus(d ideaDoc) string {
 	return d.Status
 }
 
+// isDeleted: an admin removed the idea (F-033). Missing field = active, so no migration is needed.
+func isDeleted(d ideaDoc) bool { return d.DeletedAt != nil }
+
+// visibleTo is the one filter for every reading path: removed ideas are never visible, others by status.
+func visibleTo(d ideaDoc, isAdmin bool) bool {
+	return !isDeleted(d) && canViewStatus(effectiveStatus(d), isAdmin)
+}
+
 // canViewStatus: everybody sees published ideas, only admins see the others (D3).
 func canViewStatus(status string, isAdmin bool) bool {
 	return status == statusPublished || isAdmin
@@ -185,7 +193,7 @@ func (s *server) apiApprovals(w http.ResponseWriter, r *http.Request, _ sessionU
 			log.Printf("decode idea %s: %v", snap.Ref.ID, err)
 			continue
 		}
-		if effectiveStatus(d) == statusPending {
+		if !isDeleted(d) && effectiveStatus(d) == statusPending {
 			out = append(out, toIdeaView(snap.Ref.ID, d))
 		}
 	}
@@ -204,7 +212,7 @@ func (s *server) decide(ctx context.Context, id, status, reason string) (ideaDoc
 		if err := snap.DataTo(&d); err != nil {
 			return err
 		}
-		if effectiveStatus(d) != statusPending {
+		if isDeleted(d) || effectiveStatus(d) != statusPending {
 			return errNotPending
 		}
 		d.Status = status

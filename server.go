@@ -109,6 +109,10 @@ func (s *server) routes() {
 	m.HandleFunc("GET /imprint", serveApp)          // F-028: public legal pages
 	m.HandleFunc("GET /terms", serveApp)
 	m.HandleFunc("GET /admin/users", s.requireAdmin(s.adminPage))
+	m.HandleFunc("DELETE /api/ideas/{id}", s.requireAdmin(s.apiDeleteIdea)) // F-033
+	m.HandleFunc("GET /admin/trash", s.requireAdmin(s.adminPage))
+	m.HandleFunc("GET /api/admin/trash", s.requireAdmin(s.apiTrash))
+	m.HandleFunc("POST /api/admin/trash/{id}/restore", s.requireAdmin(s.apiRestoreIdea))
 	m.HandleFunc("GET /admin/approvals", s.requireAdmin(s.adminPage)) // F-030
 	m.HandleFunc("GET /api/admin/approvals", s.requireAdmin(s.apiApprovals))
 	m.HandleFunc("POST /api/admin/approvals/{id}/publish", s.requireAdmin(s.apiPublishIdea))

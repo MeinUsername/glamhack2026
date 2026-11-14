@@ -240,7 +240,7 @@ func (s *server) loadAllIdeas(ctx context.Context) ([]ideaDoc, error) {
 			log.Printf("decode idea %s: %v", snap.Ref.ID, err)
 			continue
 		}
-		if effectiveStatus(d) != statusPublished {
+		if isDeleted(d) || effectiveStatus(d) != statusPublished {
 			continue // the route is public and must not reveal ideas that are not approved (F-030)
 		}
 		out = append(out, d)

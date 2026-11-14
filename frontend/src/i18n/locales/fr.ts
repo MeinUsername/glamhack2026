@@ -354,4 +354,16 @@ export const fr: Record<keyof typeof en, string> = {
   'linkTypes.delete': 'Supprimer',
   'linkTypes.deleted': 'Type supprimé.',
   'linkTypes.confirmDelete': 'Supprimer le type « {{name}} » ?',
+
+  'nav.trash': 'Corbeille',
+  'ideas.delete': 'Supprimer',
+  'ideas.delete.confirm': 'Placer cette idée dans la corbeille ? Elle disparaît pour tout le monde, un admin peut la restaurer.',
+  'ideas.delete.error': 'L’idée n’a pas pu être supprimée.',
+  'trash.title': 'Corbeille',
+  'trash.help': 'Idées supprimées. La restauration rend l’idée avec tout son contenu et ses images.',
+  'trash.empty': 'La corbeille est vide.',
+  'trash.loadError': 'La corbeille n’a pas pu être chargée.',
+  'trash.error': 'Cela n’a pas fonctionné.',
+  'trash.restore': 'Restaurer',
+  'trash.restored': '« {{title}} » restaurée.',
 }

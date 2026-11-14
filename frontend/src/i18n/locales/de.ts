@@ -353,4 +353,16 @@ export const de: Record<keyof typeof en, string> = {
   'linkTypes.delete': 'Löschen',
   'linkTypes.deleted': 'Typ gelöscht.',
   'linkTypes.confirmDelete': 'Den Typ «{{name}}» löschen?',
+
+  'nav.trash': 'Papierkorb',
+  'ideas.delete': 'Löschen',
+  'ideas.delete.confirm': 'Diese Idee in den Papierkorb verschieben? Sie verschwindet für alle, ein Admin kann sie wiederherstellen.',
+  'ideas.delete.error': 'Die Idee konnte nicht gelöscht werden.',
+  'trash.title': 'Papierkorb',
+  'trash.help': 'Gelöschte Ideen. Beim Wiederherstellen kommt die Idee mit allen Inhalten und Bildern zurück.',
+  'trash.empty': 'Der Papierkorb ist leer.',
+  'trash.loadError': 'Der Papierkorb konnte nicht geladen werden.',
+  'trash.error': 'Das hat nicht geklappt.',
+  'trash.restore': 'Wiederherstellen',
+  'trash.restored': '«{{title}}» wiederhergestellt.',
 }

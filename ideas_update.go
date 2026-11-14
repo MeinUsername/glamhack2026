@@ -106,7 +106,7 @@ func (s *server) apiUpdateIdea(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// F-030: pending and rejected ideas can only be changed by an admin (D3); everybody else gets 404.
-	if !canViewStatus(effectiveStatus(old), s.viewerIsAdmin(r)) {
+	if !visibleTo(old, s.viewerIsAdmin(r)) {
 		writeJSONError(w, http.StatusNotFound, "idea not found")
 		return
 	}
