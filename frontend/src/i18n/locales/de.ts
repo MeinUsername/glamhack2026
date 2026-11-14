@@ -216,4 +216,13 @@ export const de: Record<keyof typeof en, string> = {
   'prompt.level.title': "Detailgrad wählen",
   'prompt.level.confirm': "Bestätigen",
   'prompt.level.cancel': "Abbrechen",
+  // F-021: ICOM filter
+  'ideas.filter.title': 'Filter',
+  'ideas.filter.categories': 'ICOM-Kategorien',
+  'ideas.filter.reset': 'Filter zurücksetzen',
+  'ideas.filter.count': '{{shown}} von {{total}} Ideen',
+  'ideas.filter.noMatch': 'Keine Idee passt zu diesem Filter.',
+  'ideas.filter.hint': 'Innerhalb der Kategorien und innerhalb der Orte genügt ein Treffer; Kategorie und Ort müssen beide passen.',
+  'admin.import.icomTitle': 'Spalten für ICOM-Kategorien und Ort',
+  'admin.import.icomHint': 'Optionale Spalten «ICOM categories» und «Location»: IDs, getrennt mit «;». Eine unbekannte ID macht die Zeile ungültig.',
 }

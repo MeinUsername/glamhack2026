@@ -49,6 +49,8 @@ type ideaDoc struct {
 	Space                    spaceDoc   `firestore:"space"`
 	Equipment                []string   `firestore:"equipment"`
 	Categories               []string   `firestore:"categories"`
+	ICOMCategories           []string   `firestore:"icom_categories"` // F-021
+	Locations                []string   `firestore:"locations"`       // F-021
 	Budget                   *string    `firestore:"budget"`
 	Images                   []imageDoc `firestore:"images"`
 	CreatedBy                string     `firestore:"created_by"`
@@ -88,9 +90,11 @@ type ideaInput struct {
 		AreaM2   string `json:"areaM2"`
 		VolumeM3 string `json:"volumeM3"`
 	} `json:"space"`
-	Equipment  []string `json:"equipment"`
-	Budget     string   `json:"budget"`
-	Categories []string `json:"categories"`
+	Equipment      []string `json:"equipment"`
+	Budget         string   `json:"budget"`
+	Categories     []string `json:"categories"`
+	ICOMCategories []string `json:"icomCategories"` // F-021
+	Locations      []string `json:"locations"`      // F-021
 }
 
 // ideaView is an idea as returned by GET /api/ideas/{id}.
@@ -108,6 +112,8 @@ type ideaView struct {
 	Space                    spaceView   `json:"space"`
 	Equipment                []string    `json:"equipment"`
 	Categories               []string    `json:"categories"`
+	ICOMCategories           []string    `json:"icomCategories"`
+	Locations                []string    `json:"locations"`
 	Budget                   *string     `json:"budget"`
 	Images                   []imageView `json:"images"`
 	CreatedAt                string      `json:"createdAt"`
@@ -183,6 +189,12 @@ func validateIdeaInput(in ideaInput) (ideaDoc, []equipmentDoc, error) {
 		return ideaDoc{}, nil, err
 	}
 	doc.Categories = categories
+	if doc.ICOMCategories, err = normalizeIDs(in.ICOMCategories, icomCategoryIDs, "ICOM category"); err != nil {
+		return ideaDoc{}, nil, err
+	}
+	if doc.Locations, err = normalizeIDs(in.Locations, locationIDs, "location"); err != nil {
+		return ideaDoc{}, nil, err
+	}
 	return doc, catalog, nil
 }
 
@@ -404,6 +416,8 @@ func toIdeaView(id string, d ideaDoc) ideaView {
 		Equipment:                d.Equipment,
 		Budget:                   d.Budget,
 		Categories:               d.Categories,
+		ICOMCategories:           emptyIfNil(d.ICOMCategories), // pages saved before F-021 have no field
+		Locations:                emptyIfNil(d.Locations),
 		CreatedAt:                d.CreatedAt.Format(time.RFC3339),
 	}
 	if v.TargetGroup == "" {
@@ -507,6 +521,9 @@ type ideaSummary struct {
 	ImageCount int    `json:"imageCount"`
 	// Description is the full text of the field "Beschreibung" (Q-014-08).
 	Description string `json:"description"`
+	// F-021: for the filter bar of the overview.
+	ICOMCategories []string `json:"icomCategories"`
+	Locations      []string `json:"locations"`
 }
 
 // apiListIdeas handles GET /api/ideas: all ideas, newest first (F-011).
@@ -529,7 +546,14 @@ func (s *server) apiListIdeas(w http.ResponseWriter, r *http.Request) {
 			log.Printf("decode idea %s: %v", snap.Ref.ID, err)
 			continue
 		}
-		out = append(out, ideaSummary{ID: snap.Ref.ID, Title: d.Title, ImageCount: len(d.Images), Description: d.Description})
+		out = append(out, ideaSummary{
+			ID:             snap.Ref.ID,
+			Title:          d.Title,
+			ImageCount:     len(d.Images),
+			Description:    d.Description,
+			ICOMCategories: emptyIfNil(d.ICOMCategories),
+			Locations:      emptyIfNil(d.Locations),
+		})
 	}
 	writeJSON(w, http.StatusOK, out)
 }

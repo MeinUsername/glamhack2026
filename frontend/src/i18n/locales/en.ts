@@ -215,4 +215,13 @@ export const en = {
   'prompt.level.title': "Choose a detail level",
   'prompt.level.confirm': "Confirm",
   'prompt.level.cancel': "Cancel",
+  // F-021: ICOM filter
+  'ideas.filter.title': 'Filter',
+  'ideas.filter.categories': 'ICOM categories',
+  'ideas.filter.reset': 'Reset filters',
+  'ideas.filter.count': '{{shown}} of {{total}} ideas',
+  'ideas.filter.noMatch': 'No idea matches this filter.',
+  'ideas.filter.hint': 'One match within the categories or within the locations is enough; category and location must both match.',
+  'admin.import.icomTitle': 'Columns for ICOM categories and location',
+  'admin.import.icomHint': 'Optional columns «ICOM categories» and «Location»: IDs separated by «;». An unknown ID makes the row invalid.',
 } as const

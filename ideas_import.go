@@ -25,12 +25,14 @@ const (
 )
 
 // csvColumns maps the lowercase header names to our fields. "space needed" and "picture"
-// are known but dropped (D4, D5).
+// are known but dropped (D4, D5). "icom categories" and "location" are optional (F-021):
+// IDs separated by ";" or ",".
 var csvColumns = map[string]bool{
 	"title": true, "description of idea": true, "description of interaction": true,
 	"goal": true, "target group": true, "equipment needed": true, "space needed": true,
 	"staff needed": true, "necessarily related to specific exhibits": true,
 	"accessibility": true, "picture": true,
+	"icom categories": true, "location": true,
 }
 
 // importRow is one data row of the CSV. Line 1 is the header.
@@ -114,6 +116,8 @@ func parseIdeaCSV(r io.Reader) ([]importRow, error) {
 			ExhibitRelated:           get(rec, "necessarily related to specific exhibits"),
 			Accessibility:            get(rec, "accessibility"),
 			Equipment:                strings.Split(get(rec, "equipment needed"), ","),
+			ICOMCategories:           splitIDList(get(rec, "icom categories")),
+			Locations:                splitIDList(get(rec, "location")),
 		}
 		row := importRow{Line: i + 2, Title: strings.TrimSpace(in.Title), Input: in, Status: importNew}
 		if row.Title == "" {

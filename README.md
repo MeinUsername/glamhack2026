@@ -57,6 +57,29 @@ am Cloud-Run-Dienst als Secret eingebunden sein, zum Beispiel über
 `--set-secrets INITIAL_ADMIN_PASSWORD=<secret-name>:latest`. Die Zeile fehlt im Deploy-Befehl
 von `cloudbuild.yaml`, bis das Secret existiert, weil ein fehlendes Secret den Deploy abbricht.
 
+## ICOM-Kategorien und Orte
+
+Jede Idee kann mehrere ICOM-Kategorien und einen oder mehrere Orte haben (Felder
+`icom_categories` und `locations`). Die Kategorien und ihre Labels (de/en) stehen in
+`frontend/src/data/icom-filter-kategorien.json`. Das Backend prüft dieselben IDs in
+`ideas_icom.go`. Ein Go-Test meldet, wenn die beiden Listen auseinanderlaufen. Wer die JSON-Datei
+ändert, passt also auch `ideas_icom.go` an.
+
+- **Übersicht `/ideas`:** Filterleiste. Innerhalb der Kategorien und innerhalb der Orte gilt ODER,
+  zwischen Kategorie und Ort UND. Der Filter steht in der URL, z. B.
+  `/ideas?categories=accessibility,dialogue-exchange&locations=online`.
+- **Bearbeiten:** Chips im Ideenformular.
+- **CSV-Import:** optionale Spalten `ICOM categories` und `Location`, IDs getrennt mit `;`.
+
+Bestehende Ideen bekommen ihre Werte über `cmd/assign-icom` und die Zuordnung in
+`cmd/assign-icom/zuordnung.json` (Titel → IDs). Ohne `-apply` ist es ein Probelauf, der nur zeigt,
+was sich ändern würde. Ideen, die schon Werte haben, bleiben unverändert, ausser mit `-overwrite`.
+
+```sh
+go run ./cmd/assign-icom -project glamhack-hack-2026          # Probelauf
+go run ./cmd/assign-icom -project glamhack-hack-2026 -apply   # schreiben
+```
+
 ## Lokal bauen und testen
 
 ```sh

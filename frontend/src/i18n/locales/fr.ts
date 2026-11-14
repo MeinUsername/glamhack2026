@@ -217,4 +217,13 @@ export const fr: Record<keyof typeof en, string> = {
   'prompt.level.title': "Choisir un niveau de détail",
   'prompt.level.confirm': "Confirmer",
   'prompt.level.cancel': "Annuler",
+  // F-021: ICOM filter
+  'ideas.filter.title': 'Filtres',
+  'ideas.filter.categories': 'Catégories ICOM',
+  'ideas.filter.reset': 'Réinitialiser les filtres',
+  'ideas.filter.count': '{{shown}} idées sur {{total}}',
+  'ideas.filter.noMatch': 'Aucune idée ne correspond à ce filtre.',
+  'ideas.filter.hint': 'Une correspondance parmi les catégories ou parmi les lieux suffit ; catégorie et lieu doivent correspondre tous les deux.',
+  'admin.import.icomTitle': 'Colonnes pour les catégories ICOM et le lieu',
+  'admin.import.icomHint': 'Colonnes facultatives « ICOM categories » et « Location » : identifiants séparés par « ; ». Un identifiant inconnu rend la ligne invalide.',
 }

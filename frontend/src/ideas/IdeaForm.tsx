@@ -7,6 +7,7 @@ import EquipmentInput from './EquipmentInput'
 import { BUDGETS, imageProblem, MAX_IDEA_IMAGES } from './rules'
 import { CATEGORIES } from './categories'
 import CategoriesInfo from './CategoriesInfo'
+import { IcomPicker } from './IcomChips'
 import type { Category, Idea } from '../types'
 
 // Text fields of the form; the names are the English field names of the spec.
@@ -21,6 +22,8 @@ interface Draft {
   volumeM3: string
   equipment: string[]
   categories: Category[]
+  icomCategories: string[]
+  locations: string[]
   goal: string
   sustainability: string
   accessibility: string
@@ -40,6 +43,8 @@ function draftFrom(idea: Idea): Draft {
     volumeM3: idea.space.volumeM3 === null ? '' : String(idea.space.volumeM3),
     equipment: idea.equipment,
     categories: idea.categories,
+    icomCategories: idea.icomCategories ?? [],
+    locations: idea.locations ?? [],
     goal: idea.goal,
     sustainability: idea.sustainability,
     accessibility: idea.accessibility,
@@ -58,6 +63,8 @@ const emptyDraft: Draft = {
   volumeM3: '',
   equipment: [],
   categories: [],
+  icomCategories: [],
+  locations: [],
   goal: '',
   sustainability: '',
   accessibility: '',
@@ -118,6 +125,10 @@ function IdeaEditor({ edit }: { edit?: Idea }) {
     )
   }
 
+  function toggleIn(key: 'icomCategories' | 'locations', id: string) {
+    setDraft((d) => ({ ...d, [key]: d[key].includes(id) ? d[key].filter((x) => x !== id) : [...d[key], id] }))
+  }
+
   function handlePickImages(event: ChangeEvent<HTMLInputElement>) {
     const picked = Array.from(event.target.files ?? [])
     const problem = imageProblem(picked, t)
@@ -154,6 +165,8 @@ function IdeaEditor({ edit }: { edit?: Idea }) {
       space: { areaM2: draft.areaM2, volumeM3: draft.volumeM3 },
       equipment: draft.equipment,
       categories: draft.categories,
+      icomCategories: draft.icomCategories,
+      locations: draft.locations,
       budget: draft.budget,
     }
     if (edit) data.keepImages = keep
@@ -248,6 +261,12 @@ function IdeaEditor({ edit }: { edit?: Idea }) {
             </label>
           ))}
         </fieldset>
+        <IcomPicker
+          categories={draft.icomCategories}
+          locations={draft.locations}
+          onToggleCategory={(id) => toggleIn('icomCategories', id)}
+          onToggleLocation={(id) => toggleIn('locations', id)}
+        />
         <Field label={t('ideas.goal')}>
           <textarea className={input} rows={3} value={draft.goal} onChange={(e) => set('goal', e.target.value)} />
         </Field>

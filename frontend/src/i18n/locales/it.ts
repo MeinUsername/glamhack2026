@@ -217,4 +217,13 @@ export const it: Record<keyof typeof en, string> = {
   'prompt.level.title': "Scegli un livello di dettaglio",
   'prompt.level.confirm': "Conferma",
   'prompt.level.cancel': "Annulla",
+  // F-021: ICOM filter
+  'ideas.filter.title': 'Filtri',
+  'ideas.filter.categories': 'Categorie ICOM',
+  'ideas.filter.reset': 'Azzera filtri',
+  'ideas.filter.count': '{{shown}} di {{total}} idee',
+  'ideas.filter.noMatch': 'Nessuna idea corrisponde a questo filtro.',
+  'ideas.filter.hint': 'Basta una corrispondenza tra le categorie o tra i luoghi; categoria e luogo devono corrispondere entrambi.',
+  'admin.import.icomTitle': 'Colonne per categorie ICOM e luogo',
+  'admin.import.icomHint': 'Colonne facoltative «ICOM categories» e «Location»: ID separati da «;». Un ID sconosciuto rende la riga non valida.',
 }
