@@ -5,6 +5,12 @@ import type { TFunction } from 'i18next'
 export const MAX_IDEA_IMAGES = 5
 export const MAX_IDEA_IMAGE_BYTES = 5 * 1024 * 1024
 export const IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp']
+// Empty is valid (the field is optional); otherwise a plain local@domain.tld without spaces (F-027).
+export function isValidEmail(value: string): boolean {
+  const v = value.trim()
+  return v === '' || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)
+}
+
 export const BUDGETS = ['S', 'M', 'L', 'XL'] as const
 
 // Returns the message for the first problem with the picked files, or '' if all are fine.

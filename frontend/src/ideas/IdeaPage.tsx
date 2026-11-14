@@ -106,6 +106,7 @@ function Show({ idea }: { idea: Idea }) {
         <h2 className={h2}>{t('ideas.budget')}</h2>
         <p>{idea.budget ?? t('ideas.budget.notSet')}</p>
       </section>
+      <Credit idea={idea} />
       {idea.mediationConcept?.trim() && (
         <section>
           <h2 className={h2}>{t('ideas.field.mediationConcept')}</h2>
@@ -113,6 +114,27 @@ function Show({ idea }: { idea: Idea }) {
         </section>
       )}
     </article>
+  )
+}
+
+// F-027: credit line and contact; only the filled parts, and nothing at all if all are empty.
+function Credit({ idea }: { idea: Idea }) {
+  const { t } = useTranslation()
+  const name = [idea.creditFirstName, idea.creditLastName].map((v) => v?.trim()).filter(Boolean).join(' ')
+  const institute = idea.creditInstitute?.trim()
+  const email = idea.creditEmail?.trim()
+  if (!name && !institute && !email) return null
+  return (
+    <section>
+      <h2 className={h2}>{t('ideas.credit.legend')}</h2>
+      {name && <p>{name}</p>}
+      {institute && <p>{institute}</p>}
+      {email && (
+        <p>
+          <a href={`mailto:${email}`}>{email}</a>
+        </p>
+      )}
+    </section>
   )
 }
 

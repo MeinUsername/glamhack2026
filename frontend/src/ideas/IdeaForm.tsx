@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { api, ApiError } from '../api'
 import { button, errorText, h1, input, muted } from '../ui'
 import EquipmentInput from './EquipmentInput'
-import { BUDGETS, imageProblem, MAX_IDEA_IMAGES } from './rules'
+import { BUDGETS, imageProblem, isValidEmail, MAX_IDEA_IMAGES } from './rules'
 import { CATEGORIES } from './categories'
 import CategoriesInfo from './CategoriesInfo'
 import { imageUrl } from './imageUrl'
@@ -16,6 +16,10 @@ interface Draft {
   title: string
   description: string
   mediationConcept: string
+  creditFirstName: string
+  creditLastName: string
+  creditInstitute: string
+  creditEmail: string
   targetGroup: string
   descriptionOfInteraction: string
   staffNeeded: string
@@ -36,6 +40,10 @@ function draftFrom(idea: Idea): Draft {
     title: idea.title,
     description: idea.description,
     mediationConcept: idea.mediationConcept ?? '',
+    creditFirstName: idea.creditFirstName ?? '',
+    creditLastName: idea.creditLastName ?? '',
+    creditInstitute: idea.creditInstitute ?? '',
+    creditEmail: idea.creditEmail ?? '',
     targetGroup: idea.targetGroup,
     descriptionOfInteraction: idea.descriptionOfInteraction,
     staffNeeded: idea.staffNeeded,
@@ -55,6 +63,10 @@ const emptyDraft: Draft = {
   title: '',
   description: '',
   mediationConcept: '',
+  creditFirstName: '',
+  creditLastName: '',
+  creditInstitute: '',
+  creditEmail: '',
   targetGroup: '',
   descriptionOfInteraction: '',
   staffNeeded: '',
@@ -143,6 +155,10 @@ function IdeaEditor({ edit }: { edit?: Idea }) {
     if (busy) return
     setError('')
     if (countProblem) return
+    if (!isValidEmail(draft.creditEmail)) {
+      setError(t('rules.email'))
+      return
+    }
     const problem = imageProblem(images, t)
     if (problem) {
       setImageError(problem)
@@ -153,6 +169,10 @@ function IdeaEditor({ edit }: { edit?: Idea }) {
       title: draft.title,
       description: draft.description,
       mediationConcept: draft.mediationConcept,
+      creditFirstName: draft.creditFirstName,
+      creditLastName: draft.creditLastName,
+      creditInstitute: draft.creditInstitute,
+      creditEmail: draft.creditEmail,
       targetGroup: draft.targetGroup,
       descriptionOfInteraction: draft.descriptionOfInteraction,
       staffNeeded: draft.staffNeeded,
@@ -184,7 +204,7 @@ function IdeaEditor({ edit }: { edit?: Idea }) {
   return (
     <>
       <h1 className={h1}>{edit ? t('ideas.editTitle') : t('ideas.new.title')}</h1>
-      <form onSubmit={handleSubmit} className="grid max-w-xl gap-4">
+      <form onSubmit={handleSubmit} noValidate className="grid max-w-xl gap-4">
         {edit && edit.images.length > 0 && (
           <fieldset className="grid gap-2">
             <legend className="font-medium">{t('ideas.existingImages')}</legend>
@@ -276,6 +296,23 @@ function IdeaEditor({ edit }: { edit?: Idea }) {
             ))}
           </select>
         </Field>
+        <fieldset className="grid gap-2">
+          <legend className="font-medium">{t('ideas.credit.legend')}</legend>
+          <div className="grid grid-cols-2 gap-3">
+            <Field label={t('ideas.credit.firstName')}>
+              <input className={input} placeholder={t('ideas.credit.firstName.ph')} value={draft.creditFirstName} onChange={(e) => set('creditFirstName', e.target.value)} />
+            </Field>
+            <Field label={t('ideas.credit.lastName')}>
+              <input className={input} placeholder={t('ideas.credit.lastName.ph')} value={draft.creditLastName} onChange={(e) => set('creditLastName', e.target.value)} />
+            </Field>
+          </div>
+          <Field label={t('ideas.credit.institute')}>
+            <input className={input} placeholder={t('ideas.credit.institute.ph')} value={draft.creditInstitute} onChange={(e) => set('creditInstitute', e.target.value)} />
+          </Field>
+          <Field label={t('ideas.credit.email')}>
+            <input className={input} type="email" placeholder={t('ideas.credit.email.ph')} value={draft.creditEmail} onChange={(e) => set('creditEmail', e.target.value)} />
+          </Field>
+        </fieldset>
         <MarkdownEditor
           label={t('ideas.field.mediationConcept')}
           value={draft.mediationConcept}

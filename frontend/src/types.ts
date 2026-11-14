@@ -40,6 +40,10 @@ export interface Idea {
   title: string
   description: string
   mediationConcept: string
+  creditFirstName: string
+  creditLastName: string
+  creditInstitute: string
+  creditEmail: string
   targetGroup: string
   goal: string
   descriptionOfInteraction: string

@@ -107,3 +107,27 @@ describe('IdeaPage image URLs (F-029)', () => {
     expect((await screen.findAllByRole('img'))[0]).toHaveAttribute('src', '/api/ideas/i1/images/0?v=neu')
   })
 })
+
+describe('IdeaPage credit line (F-027)', () => {
+  it('AC-027-5/7 zeigt den Abschnitt vor dem Concept mit mailto-Link, ohne Login', async () => {
+    routeFetch({
+      'GET /api/ideas/i1': () => ({
+        json: { ...base, categories: [], creditFirstName: 'Ada', creditLastName: 'Lovelace', creditEmail: 'ada@example.org', mediationConcept: 'Text' },
+      }),
+    })
+    renderAt('/ideas/i1')
+    const heading = await screen.findByRole('heading', { name: 'Credit line and contact information' })
+    expect(screen.getByText('Ada Lovelace')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'ada@example.org' })).toHaveAttribute('href', 'mailto:ada@example.org')
+    const names = screen.getAllByRole('heading', { level: 2 }).map((h) => h.textContent)
+    expect(names.indexOf('Credit line and contact information')).toBe(names.indexOf('Mediation concept') - 1)
+    expect(heading).toBeInTheDocument()
+  })
+
+  it('AC-027-6 zeigt ohne Angaben keinen Abschnitt, auch wenn die Felder fehlen', async () => {
+    routeFetch({ 'GET /api/ideas/i1': () => ({ json: { ...base, categories: [] } }) })
+    renderAt('/ideas/i1')
+    await screen.findByRole('heading', { name: 'Lichtinstallation' })
+    expect(screen.queryByRole('heading', { name: 'Credit line and contact information' })).toBeNull()
+  })
+})

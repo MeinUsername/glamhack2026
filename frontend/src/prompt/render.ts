@@ -58,6 +58,10 @@ export function formatIdea(idea: Idea): string {
 
   if (idea.equipment.length > 0) lines.push(`- Ausstattung: ${idea.equipment.join(', ')}`)
   add('Budget', idea.budget)
+  const credit = [[idea.creditFirstName, idea.creditLastName].map((v) => v?.trim()).filter(Boolean).join(' '), idea.creditInstitute?.trim(), idea.creditEmail?.trim()]
+    .filter(Boolean)
+    .join(', ')
+  add('Credit Line', credit)
   const concept = idea.mediationConcept?.trim()
   if (concept) lines.push('', '#### Mediation Concept', concept)
   return lines.join('\n')

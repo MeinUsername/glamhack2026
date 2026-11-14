@@ -7,6 +7,10 @@ const base: Idea = {
   title: 'Lichtkabine',
   description: 'Eine Kabine aus Licht.',
   mediationConcept: '',
+  creditFirstName: '',
+  creditLastName: '',
+  creditInstitute: '',
+  creditEmail: '',
   targetGroup: 'Schulklassen',
   descriptionOfInteraction: '',
   staffNeeded: '',
@@ -69,6 +73,14 @@ describe('renderPrompt', () => {
     expect(out).toContain('## Ablauf')
     expect(out.endsWith('### Zweite')).toBe(true)
     expect(formatIdea({ ...base, mediationConcept: '   ' })).toBe(formatIdea(base))
+  })
+
+  it('AC-027-8 nimmt die Credit Line vor dem Concept in den Prompt auf, nur ausgefüllte Teile', () => {
+    const idea = { ...base, creditFirstName: 'Ada', creditLastName: 'Lovelace', creditInstitute: '', creditEmail: 'ada@example.org', mediationConcept: 'Plan' }
+    const out = formatIdea(idea)
+    expect(out).toContain('- Credit Line: Ada Lovelace, ada@example.org')
+    expect(out.indexOf('Credit Line')).toBeLessThan(out.indexOf('#### Mediation Concept'))
+    expect(formatIdea(base)).not.toContain('Credit Line')
   })
 
   it('fügt keine leeren Felder und keine Bilder ein', () => {

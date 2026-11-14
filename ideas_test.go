@@ -370,3 +370,29 @@ func TestAC029_SelectKept(t *testing.T) {
 		t.Errorf("none kept: kept=%v removed=%v err=%v", kept, removed, err)
 	}
 }
+
+// AC-027-2..4: the credit fields are optional, trimmed, kept, and the email is checked.
+func TestAC027_CreditLine(t *testing.T) {
+	if _, _, err := validateIdeaInput(ideaInput{}); err != nil {
+		t.Fatalf("empty credit line rejected: %v", err)
+	}
+	doc, _, err := validateIdeaInput(ideaInput{CreditFirstName: " Ada ", CreditLastName: "Lovelace", CreditInstitute: " ETH ", CreditEmail: " ada@example.org "})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if doc.CreditFirstName != "Ada" || doc.CreditInstitute != "ETH" || doc.CreditEmail != "ada@example.org" {
+		t.Errorf("doc = %+v", doc)
+	}
+	v := toIdeaView("x", doc)
+	if v.CreditFirstName != "Ada" || v.CreditLastName != "Lovelace" || v.CreditInstitute != "ETH" || v.CreditEmail != "ada@example.org" {
+		t.Errorf("view = %+v", v)
+	}
+	for _, bad := range []string{"abc", "a@", "Name <a@b.ch>", "a b@c.ch", strings.Repeat("a", 250) + "@b.ch"} {
+		if _, _, err := validateIdeaInput(ideaInput{CreditEmail: bad}); err == nil {
+			t.Errorf("email %q accepted", bad)
+		}
+	}
+	if _, _, err := validateIdeaInput(ideaInput{CreditLastName: strings.Repeat("ä", maxIdeaTextRunes+1)}); err == nil {
+		t.Error("long name accepted")
+	}
+}

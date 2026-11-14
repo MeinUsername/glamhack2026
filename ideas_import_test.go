@@ -117,3 +117,13 @@ func TestAC023_9_ImportSetsNoConcept(t *testing.T) {
 		}
 	}
 }
+
+// AC-027-9: the import neither reads nor sets the credit fields.
+func TestAC027_9_ImportSetsNoCreditLine(t *testing.T) {
+	for _, r := range startRows(t) {
+		in := r.Input
+		if in.CreditFirstName+in.CreditLastName+in.CreditInstitute+in.CreditEmail != "" {
+			t.Fatalf("line %d has credit data", r.Line)
+		}
+	}
+}

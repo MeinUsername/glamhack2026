@@ -213,7 +213,9 @@ describe('IdeaForm', () => {
       expect(before(tab, save)).toBe(true)
       const fields = [...document.querySelectorAll('form input, form select, form textarea, form [role="tab"]')]
       const lastInput = fields.filter((e) => !e.closest('.cm-editor') && e.getAttribute('role') !== 'tab').at(-1)
-      expect(lastInput).toBe(budget) // nothing but the editor follows the budget
+      // F-027: only the credit block sits between the budget and the concept editor.
+      expect(lastInput).toBe(screen.getByLabelText('Email'))
+      expect(before(budget, screen.getByLabelText('Email'))).toBe(true)
       unmount()
     }
   })
@@ -302,5 +304,39 @@ describe('IdeaForm', () => {
     const put = calls.find((c) => c.method === 'PUT')
     expect(JSON.parse(String(formData(put?.body).get('data'))).keepImages).toEqual([])
     expect(formData(put?.body).getAll('images')).toHaveLength(0)
+  })
+
+  it('AC-027-1/3/4 hat die Credit-Felder mit Platzhalter, sendet sie und lehnt eine ungültige E-Mail ab', async () => {
+    const { calls } = routeFetch({
+      'GET /api/me': () => user,
+      'POST /api/ideas': () => ({ status: 201, json: { id: 'i1' } }),
+      'GET /api/ideas/i1': () => savedIdea,
+    })
+    renderAt('/ideas/new')
+    const u = userEvent.setup()
+    expect(await screen.findByPlaceholderText('First name')).toBeInTheDocument()
+    expect(screen.getByPlaceholderText('Last name')).toBeInTheDocument()
+    expect(screen.getByPlaceholderText('Institute')).toBeInTheDocument()
+    await u.type(screen.getByLabelText('Email'), 'kaputt')
+    await u.click(screen.getByRole('button', { name: 'Save idea' }))
+    expect(await screen.findByText('Please enter a valid email address.')).toBeInTheDocument()
+    expect(calls.some((c) => c.method === 'POST')).toBe(false)
+
+    await u.clear(screen.getByLabelText('Email'))
+    await u.type(screen.getByLabelText('Email'), 'ada@example.org')
+    await u.type(screen.getByPlaceholderText('First name'), 'Ada')
+    await u.click(screen.getByRole('button', { name: 'Save idea' }))
+    const data = JSON.parse(String(formData(calls.find((c) => c.method === 'POST')?.body).get('data')))
+    expect(data).toMatchObject({ creditFirstName: 'Ada', creditEmail: 'ada@example.org', creditLastName: '', creditInstitute: '' })
+  })
+
+  it('AC-027-2/3 speichert mit leeren Feldern; Bearbeiten füllt die Werte vor', async () => {
+    routeFetch({
+      'GET /api/me': () => user,
+      'GET /api/ideas/i1': () => ({ json: { ...savedIdea.json, creditLastName: 'Lovelace', creditEmail: 'ada@example.org' } }),
+    })
+    renderAt('/ideas/i1/edit')
+    expect(await screen.findByPlaceholderText('Last name')).toHaveValue('Lovelace')
+    expect(screen.getByLabelText('Email')).toHaveValue('ada@example.org')
   })
 })

@@ -10,6 +10,7 @@ import (
 	"math"
 	"mime/multipart"
 	"net/http"
+	"net/mail"
 	"strconv"
 	"strings"
 	"time"
@@ -40,7 +41,12 @@ type ideaDoc struct {
 	Description string `firestore:"description"`
 	// MediationConcept is Markdown, shown only on the detail page (F-023).
 	MediationConcept string `firestore:"mediation_concept"`
-	TargetGroup      string `firestore:"target_group"`
+	// Credit line and contact (F-027); all optional, the email is public.
+	CreditFirstName string `firestore:"credit_first_name"`
+	CreditLastName  string `firestore:"credit_last_name"`
+	CreditInstitute string `firestore:"credit_institute"`
+	CreditEmail     string `firestore:"credit_email"`
+	TargetGroup     string `firestore:"target_group"`
 	// LegacyAudience is only read: pages saved before F-014 hold the target group here.
 	LegacyAudience           string     `firestore:"audience"`
 	Goal                     string     `firestore:"goal"`
@@ -81,6 +87,10 @@ type ideaInput struct {
 	Title                    string `json:"title"`
 	Description              string `json:"description"`
 	MediationConcept         string `json:"mediationConcept"`
+	CreditFirstName          string `json:"creditFirstName"`
+	CreditLastName           string `json:"creditLastName"`
+	CreditInstitute          string `json:"creditInstitute"`
+	CreditEmail              string `json:"creditEmail"`
 	TargetGroup              string `json:"targetGroup"`
 	Goal                     string `json:"goal"`
 	DescriptionOfInteraction string `json:"descriptionOfInteraction"`
@@ -103,6 +113,10 @@ type ideaView struct {
 	Title                    string      `json:"title"`
 	Description              string      `json:"description"`
 	MediationConcept         string      `json:"mediationConcept"`
+	CreditFirstName          string      `json:"creditFirstName"`
+	CreditLastName           string      `json:"creditLastName"`
+	CreditInstitute          string      `json:"creditInstitute"`
+	CreditEmail              string      `json:"creditEmail"`
 	TargetGroup              string      `json:"targetGroup"`
 	Goal                     string      `json:"goal"`
 	DescriptionOfInteraction string      `json:"descriptionOfInteraction"`
@@ -129,6 +143,21 @@ type imageView struct {
 	Version     string `json:"version"`
 }
 
+// checkCreditEmail accepts an empty value or a plain address (no display name), F-027 D4.
+func checkCreditEmail(email string) error {
+	if email == "" {
+		return nil
+	}
+	if len(email) > 254 {
+		return userError("Credit line email address is not valid.")
+	}
+	addr, err := mail.ParseAddress(email)
+	if err != nil || addr.Address != email {
+		return userError("Credit line email address is not valid.")
+	}
+	return nil
+}
+
 // validateIdeaInput checks the JSON input without touching Firestore and returns the
 // document to store. The empty input is valid: no field is required.
 func validateIdeaInput(in ideaInput) (ideaDoc, []equipmentDoc, error) {
@@ -142,6 +171,9 @@ func validateIdeaInput(in ideaInput) (ideaDoc, []equipmentDoc, error) {
 		"Exhibit relation":           in.ExhibitRelated,
 		"Sustainability":             in.Sustainability,
 		"Accessibility":              in.Accessibility,
+		"First name":                 in.CreditFirstName,
+		"Last name":                  in.CreditLastName,
+		"Institute":                  in.CreditInstitute,
 	}
 	for field, v := range texts {
 		if utf8.RuneCountInString(v) > maxIdeaTextRunes {
@@ -155,6 +187,13 @@ func validateIdeaInput(in ideaInput) (ideaDoc, []equipmentDoc, error) {
 
 	var doc ideaDoc
 	doc.MediationConcept = strings.TrimSpace(in.MediationConcept)
+	doc.CreditFirstName = strings.TrimSpace(in.CreditFirstName)
+	doc.CreditLastName = strings.TrimSpace(in.CreditLastName)
+	doc.CreditInstitute = strings.TrimSpace(in.CreditInstitute)
+	doc.CreditEmail = strings.TrimSpace(in.CreditEmail)
+	if err := checkCreditEmail(doc.CreditEmail); err != nil {
+		return ideaDoc{}, nil, err
+	}
 	doc.Title = strings.TrimSpace(in.Title)
 	doc.Description = strings.TrimSpace(in.Description)
 	doc.TargetGroup = strings.TrimSpace(in.TargetGroup)
@@ -405,6 +444,10 @@ func toIdeaView(id string, d ideaDoc) ideaView {
 		Title:                    d.Title,
 		Description:              d.Description,
 		MediationConcept:         d.MediationConcept,
+		CreditFirstName:          d.CreditFirstName,
+		CreditLastName:           d.CreditLastName,
+		CreditInstitute:          d.CreditInstitute,
+		CreditEmail:              d.CreditEmail,
 		TargetGroup:              d.TargetGroup,
 		Goal:                     d.Goal,
 		DescriptionOfInteraction: d.DescriptionOfInteraction,
