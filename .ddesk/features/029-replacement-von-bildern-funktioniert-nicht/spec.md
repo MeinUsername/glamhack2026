@@ -1,7 +1,7 @@
 ---
 id: F-029
 title: Replacement von Bildern funktioniert nicht
-status: plan-ready
+status: done
 ---
 
 # F-029 Replacement von Bildern funktioniert nicht
