@@ -98,6 +98,8 @@ func (s *server) routes() {
 	m.HandleFunc("GET /ideas/{id}/edit", serveApp) // F-012 T6
 	m.HandleFunc("GET /basket", serveApp)          // F-006: public, no redirect
 	m.HandleFunc("GET /ideas", serveApp)           // F-011: overview
+	m.HandleFunc("GET /imprint", serveApp)         // F-028: public legal pages
+	m.HandleFunc("GET /terms", serveApp)
 	m.HandleFunc("GET /admin/users", s.requireAdmin(s.adminPage))
 	m.HandleFunc("GET /admin/import", s.requireAdmin(s.adminPage))        // F-015: CSV import page
 	m.HandleFunc("GET /admin/master-prompt", s.requireAdmin(s.adminPage)) // F-008: editor page

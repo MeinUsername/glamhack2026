@@ -119,6 +119,7 @@ function IdeaEditor({ edit }: { edit?: Idea }) {
   const [inputKey, setInputKey] = useState(0) // remounts the file input after a rejected pick
   // Kept plus new images may not exceed the limit; recomputed when the checkboxes change (F-020).
   const countProblem = images.length > 0 ? imageProblem(images, t, keep.length) : ''
+  const [termsAccepted, setTermsAccepted] = useState(false) // always starts unchecked, also when editing (F-028)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
 
@@ -154,6 +155,10 @@ function IdeaEditor({ edit }: { edit?: Idea }) {
     event.preventDefault()
     if (busy) return
     setError('')
+    if (!termsAccepted) {
+      setError(t('ideas.terms.error'))
+      return
+    }
     if (countProblem) return
     if (!isValidEmail(draft.creditEmail)) {
       setError(t('rules.email'))
@@ -173,6 +178,7 @@ function IdeaEditor({ edit }: { edit?: Idea }) {
       creditLastName: draft.creditLastName,
       creditInstitute: draft.creditInstitute,
       creditEmail: draft.creditEmail,
+      termsAccepted,
       targetGroup: draft.targetGroup,
       descriptionOfInteraction: draft.descriptionOfInteraction,
       staffNeeded: draft.staffNeeded,
@@ -319,6 +325,15 @@ function IdeaEditor({ edit }: { edit?: Idea }) {
           onChange={(v) => set('mediationConcept', v)}
         />
         <p className={muted}>{t('ideas.markdown.help')}</p>
+        <label className="flex items-start gap-2">
+          <input type="checkbox" className="mt-1" checked={termsAccepted} onChange={(e) => setTermsAccepted(e.target.checked)} />
+          <span>
+            {t('ideas.terms.label')}{' '}
+            <a href="/terms" target="_blank" rel="noopener noreferrer">
+              {t('ideas.terms.link')}
+            </a>
+          </span>
+        </label>
         {error && <p className={errorText}>{error}</p>}
         <div>
           <button type="submit" className={button} disabled={busy || !!imageError || !!countProblem}>

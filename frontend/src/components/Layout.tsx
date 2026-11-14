@@ -10,7 +10,7 @@ export default function Layout() {
   const { t } = useTranslation()
 
   return (
-    <>
+    <div className="flex min-h-screen flex-col">
       <header className="sticky top-0 z-10 border-b border-slate-200 bg-white/80 backdrop-blur dark:border-slate-800 dark:bg-slate-950/80">
         <div className="mx-auto flex max-w-4xl flex-wrap items-center justify-between gap-x-6 gap-y-2 px-4 py-3">
         <Link to="/" className="flex items-center gap-2 text-lg font-semibold tracking-tight text-inherit no-underline hover:no-underline">
@@ -39,9 +39,15 @@ export default function Layout() {
         </nav>
         </div>
       </header>
-      <main className="mx-auto max-w-4xl px-4 py-8 max-sm:py-5">
+      <main className="mx-auto w-full max-w-4xl flex-1 px-4 py-8 max-sm:py-5">
         <Outlet />
       </main>
-    </>
+      <footer className="border-t border-slate-200 dark:border-slate-800">
+        <div className="mx-auto flex max-w-4xl flex-wrap gap-x-4 gap-y-1 px-4 py-4 text-sm">
+          <Link to="/imprint">{t('footer.imprint')}</Link>
+          <Link to="/terms">{t('footer.terms')}</Link>
+        </div>
+      </footer>
+    </div>
   )
 }

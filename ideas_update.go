@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"time"
 
 	"cloud.google.com/go/firestore"
 )
@@ -67,6 +68,9 @@ func (s *server) apiUpdateIdea(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	doc, catalog, err := validateIdeaInput(body.ideaInput)
+	if err == nil {
+		err = applyTermsAcceptance(body.ideaInput, &doc, time.Now().UTC())
+	}
 	if err != nil {
 		writeUserError(w, err)
 		return

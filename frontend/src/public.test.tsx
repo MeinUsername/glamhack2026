@@ -2,7 +2,7 @@
 import { describe, expect, it } from 'vitest'
 import userEvent from '@testing-library/user-event'
 import { screen } from '@testing-library/react'
-import { renderAt, routeFetch, unauthorized } from './test/helpers'
+import { renderAt, routeFetch, saveIdea, unauthorized } from './test/helpers'
 
 const idea = {
   id: 'abc',
@@ -51,7 +51,7 @@ describe('F-012 public use', () => {
     expect(await screen.findByRole('heading', { name: 'Edit idea' })).toBeInTheDocument()
     expect(screen.getByLabelText('Keep image 1')).toBeChecked()
 
-    await userEvent.setup().click(screen.getByRole('button', { name: 'Save idea' }))
+    await saveIdea(userEvent.setup())
     await screen.findByRole('heading', { name: 'Lichtkabine' })
     const put = calls.find((c) => c.method === 'PUT')
     expect(put?.url).toBe('/api/ideas/abc')

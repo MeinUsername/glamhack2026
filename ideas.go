@@ -60,8 +60,10 @@ type ideaDoc struct {
 	Categories               []string   `firestore:"categories"`
 	Budget                   *string    `firestore:"budget"`
 	Images                   []imageDoc `firestore:"images"`
-	CreatedBy                string     `firestore:"created_by"`
-	CreatedAt                time.Time  `firestore:"created_at"`
+	// TermsAcceptedAt is when the author confirmed the Terms and Conditions (F-028); nil if never (old or imported ideas).
+	TermsAcceptedAt *time.Time `firestore:"terms_accepted_at"`
+	CreatedBy       string     `firestore:"created_by"`
+	CreatedAt       time.Time  `firestore:"created_at"`
 }
 
 type spaceDoc struct {
@@ -105,6 +107,8 @@ type ideaInput struct {
 	Equipment  []string `json:"equipment"`
 	Budget     string   `json:"budget"`
 	Categories []string `json:"categories"`
+	// TermsAccepted must be true when an idea is created or changed through the form (F-028).
+	TermsAccepted bool `json:"termsAccepted"`
 }
 
 // ideaView is an idea as returned by GET /api/ideas/{id}.
@@ -155,6 +159,16 @@ func checkCreditEmail(email string) error {
 	if err != nil || addr.Address != email {
 		return userError("Credit line email address is not valid.")
 	}
+	return nil
+}
+
+// applyTermsAcceptance requires the confirmation of the Terms and Conditions and stores its time (F-028).
+// It is not part of validateIdeaInput, because the CSV import has no such confirmation.
+func applyTermsAcceptance(in ideaInput, doc *ideaDoc, now time.Time) error {
+	if !in.TermsAccepted {
+		return userError("You must confirm the Terms and Conditions.")
+	}
+	doc.TermsAcceptedAt = &now
 	return nil
 }
 
@@ -329,6 +343,9 @@ func (s *server) apiCreateIdea(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	doc, catalog, err := validateIdeaInput(in)
+	if err == nil {
+		err = applyTermsAcceptance(in, &doc, time.Now().UTC())
+	}
 	if err != nil {
 		writeUserError(w, err)
 		return

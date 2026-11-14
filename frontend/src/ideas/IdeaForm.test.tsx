@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import userEvent from '@testing-library/user-event'
 import { screen, within } from '@testing-library/react'
-import { renderAt, routeFetch } from '../test/helpers'
+import { renderAt, routeFetch, saveIdea } from '../test/helpers'
 
 const user = { json: { email: 'a@example.ch', role: 'user' } }
 
@@ -40,7 +40,7 @@ describe('IdeaForm', () => {
       'GET /api/ideas/i1': () => savedIdea,
     })
     renderAt('/ideas/new')
-    await userEvent.setup().click(await screen.findByRole('button', { name: 'Save idea' }))
+    await saveIdea(userEvent.setup())
 
     const post = calls.find((c) => c.method === 'POST')
     expect(post?.url).toBe('/api/ideas')
@@ -61,7 +61,7 @@ describe('IdeaForm', () => {
     await u.type(screen.getByLabelText('Description of interaction'), 'Drücken')
     await u.type(screen.getByLabelText('Staff needed'), 'yes')
     await u.type(screen.getByLabelText('Necessarily related to specific exhibits'), 'no')
-    await u.click(screen.getByRole('button', { name: 'Save idea' }))
+    await saveIdea(u)
 
     const post = calls.find((c) => c.method === 'POST')
     const data = JSON.parse(String(formData(post?.body).get('data')))
@@ -85,7 +85,7 @@ describe('IdeaForm', () => {
     await screen.findByRole('tab', { name: 'Write' })
     await u.click(document.querySelector('.cm-content') as HTMLElement)
     await u.keyboard('# Titel{Enter}- eins')
-    await u.click(screen.getByRole('button', { name: 'Save idea' }))
+    await saveIdea(u)
     const data = JSON.parse(String(formData(calls.find((c) => c.method === 'POST')?.body).get('data')))
     expect(data.mediationConcept).toBe('# Titel\n- eins')
   })
@@ -145,7 +145,7 @@ describe('IdeaForm', () => {
     const u = userEvent.setup()
     await u.type(await screen.findByLabelText('Area (m²)'), '2,5')
     await u.type(screen.getByLabelText('Volume (m³)'), '12.25')
-    await u.click(screen.getByRole('button', { name: 'Save idea' }))
+    await saveIdea(u)
 
     const post = calls.find((c) => c.method === 'POST')
     const data = JSON.parse(String(formData(post?.body).get('data')))
@@ -160,7 +160,7 @@ describe('IdeaForm', () => {
     renderAt('/ideas/new')
     const u = userEvent.setup()
     await u.type(await screen.findByLabelText('Title'), 'Lichtinstallation')
-    await u.click(screen.getByRole('button', { name: 'Save idea' }))
+    await saveIdea(u)
 
     expect(await screen.findByText('Budget must be S, M, L, XL or empty.')).toBeInTheDocument()
     expect(screen.getByLabelText('Title')).toHaveValue('Lichtinstallation')
@@ -176,7 +176,7 @@ describe('IdeaForm', () => {
     const u = userEvent.setup()
     await u.click(await screen.findByRole('checkbox', { name: 'Reproductive' }))
     await u.click(screen.getByRole('checkbox', { name: 'Transformation' }))
-    await u.click(screen.getByRole('button', { name: 'Save idea' }))
+    await saveIdea(u)
 
     const post = calls.find((c) => c.method === 'POST')
     const data = JSON.parse(String(formData(post?.body).get('data')))
@@ -190,7 +190,7 @@ describe('IdeaForm', () => {
       'GET /api/ideas/i1': () => savedIdea,
     })
     renderAt('/ideas/new')
-    await userEvent.setup().click(await screen.findByRole('button', { name: 'Save idea' }))
+    await saveIdea(userEvent.setup())
 
     const post = calls.find((c) => c.method === 'POST')
     const data = JSON.parse(String(formData(post?.body).get('data')))
@@ -213,9 +213,11 @@ describe('IdeaForm', () => {
       expect(before(tab, save)).toBe(true)
       const fields = [...document.querySelectorAll('form input, form select, form textarea, form [role="tab"]')]
       const lastInput = fields.filter((e) => !e.closest('.cm-editor') && e.getAttribute('role') !== 'tab').at(-1)
-      // F-027: only the credit block sits between the budget and the concept editor.
-      expect(lastInput).toBe(screen.getByLabelText('Email'))
+      // F-027/F-028: the credit block sits between the budget and the editor, the terms checkbox follows it.
       expect(before(budget, screen.getByLabelText('Email'))).toBe(true)
+      expect(before(screen.getByLabelText('Email'), tab)).toBe(true)
+      expect(lastInput).toBe(screen.getByRole('checkbox', { name: /I confirm that my content/ }))
+      expect(before(tab, lastInput as Node)).toBe(true)
       unmount()
     }
   })
@@ -245,7 +247,7 @@ describe('IdeaForm', () => {
     const boxes = screen.getAllByRole('checkbox').filter((b) => b.closest('label')?.querySelector('img'))
     await u.click(boxes[1])
     await u.upload(screen.getByLabelText(/^Images/), new File(['x'], 'neu.png', { type: 'image/png' }))
-    await u.click(screen.getByRole('button', { name: 'Save idea' }))
+    await saveIdea(u)
 
     const put = calls.find((c) => c.method === 'PUT')
     const form = formData(put?.body)
@@ -283,7 +285,7 @@ describe('IdeaForm', () => {
     expect(box.closest('label')?.querySelector('img')).toHaveAttribute('src', '/api/ideas/i1/images/0?v=alt')
     await u.click(box)
     await u.upload(screen.getByLabelText(/^Images/), new File(['x'], 'neu.png', { type: 'image/png' }))
-    await u.click(screen.getByRole('button', { name: 'Save idea' }))
+    await saveIdea(u)
     const put = calls.find((c) => c.method === 'PUT')
     expect(JSON.parse(String(formData(put?.body).get('data'))).keepImages).toEqual([])
     expect(formData(put?.body).getAll('images')).toHaveLength(1)
@@ -300,7 +302,7 @@ describe('IdeaForm', () => {
     const u = userEvent.setup()
     await screen.findByLabelText('Title')
     await u.click(screen.getAllByRole('checkbox').find((b) => b.closest('label')?.querySelector('img')) as HTMLElement)
-    await u.click(screen.getByRole('button', { name: 'Save idea' }))
+    await saveIdea(u)
     const put = calls.find((c) => c.method === 'PUT')
     expect(JSON.parse(String(formData(put?.body).get('data'))).keepImages).toEqual([])
     expect(formData(put?.body).getAll('images')).toHaveLength(0)
@@ -318,14 +320,14 @@ describe('IdeaForm', () => {
     expect(screen.getByPlaceholderText('Last name')).toBeInTheDocument()
     expect(screen.getByPlaceholderText('Institute')).toBeInTheDocument()
     await u.type(screen.getByLabelText('Email'), 'kaputt')
-    await u.click(screen.getByRole('button', { name: 'Save idea' }))
+    await saveIdea(u)
     expect(await screen.findByText('Please enter a valid email address.')).toBeInTheDocument()
     expect(calls.some((c) => c.method === 'POST')).toBe(false)
 
     await u.clear(screen.getByLabelText('Email'))
     await u.type(screen.getByLabelText('Email'), 'ada@example.org')
     await u.type(screen.getByPlaceholderText('First name'), 'Ada')
-    await u.click(screen.getByRole('button', { name: 'Save idea' }))
+    await saveIdea(u)
     const data = JSON.parse(String(formData(calls.find((c) => c.method === 'POST')?.body).get('data')))
     expect(data).toMatchObject({ creditFirstName: 'Ada', creditEmail: 'ada@example.org', creditLastName: '', creditInstitute: '' })
   })
@@ -338,5 +340,34 @@ describe('IdeaForm', () => {
     renderAt('/ideas/i1/edit')
     expect(await screen.findByPlaceholderText('Last name')).toHaveValue('Lovelace')
     expect(screen.getByLabelText('Email')).toHaveValue('ada@example.org')
+  })
+
+  it('AC-028-6/7/8/9 verlangt die Terms-Bestätigung, sendet sie und beginnt beim Bearbeiten ungesetzt', async () => {
+    const { calls } = routeFetch({
+      'GET /api/me': () => user,
+      'POST /api/ideas': () => ({ status: 201, json: { id: 'i1' } }),
+      'GET /api/ideas/i1': () => savedIdea,
+    })
+    renderAt('/ideas/new')
+    const u = userEvent.setup()
+    const box = await screen.findByRole('checkbox', { name: /I confirm that my content/ })
+    expect(box).not.toBeChecked()
+    const formLink = box.closest('label')?.querySelector('a')
+    expect(formLink).toHaveAttribute('href', '/terms')
+    expect(formLink).toHaveAttribute('rel', 'noopener noreferrer')
+
+    await u.click(screen.getByRole('button', { name: 'Save idea' }))
+    expect(await screen.findByText('Please confirm the Terms and Conditions before saving.')).toBeInTheDocument()
+    expect(calls.some((c) => c.method === 'POST')).toBe(false)
+
+    await saveIdea(u)
+    const data = JSON.parse(String(formData(calls.find((c) => c.method === 'POST')?.body).get('data')))
+    expect(data.termsAccepted).toBe(true)
+  })
+
+  it('AC-028-9 beim Bearbeiten ist die Bestätigung wieder ungesetzt', async () => {
+    routeFetch({ 'GET /api/me': () => user, 'GET /api/ideas/i1': () => savedIdea })
+    renderAt('/ideas/i1/edit')
+    expect(await screen.findByRole('checkbox', { name: /I confirm that my content/ })).not.toBeChecked()
   })
 })

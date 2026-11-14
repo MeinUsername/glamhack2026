@@ -10,6 +10,7 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 )
 
 var (
@@ -394,5 +395,31 @@ func TestAC027_CreditLine(t *testing.T) {
 	}
 	if _, _, err := validateIdeaInput(ideaInput{CreditLastName: strings.Repeat("ä", maxIdeaTextRunes+1)}); err == nil {
 		t.Error("long name accepted")
+	}
+}
+
+// AC-028-8..10: the terms confirmation is required, stored with its time and renewed on every save.
+func TestAC028_TermsAcceptance(t *testing.T) {
+	var doc ideaDoc
+	if err := applyTermsAcceptance(ideaInput{}, &doc, time.Now()); err == nil {
+		t.Fatal("save without confirmation accepted")
+	}
+	if doc.TermsAcceptedAt != nil {
+		t.Error("time set without confirmation")
+	}
+	first := time.Date(2026, 11, 14, 10, 0, 0, 0, time.UTC)
+	if err := applyTermsAcceptance(ideaInput{TermsAccepted: true}, &doc, first); err != nil {
+		t.Fatal(err)
+	}
+	if doc.TermsAcceptedAt == nil || !doc.TermsAcceptedAt.Equal(first) {
+		t.Fatalf("time = %v", doc.TermsAcceptedAt)
+	}
+	second := first.Add(time.Hour)
+	if err := applyTermsAcceptance(ideaInput{TermsAccepted: true}, &doc, second); err != nil || !doc.TermsAcceptedAt.Equal(second) {
+		t.Errorf("not renewed: %v %v", err, doc.TermsAcceptedAt)
+	}
+	// validateIdeaInput stays free of the confirmation, the CSV import relies on that.
+	if d, _, err := validateIdeaInput(ideaInput{}); err != nil || d.TermsAcceptedAt != nil {
+		t.Errorf("validateIdeaInput: %v %v", err, d.TermsAcceptedAt)
 	}
 }
