@@ -1,7 +1,7 @@
 ---
 id: F-020
 title: Kannst du die Idee Seite editerbar machen, dass man z.B. auch noch Bilder hochladen kann
-status: plan-ready
+status: done
 ---
 
 # F-020 Kannst du die Idee Seite editerbar machen, dass man z.B. auch noch Bilder hochladen kann
