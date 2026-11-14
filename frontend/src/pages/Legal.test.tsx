@@ -30,7 +30,7 @@ describe('Footer und Rechtsseiten (F-028)', () => {
     const { container } = renderAt('/imprint')
     expect(await screen.findByRole('heading', { level: 1, name: 'Imprint' })).toBeInTheDocument()
     expect(screen.getByRole('note')).toHaveTextContent('TODO')
-    expect(container.querySelectorAll('[data-placeholder]').length).toBeGreaterThanOrEqual(4)
+    expect(container.querySelectorAll('[data-placeholder]').length).toBe(3) // the contact is no longer a placeholder (F-033)
   })
 
   it('AC-028-5 wechselt die Texte mit der Sprache', async () => {
@@ -42,5 +42,26 @@ describe('Footer und Rechtsseiten (F-028)', () => {
     expect(within(screen.getByRole('contentinfo')).getByRole('link', { name: 'Impressum' })).toBeInTheDocument()
     await userEvent.setup().click(within(screen.getByRole('contentinfo')).getByRole('link', { name: 'Impressum' }))
     expect(await screen.findByRole('heading', { level: 1, name: 'Impressum' })).toBeInTheDocument()
+  })
+})
+
+describe('Projektname und Kontakt (F-033)', () => {
+  it('AC-033-9 das Impressum nennt den Projektnamen und verlinkt die Kontakt-E-Mail', async () => {
+    routeFetch({ 'GET /api/me': () => unauthorized })
+    renderAt('/imprint')
+    await screen.findByRole('heading', { level: 1, name: 'Imprint' })
+    expect(screen.getAllByText('Good Question – A Tool Kit for Art Mediation').length).toBeGreaterThan(0)
+    expect(screen.getByRole('link', { name: 'goodquestion.glamhack@gmail.com' })).toHaveAttribute('href', 'mailto:goodquestion.glamhack@gmail.com')
+  })
+
+  it('AC-033-10 die Terms nennen Projektname und Kontakt in allen Sprachen', async () => {
+    routeFetch({ 'GET /api/me': () => unauthorized })
+    renderAt('/terms')
+    for (const lang of ['en', 'de', 'fr', 'it']) {
+      await i18n.changeLanguage(lang)
+      expect(await screen.findByRole('link', { name: 'goodquestion.glamhack@gmail.com' })).toHaveAttribute('href', 'mailto:goodquestion.glamhack@gmail.com')
+      expect(screen.getByText(/Good Question – A Tool Kit for Art Mediation/, { selector: 'p' })).toBeInTheDocument()
+    }
+    await i18n.changeLanguage('en')
   })
 })

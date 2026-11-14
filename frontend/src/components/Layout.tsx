@@ -1,5 +1,6 @@
 import { Link, NavLink, Outlet, useLocation } from 'react-router'
 import { useTranslation } from 'react-i18next'
+import { PROJECT_TITLE } from '../brand'
 import { useMe } from '../auth/useMe'
 import { useBasket } from '../basket/useBasket'
 import { navLink, navLinkActive } from '../ui'
@@ -25,12 +26,12 @@ export default function Layout() {
     <div className="flex min-h-screen flex-col">
       <header>
         <div className={`mx-auto flex ${width} flex-wrap items-center justify-between gap-x-6 gap-y-3 px-4 py-5 sm:px-8`}>
-          <Link to="/" className="flex min-h-11 items-center gap-3 font-display text-[26px] leading-none font-semibold tracking-[-0.03em] text-ink no-underline hover:text-ink">
+          <Link to="/" className="flex min-h-11 items-center gap-3 font-display text-xl leading-tight sm:text-[26px] font-semibold tracking-[-0.03em] text-ink no-underline hover:text-ink">
             <span
               aria-hidden="true"
               className="inline-block h-[30px] w-[30px] shrink-0 rotate-[8deg] rounded-[10px] border-2 border-ink bg-coral"
             />
-            {t('app.name')}
+            {PROJECT_TITLE}
           </Link>
           <nav className="flex flex-wrap items-center gap-x-1 gap-y-2">
             <NavLink to="/ideas" className={navClass}>

@@ -43,14 +43,6 @@ export const de: Record<keyof typeof en, string> = {
   'error.firebase.tooManyRequests': 'Zu viele Versuche. Bitte warte kurz und versuche es erneut.',
   'error.firebase.network': 'Keine Verbindung. Bitte prüfe dein Netzwerk.',
 
-  'home.title': 'Ideen für die Kunstvermittlung',
-  'home.intro': 'Stöbere in Ideen für die Kunstvermittlung, sammle deine Favoriten im Korb und erzeuge daraus einen Prompt.',
-  'home.newIdea': 'Idee erfassen',
-  'app.name': 'Ideen-Shop',
-  'home.signedInAs': 'Angemeldet als {{email}}.',
-  'home.toFiles': 'Zu meinen Dateien',
-  'home.or': 'oder',
-  'home.createAccount': 'Konto erstellen',
 
   'files.title': 'Meine Dateien',
   'files.intro': 'Angemeldet als {{email}}. Maximale Grösse pro Datei: 1 MB.',
@@ -251,7 +243,7 @@ export const de: Record<keyof typeof en, string> = {
   'terms.title': 'Nutzungsbedingungen',
   'terms.draft': 'Diese Bedingungen regeln das Einreichen von Ideen. Sie sind ein Entwurf und müssen noch juristisch geprüft werden.',
   'terms.s1.h': '1. Geltungsbereich',
-  'terms.s1.p': 'Diese Bedingungen gelten für jede Idee, die du auf dieser Plattform anlegst, änderst oder einreichst.',
+  'terms.s1.p': 'Diese Bedingungen gelten für jede Idee, die du auf der Plattform {{name}} anlegst, änderst oder einreichst.',
   'terms.s2.h': '2. Urheberrecht und Rechte Dritter',
   'terms.s2.p': 'Du bestätigst, dass du die eingereichten Texte, Bilder und anderen Inhalte selbst erstellt hast oder alle Rechte besitzt, die für die Veröffentlichung hier nötig sind. Deine Inhalte dürfen keine Urheberrechte, Markenrechte, Persönlichkeitsrechte, Datenschutzbestimmungen oder andere Rechte Dritter verletzen. Bilder von erkennbaren Personen setzen deren Einwilligung voraus.',
   'terms.s3.h': '3. Verantwortung für eingereichte Inhalte',
@@ -365,4 +357,11 @@ export const de: Record<keyof typeof en, string> = {
   'trash.error': 'Das hat nicht geklappt.',
   'trash.restore': 'Wiederherstellen',
   'trash.restored': '«{{title}}» wiederhergestellt.',
+
+  'home.card.ideas.title': 'Ideen-Shop',
+  'home.card.ideas.text': 'Stöbere in Ideen für die Kunstvermittlung, sammle sie im Korb und erzeuge daraus einen Prompt.',
+  'home.card.feedback.title': 'Feedback-Prompt Download',
+  'home.card.feedback.text': 'Prompts, die Rückmeldungen zu deinem Projekt in nächste Schritte verwandeln.',
+  'terms.s8.h': '8. Kontakt',
+  'terms.s8.p': 'Fragen zu diesen Bedingungen und Bitten um Entfernung von Inhalten gehen an:',
 }

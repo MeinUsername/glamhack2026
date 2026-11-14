@@ -401,7 +401,7 @@ function IdeaEditor({ edit }: { edit?: Idea }) {
         />
         <p className={muted}>{t('ideas.markdown.help')}</p>
         <label className="flex items-start gap-2">
-          <input type="checkbox" className="mt-1" checked={termsAccepted} onChange={(e) => setTermsAccepted(e.target.checked)} />
+          <input type="checkbox" className="mt-1 h-5 w-5 shrink-0" checked={termsAccepted} onChange={(e) => setTermsAccepted(e.target.checked)} />
           <span>
             {t('ideas.terms.label')}{' '}
             <a href="/terms" target="_blank" rel="noopener noreferrer">

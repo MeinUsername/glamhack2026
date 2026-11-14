@@ -453,3 +453,15 @@ describe('IdeaForm links (F-031)', () => {
     expect(screen.queryByRole('button', { name: 'Add link' })).toBeNull()
   })
 })
+
+describe('IdeaForm terms checkbox (F-033)', () => {
+  it('AC-033-6 die Checkbox hat feste Grösse und schrumpft nicht, auch beim Bearbeiten', async () => {
+    routeFetch({ 'GET /api/me': () => user })
+    renderAt('/ideas/new')
+    const box = await screen.findByRole('checkbox', { name: /I confirm that my content/ })
+    expect(box).toBeVisible()
+    expect(box.className).toMatch(/shrink-0/)
+    expect(box.className).toMatch(/h-5/)
+    expect(box.className).toMatch(/w-5/)
+  })
+})

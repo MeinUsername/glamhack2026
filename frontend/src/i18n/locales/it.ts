@@ -44,14 +44,6 @@ export const it: Record<keyof typeof en, string> = {
   'error.firebase.tooManyRequests': 'Troppi tentativi. Attendi un momento e riprova.',
   'error.firebase.network': 'Nessuna connessione. Controlla la rete.',
 
-  'home.title': 'Idee per la mediazione artistica',
-  'home.intro': 'Sfoglia idee per la mediazione artistica, raccogli le preferite nel carrello e trasformale in un prompt.',
-  'home.newIdea': 'Aggiungi un’idea',
-  'app.name': 'Negozio di idee',
-  'home.signedInAs': 'Accesso effettuato come {{email}}.',
-  'home.toFiles': 'Ai miei file',
-  'home.or': 'o',
-  'home.createAccount': 'crea un account',
 
   'files.title': 'I miei file',
   'files.intro': 'Accesso effettuato come {{email}}. Dimensione massima per file: 1 MB.',
@@ -252,7 +244,7 @@ export const it: Record<keyof typeof en, string> = {
   'terms.title': 'Condizioni d’uso',
   'terms.draft': 'Queste condizioni regolano l’invio di idee. Sono una bozza e devono ancora essere verificate legalmente.',
   'terms.s1.h': '1. Ambito di applicazione',
-  'terms.s1.p': 'Queste condizioni si applicano a ogni idea che crei, modifichi o invii su questa piattaforma.',
+  'terms.s1.p': 'Queste condizioni si applicano a ogni idea che crei, modifichi o invii sulla piattaforma {{name}}.',
   'terms.s2.h': '2. Diritto d’autore e diritti di terzi',
   'terms.s2.p': 'Confermi di aver creato tu stesso i testi, le immagini e gli altri contenuti inviati, o di avere tutti i diritti necessari per pubblicarli qui. I tuoi contenuti non devono violare diritti d’autore, marchi, diritti della personalità, protezione dei dati o altri diritti di terzi. Le immagini di persone riconoscibili richiedono il loro consenso.',
   'terms.s3.h': '3. Responsabilità per i contenuti inviati',
@@ -366,4 +358,11 @@ export const it: Record<keyof typeof en, string> = {
   'trash.error': 'Non ha funzionato.',
   'trash.restore': 'Ripristina',
   'trash.restored': '«{{title}}» ripristinata.',
+
+  'home.card.ideas.title': 'Negozio di idee',
+  'home.card.ideas.text': 'Sfoglia idee per la mediazione artistica, raccoglile nel carrello e trasformale in un prompt.',
+  'home.card.feedback.title': 'Download dei prompt di feedback',
+  'home.card.feedback.text': 'Prompt che trasformano i riscontri sul tuo progetto in prossimi passi.',
+  'terms.s8.h': '8. Contatto',
+  'terms.s8.p': 'Domande su queste condizioni e richieste di rimozione di contenuti vanno inviate a:',
 }

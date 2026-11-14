@@ -44,14 +44,6 @@ export const fr: Record<keyof typeof en, string> = {
   'error.firebase.tooManyRequests': 'Trop de tentatives. Patiente un instant et réessaie.',
   'error.firebase.network': 'Pas de connexion. Vérifie ton réseau.',
 
-  'home.title': 'Idées pour la médiation artistique',
-  'home.intro': 'Parcourez des idées pour la médiation artistique, rassemblez vos favorites dans le panier et générez-en un prompt.',
-  'home.newIdea': 'Ajouter une idée',
-  'app.name': 'Boutique d’idées',
-  'home.signedInAs': 'Connecté en tant que {{email}}.',
-  'home.toFiles': 'Vers mes fichiers',
-  'home.or': 'ou',
-  'home.createAccount': 'créer un compte',
 
   'files.title': 'Mes fichiers',
   'files.intro': 'Connecté en tant que {{email}}. Taille maximale par fichier : 1 Mo.',
@@ -252,7 +244,7 @@ export const fr: Record<keyof typeof en, string> = {
   'terms.title': 'Conditions d’utilisation',
   'terms.draft': 'Ces conditions règlent la soumission d’idées. Il s’agit d’un projet qui doit encore être examiné juridiquement.',
   'terms.s1.h': '1. Champ d’application',
-  'terms.s1.p': 'Ces conditions s’appliquent à chaque idée que vous créez, modifiez ou soumettez sur cette plateforme.',
+  'terms.s1.p': 'Ces conditions s’appliquent à chaque idée que vous créez, modifiez ou soumettez sur la plateforme {{name}}.',
   'terms.s2.h': '2. Droit d’auteur et droits de tiers',
   'terms.s2.p': 'Vous confirmez avoir créé vous-même les textes, images et autres contenus soumis, ou détenir tous les droits nécessaires pour les publier ici. Vos contenus ne doivent violer ni le droit d’auteur, ni les marques, ni les droits de la personnalité, ni la protection des données, ni d’autres droits de tiers. Les images de personnes identifiables exigent leur consentement.',
   'terms.s3.h': '3. Responsabilité des contenus soumis',
@@ -366,4 +358,11 @@ export const fr: Record<keyof typeof en, string> = {
   'trash.error': 'Cela n’a pas fonctionné.',
   'trash.restore': 'Restaurer',
   'trash.restored': '« {{title}} » restaurée.',
+
+  'home.card.ideas.title': 'Boutique d’idées',
+  'home.card.ideas.text': 'Parcourez des idées pour la médiation artistique, rassemblez-les dans le panier et générez-en un prompt.',
+  'home.card.feedback.title': 'Téléchargement de prompts de feedback',
+  'home.card.feedback.text': 'Des prompts qui transforment les retours sur votre projet en prochaines étapes.',
+  'terms.s8.h': '8. Contact',
+  'terms.s8.p': 'Les questions sur ces conditions et les demandes de suppression de contenu sont à adresser à :',
 }

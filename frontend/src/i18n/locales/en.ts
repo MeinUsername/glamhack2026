@@ -42,14 +42,6 @@ export const en = {
   'error.firebase.tooManyRequests': 'Too many attempts. Please wait a moment and try again.',
   'error.firebase.network': 'No connection. Please check your network.',
 
-  'home.title': 'Ideas for art mediation',
-  'home.intro': 'Browse ideas for art mediation, collect the ones you like in your basket and turn them into a prompt.',
-  'home.newIdea': 'Add an idea',
-  'app.name': 'Idea Shop',
-  'home.signedInAs': 'Signed in as {{email}}.',
-  'home.toFiles': 'To my files',
-  'home.or': 'or',
-  'home.createAccount': 'create an account',
 
   'files.title': 'My files',
   'files.intro': 'Signed in as {{email}}. Maximum size per file: 1 MB.',
@@ -250,7 +242,7 @@ export const en = {
   'terms.title': 'Terms and Conditions',
   'terms.draft': 'These terms describe the rules for submitting ideas. They are a draft and still have to be reviewed legally.',
   'terms.s1.h': '1. Scope',
-  'terms.s1.p': 'These terms apply to every idea that you create, change or submit on this platform.',
+  'terms.s1.p': 'These terms apply to every idea that you create, change or submit on this platform, {{name}}.',
   'terms.s2.h': '2. Copyright and rights of third parties',
   'terms.s2.p': 'You confirm that you created the submitted texts, images and other content yourself, or that you hold all rights needed to publish them here. Your content must not infringe copyright, trademarks, personality rights, data protection or other rights of third parties. Images of identifiable people require their consent.',
   'terms.s3.h': '3. Responsibility for submitted content',
@@ -364,4 +356,11 @@ export const en = {
   'trash.error': 'This did not work.',
   'trash.restore': 'Restore',
   'trash.restored': '"{{title}}" restored.',
+
+  'home.card.ideas.title': 'Idea shop',
+  'home.card.ideas.text': 'Browse ideas for art mediation, collect them in your basket and turn them into a prompt.',
+  'home.card.feedback.title': 'Feedback prompt download',
+  'home.card.feedback.text': 'Prompts that turn feedback on your project into next steps.',
+  'terms.s8.h': '8. Contact',
+  'terms.s8.p': 'Questions about these terms and requests to remove content go to:',
 } as const
