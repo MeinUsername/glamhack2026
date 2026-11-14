@@ -17,17 +17,20 @@ export function FilterChip({
   pressed,
   onClick,
   title,
+  describedBy,
   children,
 }: {
   pressed: boolean
   onClick: () => void
   title?: string
+  describedBy?: string
   children: ReactNode
 }) {
   return (
     <button
       type="button"
       aria-pressed={pressed}
+      aria-describedby={describedBy}
       title={title}
       onClick={onClick}
       className={`${chipFace} cursor-pointer bg-paper text-ink hover:bg-coral-soft aria-pressed:bg-ink aria-pressed:text-on-accent aria-pressed:hover:bg-accent`}

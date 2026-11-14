@@ -37,10 +37,15 @@ function IcomTags({ idea }: { idea: Idea }) {
           <h2 className={`${label} m-0`}>{t('ideas.filter.categories')}</h2>
           <ul className="flex flex-wrap gap-2">
             {cats.map((c) => (
-              <li key={c.id}>
+              <li key={c.id} className="flex flex-wrap items-center gap-2">
                 <Link to={`/ideas?categories=${c.id}`} title={pick(c.description, lang)} className={tagLink}>
                   {pick(c.label, lang)}
                 </Link>
+                {c.icomRefs.length > 0 && (
+                  <span aria-label={`${t('ideas.icomRefs')}: ${c.icomRefs.join(', ')}`} className="font-mono text-sm text-ink-2">
+                    {c.icomRefs.join(' · ')}
+                  </span>
+                )}
               </li>
             ))}
           </ul>

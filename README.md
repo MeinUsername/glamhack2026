@@ -94,6 +94,10 @@ go vet ./... && go test ./...
 
 Neue und geänderte Ideen haben den Status `pending`. Nur Admins sehen sie (Übersicht, Detailseite, Bilder), für alle anderen antwortet die API mit 404. Admins veröffentlichen oder lehnen auf `/admin/approvals` ab. Ideen ohne Statusfeld gelten als `published`, der Admin-CSV-Import veröffentlicht sofort. Beim Einreichen geht eine Mail an alle aktiven Admins, mit Link aus `APP_BASE_URL`. **Der Mail-Anbieter ist noch nicht gewählt** (F-030 D8): bis dahin verwendet der Server `logMailer`, der nur ins Log schreibt. Ein echter Versand braucht eine Implementierung von `Mailer` (`ideas_status.go`) und die Auswahl in `newServer`.
 
+## ICOM-Kriterien (F-035)
+
+`frontend/src/data/icom-filter-kategorien.json` ist die einzige Quelle der ICOM-Kategorien und Orte. Das Frontend liest daraus Beschriftungen, Beschreibungen und Referenzen, der Go-Code bettet die Datei per `go:embed` ein und leitet die gültigen IDs daraus ab (eine kaputte Datei stoppt den Start). Deshalb nimmt `.gcloudignore` genau diese Datei vom Ausschluss von `frontend/` aus. Die Übersicht filtert Kategorien mit UND (eine Idee braucht alle gewählten), Orte mit ODER, Kategorie und Ort zusammen mit UND.
+
 ## Papierkorb (F-033)
 
 Admins löschen Ideen weich: `DELETE /api/ideas/{id}` setzt nur `deleted_at`. Übersicht, Detail, Bilder, Bearbeiten, Freigaben und `{{allideas}}` übergehen solche Ideen über den einen Filter `visibleTo`. Unter `/admin/trash` stellt ein Admin sie samt Bildern wieder her. Der CSV-Import zählt gelöschte Ideen weiter als vorhanden, damit ein Re-Import keine Dublette anlegt. Projektname, Claim und Kontakt stehen in `frontend/src/brand.ts`.

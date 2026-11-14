@@ -1,29 +1,71 @@
 package app
 
 import (
+	_ "embed"
+	"encoding/json"
 	"fmt"
 	"strings"
 )
 
-// ICOM filter (F-024): every idea can carry several ICOM categories and one or more locations.
-// The IDs mirror frontend/src/data/icom-filter-kategorien.json, which also holds the labels.
-// frontend/ is not uploaded on deploy (.gcloudignore), so the IDs are repeated here;
-// TestF024_IDsMatchFrontendJSON keeps both lists in step.
+// ICOM filter (F-024, F-035): every idea can carry several ICOM categories and one or more locations.
+// frontend/src/data/icom-filter-kategorien.json is the only source: the frontend reads the labels from it,
+// and the server embeds it, so no list of IDs is repeated in Go. It is uploaded on deploy despite the rest
+// of frontend/ being excluded (.gcloudignore).
 
-// icomCategoryIDs in the order of the JSON file (groups, then categories).
-var icomCategoryIDs = []string{
-	// people-participation
-	"participation-cocreation", "dialogue-exchange", "visitor-feedback", "community-partnerships",
-	// access-inclusion
-	"accessibility", "inclusion-antidiscrimination", "multiple-perspectives", "diverse-audiences",
-	// learning-reflection
-	"active-learning", "transparency-insights", "digital-mediation",
-	// care-responsibility
-	"wellbeing-safe-space", "sensitive-content", "colonial-restitution", "sustainability",
+//go:embed frontend/src/data/icom-filter-kategorien.json
+var icomFilterJSON []byte
+
+type icomFilterFile struct {
+	FilterGroups []struct {
+		Categories []struct {
+			ID string `json:"id"`
+		} `json:"categories"`
+	} `json:"filterGroups"`
+	SecondaryFilters []struct {
+		ID      string `json:"id"`
+		Options []struct {
+			ID string `json:"id"`
+		} `json:"options"`
+	} `json:"secondaryFilters"`
 }
 
-// locationIDs are the options of the secondary filter "location".
-var locationIDs = []string{"onsite", "offsite", "online"}
+// icomCategoryIDs in the order of the JSON file (groups, then categories); locationIDs are the options
+// of the secondary filter "location".
+var icomCategoryIDs, locationIDs = mustLoadICOMIDs(icomFilterJSON)
+
+// mustLoadICOMIDs parses the file once at start. A broken file stops the start instead of letting the
+// server reject every ID silently.
+func mustLoadICOMIDs(data []byte) (categories, locations []string) {
+	var f icomFilterFile
+	if err := json.Unmarshal(data, &f); err != nil {
+		panic(fmt.Sprintf("icom-filter-kategorien.json: %v", err))
+	}
+	seen := map[string]bool{}
+	add := func(list *[]string, id string) {
+		if id == "" || seen[id] {
+			panic(fmt.Sprintf("icom-filter-kategorien.json: empty or duplicate ID %q", id))
+		}
+		seen[id] = true
+		*list = append(*list, id)
+	}
+	for _, g := range f.FilterGroups {
+		for _, c := range g.Categories {
+			add(&categories, c.ID)
+		}
+	}
+	for _, sf := range f.SecondaryFilters {
+		if sf.ID != "location" {
+			continue
+		}
+		for _, o := range sf.Options {
+			add(&locations, o.ID)
+		}
+	}
+	if len(categories) == 0 || len(locations) == 0 {
+		panic("icom-filter-kategorien.json: no categories or no locations")
+	}
+	return categories, locations
+}
 
 // normalizeIDs accepts only IDs from valid (case-sensitive), drops duplicates and keeps the
 // order of the first occurrences. nil and an empty list give an empty list.

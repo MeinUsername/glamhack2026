@@ -304,7 +304,7 @@ export const it: Record<keyof typeof en, string> = {
   'ideas.filter.reset': 'Azzera filtri',
   'ideas.filter.count': '{{shown}} di {{total}} idee',
   'ideas.filter.noMatch': 'Nessuna idea corrisponde a questo filtro.',
-  'ideas.filter.hint': 'Basta una corrispondenza tra le categorie o tra i luoghi; categoria e luogo devono corrispondere entrambi.',
+  'ideas.filter.hint': 'Un’idea deve avere tutte le categorie scelte; per i luoghi basta una corrispondenza. Categoria e luogo devono corrispondere entrambi.',
   'admin.import.icomTitle': 'Colonne per categorie ICOM e luogo',
   'admin.import.icomHint': 'Colonne facoltative «ICOM categories» e «Location»: ID separati da «;». Un ID sconosciuto rende la riga non valida.',
   // Gallery on the idea page
@@ -365,4 +365,5 @@ export const it: Record<keyof typeof en, string> = {
   'home.card.feedback.text': 'Prompt che trasformano i riscontri sul tuo progetto in prossimi passi.',
   'terms.s8.h': '8. Contatto',
   'terms.s8.p': 'Domande su queste condizioni e richieste di rimozione di contenuti vanno inviate a:',
+  'ideas.icomRefs': 'Riferimenti ICOM',
 }

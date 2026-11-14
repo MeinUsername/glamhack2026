@@ -5,7 +5,7 @@ import { MemoryRouter, useLocation } from 'react-router'
 import App from '../App'
 import i18n from '../i18n'
 import { renderAt, routeFetch } from '../test/helpers'
-import { matchesFilter, parseIdList, ICOM_CATEGORY_IDS } from './icom'
+import { matchesFilter, parseIdList, ICOM_CATEGORY_IDS, ICOM_GROUPS } from './icom'
 
 const user = { json: { email: 'a@example.ch', role: 'user' } }
 const rows = [
@@ -42,20 +42,38 @@ describe('ICOM filter (F-024)', () => {
     expect(screen.getByRole('button', { name: 'Reset filters' })).toBeDisabled()
   })
 
-  it('verknüpft Kategorien mit ODER und Kategorie und Ort mit UND', async () => {
+  it('AC-035-4/5 verknüpft Kategorien mit UND, Orte mit ODER und Kategorie und Ort mit UND', async () => {
     mockIdeas()
     renderAt('/ideas')
     const u = userEvent.setup()
     await u.click(await screen.findByRole('switch', { name: 'Show all subcategories' }))
     await u.click(screen.getByRole('button', { name: 'Accessibility & Access' }))
+    expect(shownTitles()).toEqual(['Talking hour'])
+    await u.click(screen.getByRole('button', { name: 'Dialogue & Exchange' }))
+    expect(shownTitles()).toEqual(['Talking hour'])
     await u.click(screen.getByRole('button', { name: 'Digital Mediation' }))
-    expect(screen.getByRole('button', { name: 'Accessibility & Access' })).toHaveAttribute('aria-pressed', 'true')
-    expect(shownTitles()).toEqual(['Talking hour', 'Online archive'])
-    expect(screen.getByText('2 of 3 ideas')).toBeInTheDocument()
-
+    expect(shownTitles()).toEqual([])
+    expect(screen.getByText('0 of 3 ideas')).toBeInTheDocument()
+    await u.click(screen.getByRole('button', { name: 'Digital Mediation' }))
+    await u.click(screen.getByRole('button', { name: 'Onsite' }))
+    expect(shownTitles()).toEqual(['Talking hour'])
     await u.click(screen.getByRole('button', { name: 'Online' }))
-    expect(shownTitles()).toEqual(['Online archive'])
-    expect(screen.getByText('1 of 3 ideas')).toBeInTheDocument()
+    expect(shownTitles()).toEqual(['Talking hour'])
+    await u.click(screen.getByRole('button', { name: 'Accessibility & Access' }))
+    await u.click(screen.getByRole('button', { name: 'Dialogue & Exchange' }))
+    expect(shownTitles()).toEqual(['Talking hour', 'Online archive'])
+  })
+
+  it('AC-035-6 zeigt die Beschreibung sichtbar und wechselt mit der Sprache', async () => {
+    mockIdeas()
+    renderAt('/ideas')
+    const u = userEvent.setup()
+    await u.click(await screen.findByRole('switch', { name: 'Show all subcategories' }))
+    const cat = ICOM_GROUPS.flatMap((g) => g.categories).find((c) => c.id === 'accessibility')!
+    expect(screen.getByText(cat.description.en)).toBeVisible()
+    expect(screen.getByRole('button', { name: 'Accessibility & Access' })).toHaveAccessibleDescription(cat.description.en)
+    await i18n.changeLanguage('de')
+    expect(await screen.findByText(cat.description.de)).toBeVisible()
   })
 
   it('liest den Filter aus der URL und meldet, wenn nichts passt', async () => {
@@ -141,6 +159,10 @@ describe('matchesFilter / parseIdList', () => {
   it('behandelt fehlende Felder wie leere Listen', () => {
     expect(matchesFilter({}, [], [])).toBe(true)
     expect(matchesFilter({}, ['accessibility'], [])).toBe(false)
+    const item = { icomCategories: ['accessibility', 'dialogue-exchange'], locations: ['onsite'] }
+    expect(matchesFilter(item, ['accessibility', 'dialogue-exchange'], [])).toBe(true)
+    expect(matchesFilter(item, ['accessibility', 'digital-mediation'], [])).toBe(false)
+    expect(matchesFilter(item, [], ['online', 'onsite'])).toBe(true)
   })
 })
 

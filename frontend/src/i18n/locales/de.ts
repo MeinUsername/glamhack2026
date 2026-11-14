@@ -303,7 +303,7 @@ export const de: Record<keyof typeof en, string> = {
   'ideas.filter.reset': 'Filter zurücksetzen',
   'ideas.filter.count': '{{shown}} von {{total}} Ideen',
   'ideas.filter.noMatch': 'Keine Idee passt zu diesem Filter.',
-  'ideas.filter.hint': 'Innerhalb der Kategorien und innerhalb der Orte genügt ein Treffer; Kategorie und Ort müssen beide passen.',
+  'ideas.filter.hint': 'Eine Idee braucht alle gewählten Kategorien; bei den Orten genügt ein Treffer. Kategorie und Ort müssen beide passen.',
   'admin.import.icomTitle': 'Spalten für ICOM-Kategorien und Ort',
   'admin.import.icomHint': 'Optionale Spalten «ICOM categories» und «Location»: IDs, getrennt mit «;». Eine unbekannte ID macht die Zeile ungültig.',
   // Gallery on the idea page
@@ -364,4 +364,5 @@ export const de: Record<keyof typeof en, string> = {
   'home.card.feedback.text': 'Prompts, die Rückmeldungen zu deinem Projekt in nächste Schritte verwandeln.',
   'terms.s8.h': '8. Kontakt',
   'terms.s8.p': 'Fragen zu diesen Bedingungen und Bitten um Entfernung von Inhalten gehen an:',
+  'ideas.icomRefs': 'ICOM-Referenzen',
 }

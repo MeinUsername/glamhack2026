@@ -253,14 +253,16 @@ function FilterBar({
                   className="flex flex-wrap gap-2 px-1 pt-1 pb-2"
                 >
                   {g.categories.map((c) => (
-                    <FilterChip
-                      key={c.id}
-                      pressed={categories.includes(c.id)}
-                      onClick={() => onToggleCategory(c.id)}
-                      title={pick(c.description, lang)}
-                    >
-                      {pick(c.label, lang)}
-                    </FilterChip>
+                    <div key={c.id} className="grid basis-full gap-1">
+                      <div>
+                        <FilterChip pressed={categories.includes(c.id)} onClick={() => onToggleCategory(c.id)} describedBy={`filter-desc-${c.id}`}>
+                          {pick(c.label, lang)}
+                        </FilterChip>
+                      </div>
+                      <p id={`filter-desc-${c.id}`} className={`${muted} m-0 px-1 text-sm leading-snug`}>
+                        {pick(c.description, lang)}
+                      </p>
+                    </div>
                   ))}
                 </div>
               </div>

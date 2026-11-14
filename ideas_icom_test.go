@@ -8,48 +8,63 @@ import (
 	"testing"
 )
 
-// The IDs in Go must match the JSON file the frontend uses for labels (F-024).
-func TestF024_IDsMatchFrontendJSON(t *testing.T) {
+// AC-035-1: the IDs the server knows are exactly those of the JSON file (read here on its own), 15 categories and 3 locations today.
+func TestAC035_1_IDsComeFromJSON(t *testing.T) {
 	data, err := os.ReadFile("frontend/src/data/icom-filter-kategorien.json")
 	if err != nil {
 		t.Fatal(err)
 	}
-	var f struct {
-		FilterGroups []struct {
-			Categories []struct {
-				ID string `json:"id"`
-			} `json:"categories"`
-		} `json:"filterGroups"`
-		SecondaryFilters []struct {
-			ID      string `json:"id"`
-			Options []struct {
-				ID string `json:"id"`
-			} `json:"options"`
-		} `json:"secondaryFilters"`
-	}
-	if err := json.Unmarshal(data, &f); err != nil {
+	var raw map[string]any
+	if err := json.Unmarshal(data, &raw); err != nil {
 		t.Fatal(err)
 	}
-	var cats []string
-	for _, g := range f.FilterGroups {
-		for _, c := range g.Categories {
-			cats = append(cats, c.ID)
+	var cats, locs []string
+	for _, g := range raw["filterGroups"].([]any) {
+		for _, c := range g.(map[string]any)["categories"].([]any) {
+			cats = append(cats, c.(map[string]any)["id"].(string))
 		}
 	}
-	if !reflect.DeepEqual(cats, icomCategoryIDs) {
-		t.Errorf("categories in JSON %q, in Go %q", cats, icomCategoryIDs)
-	}
-	var locs []string
-	for _, s := range f.SecondaryFilters {
-		if s.ID != "location" {
+	for _, sf := range raw["secondaryFilters"].([]any) {
+		m := sf.(map[string]any)
+		if m["id"] != "location" {
 			continue
 		}
-		for _, o := range s.Options {
-			locs = append(locs, o.ID)
+		for _, o := range m["options"].([]any) {
+			locs = append(locs, o.(map[string]any)["id"].(string))
 		}
 	}
-	if !reflect.DeepEqual(locs, locationIDs) {
-		t.Errorf("locations in JSON %q, in Go %q", locs, locationIDs)
+	if !reflect.DeepEqual(cats, icomCategoryIDs) || !reflect.DeepEqual(locs, locationIDs) {
+		t.Errorf("file %q %q, server %q %q", cats, locs, icomCategoryIDs, locationIDs)
+	}
+	if len(icomCategoryIDs) != 15 || !reflect.DeepEqual(locationIDs, []string{"onsite", "offsite", "online"}) {
+		t.Errorf("regression: %d categories, locations %q", len(icomCategoryIDs), locationIDs)
+	}
+}
+
+// AC-035-2: every category of the file is accepted when an idea is saved; an ID outside it is rejected with a message.
+func TestAC035_2_EveryFileIDIsAccepted(t *testing.T) {
+	for _, id := range icomCategoryIDs {
+		if _, _, err := validateIdeaInput(ideaInput{ICOMCategories: []string{id}}); err != nil {
+			t.Errorf("%q rejected: %v", id, err)
+		}
+	}
+	_, _, err := validateIdeaInput(ideaInput{ICOMCategories: []string{"not-in-the-file"}})
+	if err == nil || !strings.Contains(err.Error(), "not-in-the-file") {
+		t.Errorf("err = %v, want a message naming the ID", err)
+	}
+}
+
+// A broken file stops the start instead of rejecting every ID.
+func TestMustLoadICOMIDsPanicsOnBrokenFile(t *testing.T) {
+	for _, bad := range []string{`{`, `{}`, `{"filterGroups":[{"categories":[{"id":"a"},{"id":"a"}]}]}`} {
+		func() {
+			defer func() {
+				if recover() == nil {
+					t.Errorf("%q: no panic", bad)
+				}
+			}()
+			mustLoadICOMIDs([]byte(bad))
+		}()
 	}
 }
 
@@ -84,7 +99,7 @@ func TestF024_UnknownIDsRejected(t *testing.T) {
 	for _, in := range []ideaInput{
 		{ICOMCategories: []string{"nope"}},
 		{ICOMCategories: []string{"Accessibility"}}, // case-sensitive in the API
-		{ICOMCategories: []string{"affirmative"}},  // F-009 key, not an ICOM category
+		{ICOMCategories: []string{"affirmative"}},   // F-009 key, not an ICOM category
 		{Locations: []string{"moon"}},
 	} {
 		if _, _, err := validateIdeaInput(in); err == nil {

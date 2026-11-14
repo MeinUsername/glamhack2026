@@ -1,7 +1,7 @@
 import data from '../data/icom-filter-kategorien.json'
 
 // ICOM filter categories and the location filter (F-024). The JSON file is the source of the
-// labels; the server checks the same IDs (ideas_icom.go, kept in step by a Go test).
+// labels; the server embeds this file (ideas_icom.go).
 
 export interface Localized {
   de: string
@@ -52,12 +52,12 @@ export interface Filterable {
   locations?: string[]
 }
 
-// OR within the categories, OR within the locations, AND between the two. An empty selection
-// does not filter.
+// AND within the categories (an idea needs all chosen ones, F-035), OR within the locations, AND between
+// the two. An empty selection does not filter.
 export function matchesFilter(item: Filterable, categories: string[], locations: string[]): boolean {
   const cats = item.icomCategories ?? []
   const locs = item.locations ?? []
-  const catOk = categories.length === 0 || categories.some((c) => cats.includes(c))
+  const catOk = categories.length === 0 || categories.every((c) => cats.includes(c))
   const locOk = locations.length === 0 || locations.some((l) => locs.includes(l))
   return catOk && locOk
 }

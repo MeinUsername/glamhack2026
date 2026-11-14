@@ -1,6 +1,13 @@
 # Source upload for `gcloud functions deploy`. Only the Go function and the
 # prebuilt static React bundle (static/app) are needed in the cloud.
-frontend/
+# The one exception in frontend/ is the ICOM criteria file: the Go code embeds it (F-035).
+# gitignore rules: an excluded directory cannot be reopened, so each level is excluded by its content.
+frontend/*
+!frontend/src/
+frontend/src/*
+!frontend/src/data/
+frontend/src/data/*
+!frontend/src/data/icom-filter-kategorien.json
 .git/
 .gitignore
 .gcloudignore

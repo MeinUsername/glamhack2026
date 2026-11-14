@@ -207,3 +207,20 @@ describe('IdeaPage delete (F-033)', () => {
     await waitFor(() => expect(screen.queryByRole('heading', { name: 'Lichtinstallation' })).toBeNull())
   })
 })
+
+describe('IdeaPage ICOM references (F-035)', () => {
+  it('AC-035-7 zeigt die Referenzen jeder Kategorie, ohne Kategorien nichts', async () => {
+    routeFetch({
+      'GET /api/ideas/i1': () => ({ json: { ...base, categories: [], icomCategories: ['participation-cocreation', 'visitor-feedback'] } }),
+    })
+    const { unmount } = renderAt('/ideas/i1')
+    await screen.findByRole('heading', { name: 'Lichtinstallation' })
+    expect(screen.getByLabelText('ICOM references: S.2, S.3, G.6')).toHaveTextContent('S.2 · S.3 · G.6')
+    expect(screen.getByText(/E\.4/)).toBeInTheDocument()
+    unmount()
+    routeFetch({ 'GET /api/ideas/i1': () => ({ json: { ...base, categories: [] } }) })
+    renderAt('/ideas/i1')
+    await screen.findByRole('heading', { name: 'Lichtinstallation' })
+    expect(screen.queryByLabelText(/ICOM references/)).toBeNull()
+  })
+})
