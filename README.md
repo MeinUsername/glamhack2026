@@ -90,6 +90,10 @@ go vet ./... && go test ./...
 
 `npm run dev` startet den Vite-Entwicklungsserver (unter `/app/`).
 
+## Keine Indexierung (F-032)
+
+Die App ist per `/robots.txt`, dem Header `X-Robots-Tag: noindex, nofollow` und `<meta name="robots">` von Suchmaschinen ausgenommen. Bekannte Crawler und KI-Bots (User-Agent, Liste in `robots.go`) bekommen auf allen Routen ausser `/robots.txt` ein 403. Neue Bots werden nur in `robots.go` ergänzt. Bereits indexierte Seiten müssen über die Search Console der Suchmaschinen entfernt werden.
+
 ## Deploy
 
 Der Build läuft in Cloud Build (`cloudbuild.yaml`): `npm ci` und `npm run build` in `frontend/`,
