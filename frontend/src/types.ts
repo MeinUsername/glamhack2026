@@ -37,6 +37,18 @@ export interface IdeaImage {
 
 export type IdeaStatus = 'pending' | 'published' | 'rejected'
 
+// F-031: a link of an idea and the type it belongs to (types are kept by admins).
+export interface IdeaLink {
+  url: string
+  title: string
+  typeId: string
+}
+
+export interface LinkType {
+  id: string
+  name: string
+}
+
 export interface Idea {
   id: string
   title: string
@@ -63,6 +75,7 @@ export interface Idea {
   locations?: string[]
   budget: Budget | null
   images: IdeaImage[]
+  links?: IdeaLink[] // F-031; missing in older test data
   createdAt: string
 }
 

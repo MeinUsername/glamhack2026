@@ -5,6 +5,7 @@ import { api, ApiError } from '../api'
 import { useMe } from '../auth/useMe'
 import { localeFor, renderPrompt } from './render'
 import LevelDialog from './LevelDialog'
+import { useLinkTypes } from '../ideas/useLinkTypes'
 import type { Idea, PromptLevel } from '../types'
 import { button, errorText, h2, muted, noticeText } from '../ui'
 
@@ -36,6 +37,7 @@ function Generator({ ids }: { ids: string[] }) {
   const [selectedId, setSelectedId] = useState('')
   const [pending, setPending] = useState<Action | null>(null)
   const [ideas, setIdeas] = useState<Idea[]>([])
+  const linkTypes = useLinkTypes() ?? []
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
 
@@ -63,7 +65,7 @@ function Generator({ ids }: { ids: string[] }) {
 
   const list = levels.status === 'ready' ? levels.levels : []
   const locale = localeFor(i18n.resolvedLanguage)
-  const render = (level: PromptLevel) => renderPrompt(level.text, ideas, locale)
+  const render = (level: PromptLevel) => renderPrompt(level.text, ideas, locale, linkTypes)
   const selected = list.find((l) => l.id === selectedId) ?? list[0]
   const text = selected ? render(selected) : ''
   const emptyBasket = ids.length === 0

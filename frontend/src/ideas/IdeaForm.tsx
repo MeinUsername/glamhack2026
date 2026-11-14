@@ -3,15 +3,16 @@ import { useNavigate, useParams } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { api, ApiError } from '../api'
 import { useMe } from '../auth/useMe'
-import { button, errorText, h1, input, label as labelClass, muted } from '../ui'
+import { button, buttonSecondary, errorText, h1, input, label as labelClass, muted } from '../ui'
 import EquipmentInput from './EquipmentInput'
-import { BUDGETS, imageProblem, isValidEmail, MAX_IDEA_IMAGES } from './rules'
+import { BUDGETS, imageProblem, isValidEmail, isValidLinkUrl, MAX_IDEA_IMAGES, MAX_LINKS } from './rules'
+import { useLinkTypes } from './useLinkTypes'
 import { CATEGORIES } from './categories'
 import CategoriesInfo from './CategoriesInfo'
 import { IcomPicker } from './IcomChips'
 import { imageUrl } from './imageUrl'
 import MarkdownEditor from './MarkdownEditor'
-import type { Category, Idea } from '../types'
+import type { Category, Idea, IdeaLink } from '../types'
 
 // Text fields of the form; the names are the English field names of the spec.
 interface Draft {
@@ -36,6 +37,7 @@ interface Draft {
   sustainability: string
   accessibility: string
   budget: string
+  links: IdeaLink[]
 }
 
 // The form values of an existing idea, for editing (F-012 T8).
@@ -62,6 +64,7 @@ function draftFrom(idea: Idea): Draft {
     sustainability: idea.sustainability,
     accessibility: idea.accessibility,
     budget: idea.budget ?? '',
+    links: (idea.links ?? []).map((l) => ({ ...l })),
   }
 }
 
@@ -87,6 +90,7 @@ const emptyDraft: Draft = {
   sustainability: '',
   accessibility: '',
   budget: '',
+  links: [],
 }
 
 // /ideas/new: no login needed (F-012 D1).
@@ -129,6 +133,7 @@ function IdeaEditor({ edit }: { edit?: Idea }) {
   // Kept plus new images may not exceed the limit; recomputed when the checkboxes change (F-020).
   const countProblem = images.length > 0 ? imageProblem(images, t, keep.length) : ''
   const [termsAccepted, setTermsAccepted] = useState(false) // always starts unchecked, also when editing (F-028)
+  const linkTypes = useLinkTypes() ?? []
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
 
@@ -177,6 +182,16 @@ function IdeaEditor({ edit }: { edit?: Idea }) {
       setError(t('rules.email'))
       return
     }
+    // F-031: rows without any entry are dropped; every other row needs a valid address and a type.
+    const links = draft.links.filter((l) => l.url.trim() !== '' || l.title.trim() !== '')
+    if (links.some((l) => !isValidLinkUrl(l.url))) {
+      setError(t('links.error.url'))
+      return
+    }
+    if (links.some((l) => l.typeId === '')) {
+      setError(t('links.error.type'))
+      return
+    }
     const problem = imageProblem(images, t)
     if (problem) {
       setImageError(problem)
@@ -205,6 +220,7 @@ function IdeaEditor({ edit }: { edit?: Idea }) {
       icomCategories: draft.icomCategories,
       locations: draft.locations,
       budget: draft.budget,
+      links: links.map((l) => ({ url: l.url.trim(), title: l.title.trim(), typeId: l.typeId })),
     }
     if (edit) data.keepImages = keep
     form.append('data', JSON.stringify(data))
@@ -342,6 +358,42 @@ function IdeaEditor({ edit }: { edit?: Idea }) {
             <input className={input} type="email" placeholder={t('ideas.credit.email.ph')} value={draft.creditEmail} onChange={(e) => set('creditEmail', e.target.value)} />
           </Field>
         </fieldset>
+        {linkTypes.length > 0 && (
+          <fieldset className="grid gap-2">
+            <legend className={`${labelClass} mb-2`}>{t('links.title')}</legend>
+            {draft.links.map((l, i) => {
+              const patch = (change: Partial<IdeaLink>) => set('links', draft.links.map((x, n) => (n === i ? { ...x, ...change } : x)))
+              return (
+                <div key={i} className="grid gap-2 sm:grid-cols-[2fr_2fr_1fr_auto]">
+                  <input className={input} type="url" aria-label={t('links.url', { n: i + 1 })} placeholder={t('links.url.ph')} value={l.url} onChange={(e) => patch({ url: e.target.value })} />
+                  <input className={input} aria-label={t('links.linkTitle', { n: i + 1 })} placeholder={t('links.linkTitle.ph')} value={l.title} onChange={(e) => patch({ title: e.target.value })} />
+                  <select className={input} aria-label={t('links.type', { n: i + 1 })} value={l.typeId} onChange={(e) => patch({ typeId: e.target.value })}>
+                    <option value="">—</option>
+                    {linkTypes.map((ty) => (
+                      <option key={ty.id} value={ty.id}>
+                        {ty.name}
+                      </option>
+                    ))}
+                  </select>
+                  <button type="button" className={buttonSecondary} aria-label={t('links.remove', { n: i + 1 })} onClick={() => set('links', draft.links.filter((_, n) => n !== i))}>
+                    ×
+                  </button>
+                </div>
+              )
+            })}
+            <div>
+              <button
+                type="button"
+                className={buttonSecondary}
+                disabled={draft.links.length >= MAX_LINKS}
+                onClick={() => set('links', [...draft.links, { url: '', title: '', typeId: linkTypes[0].id }])}
+              >
+                {t('links.add')}
+              </button>
+              {draft.links.length >= MAX_LINKS && <span className={`${muted} ml-3`}>{t('links.max', { max: MAX_LINKS })}</span>}
+            </div>
+          </fieldset>
+        )}
         <MarkdownEditor
           label={t('ideas.field.mediationConcept')}
           value={draft.mediationConcept}

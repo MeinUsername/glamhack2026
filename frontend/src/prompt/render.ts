@@ -1,6 +1,7 @@
 // Renders the master prompt in the browser (F-003 T1, reused by F-008 for the preview).
 // Pure functions: no React, no storage, no network.
-import type { Idea } from '../types'
+import { groupLinks } from '../ideas/links'
+import type { Idea, LinkType } from '../types'
 
 export type LocaleCode = 'de' | 'en' | 'fr' | 'it'
 
@@ -39,7 +40,7 @@ function number(n: number): string {
 }
 
 // One block per idea. Empty fields are left out; images are not text and are not included.
-export function formatIdea(idea: Idea): string {
+export function formatIdea(idea: Idea, types: LinkType[] = []): string {
   const lines: string[] = [`### ${idea.title.trim() || 'Idee ohne Titel'}`]
   const add = (label: string, value: string | null | undefined) => {
     const v = value?.trim()
@@ -62,6 +63,16 @@ export function formatIdea(idea: Idea): string {
     .filter(Boolean)
     .join(', ')
   add('Credit Line', credit)
+  const groups = groupLinks(idea.links ?? [], types)
+  if (groups.length > 0) {
+    lines.push('- Links:')
+    for (const g of groups) {
+      for (const l of g.links) {
+        const title = l.title?.trim()
+        lines.push(`  - ${g.typeName || 'Link'}: ${title ? `${title} – ` : ''}${l.url}`)
+      }
+    }
+  }
   const concept = idea.mediationConcept?.trim()
   if (concept) lines.push('', '#### Mediation Concept', concept)
   return lines.join('\n')
@@ -69,8 +80,8 @@ export function formatIdea(idea: Idea): string {
 
 // Replaces {{ideas}} and {{language}}. Other {{…}} stay as they are.
 // An empty basket turns {{ideas}} into an empty text (AC-008-7).
-export function renderPrompt(template: string, ideas: Idea[], locale: Locale): string {
-  const ideasText = ideas.map(formatIdea).join('\n\n')
+export function renderPrompt(template: string, ideas: Idea[], locale: Locale, types: LinkType[] = []): string {
+  const ideasText = ideas.map((i) => formatIdea(i, types)).join('\n\n')
   return template
     .replace(/\{\{ideas\}\}/g, () => ideasText)
     .replace(/\{\{language\}\}/g, () => formatLanguage(locale))

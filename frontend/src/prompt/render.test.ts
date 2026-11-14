@@ -93,3 +93,13 @@ describe('unknownVariables', () => {
     expect(unknownVariables('{{ideas}} {{foo}} {{ language }} {{foo}} {{bar}}')).toEqual(['foo', 'bar'])
   })
 })
+
+describe('formatIdea mit Links (F-031)', () => {
+  it('AC-031-9 listet die Links nach Typ, ohne Links nichts', () => {
+    const types = [{ id: 't', name: 'Tools' }, { id: 'r', name: 'Reference' }]
+    const idea = { ...base, links: [{ url: 'https://a.org', title: 'A', typeId: 't' }, { url: 'https://b.org', title: '', typeId: 'r' }] }
+    const out = formatIdea(idea, types)
+    expect(out).toContain('- Links:\n  - Reference: https://b.org\n  - Tools: A – https://a.org')
+    expect(formatIdea(base, types)).not.toContain('Links')
+  })
+})

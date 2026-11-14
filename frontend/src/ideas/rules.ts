@@ -25,3 +25,19 @@ export function imageProblem(files: File[], t: TFunction, existing = 0): string 
   if (files.some((f) => !IMAGE_TYPES.includes(f.type))) return t('rules.type')
   return ''
 }
+
+// F-031: links of an idea. The Go server repeats these checks (links.go).
+export const MAX_LINKS = 20
+export const MAX_LINK_URL = 2048
+
+// Only http and https with a host and without white space.
+export function isValidLinkUrl(value: string): boolean {
+  const v = value.trim()
+  if (v === '' || v.length > MAX_LINK_URL || /\s/.test(v)) return false
+  try {
+    const u = new URL(v)
+    return (u.protocol === 'http:' || u.protocol === 'https:') && u.host !== ''
+  } catch {
+    return false
+  }
+}

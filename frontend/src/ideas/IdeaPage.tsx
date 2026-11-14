@@ -10,6 +10,8 @@ import { icomCategory, location, LOCATION_LABEL, pick } from './icom'
 import Gallery from './Gallery'
 import StatusBadge from '../components/StatusBadge'
 import MarkdownView from '../components/MarkdownView'
+import { groupLinks } from './links'
+import { useLinkTypes } from './useLinkTypes'
 
 const tagLink =
   'inline-flex min-h-11 items-center rounded-full border-2 border-ink bg-paper px-[18px] py-2 text-[15px] leading-tight font-medium text-ink no-underline hover:bg-coral hover:text-ink'
@@ -154,6 +156,7 @@ function Show({ idea }: { idea: Idea }) {
         <p>{idea.budget ?? t('ideas.budget.notSet')}</p>
       </section>
       <Credit idea={idea} />
+      <Links idea={idea} />
       {idea.mediationConcept?.trim() && (
         <section>
           <h2 className={sectionHead}>{t('ideas.field.mediationConcept')}</h2>
@@ -184,6 +187,33 @@ function Credit({ idea }: { idea: Idea }) {
           <a href={`mailto:${email}`}>{email}</a>
         </p>
       )}
+    </section>
+  )
+}
+
+// F-031: links grouped by type, after the credit line. Nothing if the idea has no links.
+function Links({ idea }: { idea: Idea }) {
+  const { t } = useTranslation()
+  const types = useLinkTypes()
+  const links = idea.links ?? []
+  if (links.length === 0 || types === null) return null
+  return (
+    <section>
+      <h2 className={sectionHead}>{t('links.title')}</h2>
+      {groupLinks(links, types).map((g) => (
+        <div key={g.typeName} className="mb-3">
+          {g.typeName && <h3 className="m-0 font-mono text-[13px] font-medium tracking-[0.05em] uppercase">{g.typeName}</h3>}
+          <ul className="m-0 list-disc pl-5">
+            {g.links.map((l, i) => (
+              <li key={i} className="break-all">
+                <a href={l.url} target="_blank" rel="noopener noreferrer">
+                  {l.title?.trim() || l.url}
+                </a>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ))}
     </section>
   )
 }

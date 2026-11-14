@@ -75,6 +75,10 @@ func (s *server) apiUpdateIdea(w http.ResponseWriter, r *http.Request) {
 		writeUserError(w, err)
 		return
 	}
+	if err := s.verifyLinkTypes(r.Context(), &doc); err != nil {
+		writeUserError(w, err)
+		return
+	}
 	newImages, err := readIdeaImages(r.MultipartForm)
 	if err != nil {
 		writeUserError(w, err)

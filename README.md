@@ -94,6 +94,10 @@ go vet ./... && go test ./...
 
 Neue und geänderte Ideen haben den Status `pending`. Nur Admins sehen sie (Übersicht, Detailseite, Bilder), für alle anderen antwortet die API mit 404. Admins veröffentlichen oder lehnen auf `/admin/approvals` ab. Ideen ohne Statusfeld gelten als `published`, der Admin-CSV-Import veröffentlicht sofort. Beim Einreichen geht eine Mail an alle aktiven Admins, mit Link aus `APP_BASE_URL`. **Der Mail-Anbieter ist noch nicht gewählt** (F-030 D8): bis dahin verwendet der Server `logMailer`, der nur ins Log schreibt. Ein echter Versand braucht eine Implementierung von `Mailer` (`ideas_status.go`) und die Auswahl in `newServer`.
 
+## Links bei Ideen (F-031)
+
+Jede Idee kann bis zu 20 Links haben (Adresse nur `http`/`https`, optionaler Titel, ein Typ). Die Typen liegen in der Firestore-Collection `link_types` und werden unter `/admin/link-types` gepflegt. Beim ersten Start legt der Server `Tools`, `Reference` und `Institutes` an, wenn die Collection leer ist. Ein Typ, der noch in einer Idee vorkommt, lässt sich nicht löschen (die Idee speichert `link_type_ids` für diese Abfrage; die Abfrage `array-contains` braucht keinen zusammengesetzten Index). Der Export (AC-031-10) wartet auf F-010.
+
 ## Keine Indexierung (F-032)
 
 Die App ist per `/robots.txt`, dem Header `X-Robots-Tag: noindex, nofollow` und `<meta name="robots">` von Suchmaschinen ausgenommen. Bekannte Crawler und KI-Bots (User-Agent, Liste in `robots.go`) bekommen auf allen Routen ausser `/robots.txt` ein 403. Neue Bots werden nur in `robots.go` ergänzt. Bereits indexierte Seiten müssen über die Search Console der Suchmaschinen entfernt werden.

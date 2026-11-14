@@ -41,6 +41,9 @@ type ideaDoc struct {
 	Description string `firestore:"description"`
 	// MediationConcept is Markdown, shown only on the detail page (F-023).
 	MediationConcept string `firestore:"mediation_concept"`
+	// Links with a type (F-031). LinkTypeIDs is derived from Links and only serves the check on delete.
+	Links       []linkDoc `firestore:"links"`
+	LinkTypeIDs []string  `firestore:"link_type_ids"`
 	// Credit line and contact (F-027); all optional, the email is public.
 	CreditFirstName string `firestore:"credit_first_name"`
 	CreditLastName  string `firestore:"credit_last_name"`
@@ -91,20 +94,21 @@ type equipmentDoc struct {
 // ideaInput is the JSON part ("data") of the multipart upload. Numbers arrive as text
 // so that "2,5" and "2.5" are both accepted.
 type ideaInput struct {
-	Title                    string `json:"title"`
-	Description              string `json:"description"`
-	MediationConcept         string `json:"mediationConcept"`
-	CreditFirstName          string `json:"creditFirstName"`
-	CreditLastName           string `json:"creditLastName"`
-	CreditInstitute          string `json:"creditInstitute"`
-	CreditEmail              string `json:"creditEmail"`
-	TargetGroup              string `json:"targetGroup"`
-	Goal                     string `json:"goal"`
-	DescriptionOfInteraction string `json:"descriptionOfInteraction"`
-	StaffNeeded              string `json:"staffNeeded"`
-	ExhibitRelated           string `json:"exhibitRelated"`
-	Sustainability           string `json:"sustainability"`
-	Accessibility            string `json:"accessibility"`
+	Title                    string      `json:"title"`
+	Description              string      `json:"description"`
+	MediationConcept         string      `json:"mediationConcept"`
+	Links                    []linkInput `json:"links"`
+	CreditFirstName          string      `json:"creditFirstName"`
+	CreditLastName           string      `json:"creditLastName"`
+	CreditInstitute          string      `json:"creditInstitute"`
+	CreditEmail              string      `json:"creditEmail"`
+	TargetGroup              string      `json:"targetGroup"`
+	Goal                     string      `json:"goal"`
+	DescriptionOfInteraction string      `json:"descriptionOfInteraction"`
+	StaffNeeded              string      `json:"staffNeeded"`
+	ExhibitRelated           string      `json:"exhibitRelated"`
+	Sustainability           string      `json:"sustainability"`
+	Accessibility            string      `json:"accessibility"`
 	Space                    struct {
 		AreaM2   string `json:"areaM2"`
 		VolumeM3 string `json:"volumeM3"`
@@ -124,6 +128,7 @@ type ideaView struct {
 	Title                    string      `json:"title"`
 	Description              string      `json:"description"`
 	MediationConcept         string      `json:"mediationConcept"`
+	Links                    []linkView  `json:"links"`
 	CreditFirstName          string      `json:"creditFirstName"`
 	CreditLastName           string      `json:"creditLastName"`
 	CreditInstitute          string      `json:"creditInstitute"`
@@ -212,6 +217,12 @@ func validateIdeaInput(in ideaInput) (ideaDoc, []equipmentDoc, error) {
 
 	var doc ideaDoc
 	doc.MediationConcept = strings.TrimSpace(in.MediationConcept)
+	links, err := checkLinks(in.Links)
+	if err != nil {
+		return ideaDoc{}, nil, err
+	}
+	doc.Links = links
+	doc.LinkTypeIDs = linkTypeIDsOf(links)
 	doc.CreditFirstName = strings.TrimSpace(in.CreditFirstName)
 	doc.CreditLastName = strings.TrimSpace(in.CreditLastName)
 	doc.CreditInstitute = strings.TrimSpace(in.CreditInstitute)
@@ -367,6 +378,10 @@ func (s *server) apiCreateIdea(w http.ResponseWriter, r *http.Request) {
 		writeUserError(w, err)
 		return
 	}
+	if err := s.verifyLinkTypes(r.Context(), &doc); err != nil {
+		writeUserError(w, err)
+		return
+	}
 	images, err := readIdeaImages(r.MultipartForm)
 	if err != nil {
 		writeUserError(w, err)
@@ -484,6 +499,7 @@ func toIdeaView(id string, d ideaDoc) ideaView {
 		Title:                    d.Title,
 		Description:              d.Description,
 		MediationConcept:         d.MediationConcept,
+		Links:                    linkViews(d.Links),
 		CreditFirstName:          d.CreditFirstName,
 		CreditLastName:           d.CreditLastName,
 		CreditInstitute:          d.CreditInstitute,

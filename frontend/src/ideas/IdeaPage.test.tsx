@@ -152,3 +152,29 @@ describe('IdeaPage status (F-030)', () => {
     expect(screen.queryByText('In review')).toBeNull()
   })
 })
+
+describe('IdeaPage links (F-031)', () => {
+  const types = [{ id: 't', name: 'Tools' }, { id: 'r', name: 'Reference' }]
+  it('AC-031-5/6 zeigt Links nach Typ gruppiert, öffnet sie in neuem Tab und zeigt die URL ohne Titel', async () => {
+    routeFetch({
+      'GET /api/link-types': () => ({ json: types }),
+      'GET /api/ideas/i1': () => ({
+        json: { ...base, categories: [], links: [{ url: 'https://a.org', title: 'Titel A', typeId: 't' }, { url: 'https://b.org', title: '', typeId: 'r' }] },
+      }),
+    })
+    renderAt('/ideas/i1')
+    const a = await screen.findByRole('link', { name: 'Titel A' })
+    expect(a).toHaveAttribute('href', 'https://a.org')
+    expect(a).toHaveAttribute('target', '_blank')
+    expect(a).toHaveAttribute('rel', 'noopener noreferrer')
+    expect(screen.getByRole('link', { name: 'https://b.org' })).toBeInTheDocument()
+    const heads = screen.getAllByRole('heading', { level: 3 }).map((h) => h.textContent)
+    expect(heads).toEqual(['Reference', 'Tools'])
+  })
+  it('AC-031-7 ohne Links gibt es keinen Abschnitt', async () => {
+    routeFetch({ 'GET /api/link-types': () => ({ json: types }), 'GET /api/ideas/i1': () => ({ json: { ...base, categories: [] } }) })
+    renderAt('/ideas/i1')
+    await screen.findByRole('heading', { name: 'Lichtinstallation' })
+    expect(screen.queryByRole('heading', { name: 'Links' })).toBeNull()
+  })
+})

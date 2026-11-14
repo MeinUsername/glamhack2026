@@ -7,6 +7,7 @@ import { useBasket } from '../basket/useBasket'
 import { localeFor, renderPrompt, unknownVariables } from '../prompt/render'
 import { pickLocalized } from '../prompt/localized'
 import { LANGUAGES, LANGUAGE_NAMES } from '../i18n'
+import { useLinkTypes } from '../ideas/useLinkTypes'
 import type { Idea } from '../types'
 import AdminFeedbackPrompts from './AdminFeedbackPrompts'
 import { button, buttonSecondary, cell, errorText, h1, h2, headCell, iconButton, input, label, linkButton, muted, noticeText, table, tableWrap } from '../ui'
@@ -176,6 +177,7 @@ function Levels() {
 function LevelEditor({ level, onSaved }: { level?: Level; onSaved: (id: string, message: string) => Promise<void> }) {
   const { t, i18n } = useTranslation()
   const basket = useBasket()
+  const linkTypes = useLinkTypes()
   const [titles, setTitles] = useState<Record<string, string>>(level?.titles ?? {})
   const [descs, setDescs] = useState<Record<string, string>>(level?.descriptions ?? {})
   const [text, setText] = useState(level?.text ?? '')
@@ -306,7 +308,7 @@ function LevelEditor({ level, onSaved }: { level?: Level; onSaved: (id: string, 
         <>
           <p className={`${muted} mt-3`}>{t('masterPrompt.previewNote', { n: ideas.length })}</p>
           <pre className="mt-2 rounded-card border-2 border-ink bg-paper p-5 font-mono text-sm leading-[1.6] whitespace-pre-wrap">
-            {renderPrompt(text, ideas, localeFor(i18n.resolvedLanguage))}
+            {renderPrompt(text, ideas, localeFor(i18n.resolvedLanguage), linkTypes ?? [])}
           </pre>
         </>
       )}

@@ -77,6 +77,10 @@ func newServer(ctx context.Context) (*server, error) {
 	if err := s.migrateMasterPrompt(ctx); err != nil {
 		log.Printf("migrate master prompt: %v", err)
 	}
+	// F-031 Q-031-27: the default link types exist after the start. A failure is logged.
+	if err := s.ensureDefaultLinkTypes(ctx); err != nil {
+		log.Printf("default link types: %v", err)
+	}
 	s.routes()
 	return s, nil
 }
@@ -132,6 +136,11 @@ func (s *server) routes() {
 	m.HandleFunc("GET /api/equipment", s.apiEquipment)
 
 	// Prompt levels (F-018, replaces the single master prompt of F-008). Reading is open to every signed-in role.
+	m.HandleFunc("GET /api/link-types", s.apiLinkTypes) // F-031: public
+	m.HandleFunc("GET /admin/link-types", s.requireAdmin(s.adminPage))
+	m.HandleFunc("POST /api/admin/link-types", s.requireAdmin(s.apiCreateLinkType))
+	m.HandleFunc("PUT /api/admin/link-types/{id}", s.requireAdmin(s.apiRenameLinkType))
+	m.HandleFunc("DELETE /api/admin/link-types/{id}", s.requireAdmin(s.apiDeleteLinkType))
 	m.HandleFunc("GET /api/prompt-levels", s.requireSignedIn(s.apiPromptLevels))
 	m.HandleFunc("GET /api/feedback-prompts", s.apiFeedbackPrompts) // F-025: public
 	m.HandleFunc("GET /api/feedback-prompts/{id}/render", s.apiRenderFeedbackPrompt)

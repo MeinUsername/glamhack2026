@@ -405,3 +405,51 @@ describe('IdeaForm', () => {
     expect(await screen.findByRole('heading', { name: 'Idea submitted' })).toBeInTheDocument()
   })
 })
+
+describe('IdeaForm links (F-031)', () => {
+  const types = { 'GET /api/link-types': () => ({ json: [{ id: 't', name: 'Tools' }, { id: 'r', name: 'Reference' }] }) }
+  it('AC-031-1/2 sendet Links mit Typ und verwirft leere Zeilen', async () => {
+    const { calls } = routeFetch({
+      'GET /api/me': () => user,
+      ...types,
+      'POST /api/ideas': () => ({ status: 201, json: { id: 'i1' } }),
+      'GET /api/ideas/i1': () => savedIdea,
+    })
+    const u = userEvent.setup()
+    renderAt('/ideas/new')
+    await screen.findByRole('button', { name: 'Add link' })
+    await u.click(screen.getByRole('button', { name: 'Add link' }))
+    await u.click(screen.getByRole('button', { name: 'Add link' }))
+    await u.type(screen.getByLabelText('Link 1: address'), 'https://a.org')
+    await u.selectOptions(screen.getByLabelText('Link 1: type'), 'Reference')
+    await saveIdea(u)
+    const post = calls.find((c) => c.method === 'POST')
+    const data = JSON.parse(String(formData(post?.body).get('data')))
+    expect(data.links).toEqual([{ url: 'https://a.org', title: '', typeId: 'r' }])
+  })
+  it('AC-031-4 weist eine ungültige Adresse ab, ohne zu senden', async () => {
+    const { calls } = routeFetch({ 'GET /api/me': () => user, ...types })
+    const u = userEvent.setup()
+    renderAt('/ideas/new')
+    await u.click(await screen.findByRole('button', { name: 'Add link' }))
+    await u.type(screen.getByLabelText('Link 1: address'), 'ftp://a.org')
+    await saveIdea(u)
+    expect(await screen.findByText('Every link needs a valid http or https address.')).toBeInTheDocument()
+    expect(calls.some((c) => c.method === 'POST')).toBe(false)
+  })
+  it('AC-031-3 stoppt bei 20 Links', async () => {
+    routeFetch({ 'GET /api/me': () => user, ...types })
+    const u = userEvent.setup()
+    renderAt('/ideas/new')
+    const add = await screen.findByRole('button', { name: 'Add link' })
+    for (let i = 0; i < 20; i++) await u.click(add)
+    expect(add).toBeDisabled()
+    expect(screen.getAllByLabelText(/address$/)).toHaveLength(20)
+  })
+  it('ohne Typen gibt es den Abschnitt nicht', async () => {
+    routeFetch({ 'GET /api/me': () => user, 'GET /api/link-types': () => ({ json: [] }) })
+    renderAt('/ideas/new')
+    await screen.findByRole('checkbox', { name: /I confirm that my content/ })
+    expect(screen.queryByRole('button', { name: 'Add link' })).toBeNull()
+  })
+})
