@@ -1,7 +1,7 @@
 ---
 id: F-028
 title: Terms and Conditions
-status: plan-ready
+status: done
 ---
 
 # F-028 Terms and Conditions
