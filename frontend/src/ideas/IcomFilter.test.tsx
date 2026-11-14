@@ -84,8 +84,10 @@ describe('ICOM filter (F-024)', () => {
     renderAt('/ideas?categories=dialogue-exchange&locations=online')
     expect(await screen.findByText('0 of 3 ideas')).toBeInTheDocument()
     expect(screen.getByText('No idea matches this filter.')).toBeInTheDocument()
-    // A chosen category turns the switch on by itself.
-    expect(screen.getByRole('switch', { name: 'Show all subcategories' })).toHaveAttribute('aria-checked', 'true')
+    // The group of a chosen category opens by itself; the others stay closed, so the switch is off.
+    expect(screen.getByRole('button', { name: 'People & Participation' })).toHaveAttribute('aria-expanded', 'true')
+    expect(screen.getByRole('button', { name: 'Access & Inclusion' })).toHaveAttribute('aria-expanded', 'false')
+    expect(screen.getByRole('switch', { name: 'Show all subcategories' })).toHaveAttribute('aria-checked', 'false')
     expect(screen.getByRole('button', { name: 'Dialogue & Exchange' })).toHaveAttribute('aria-pressed', 'true')
     expect(screen.getByRole('button', { name: 'Online' })).toHaveAttribute('aria-pressed', 'true')
   })
@@ -123,33 +125,58 @@ describe('ICOM filter (F-024)', () => {
   })
 })
 
-describe('Schalter für alle Unterkategorien', () => {
+describe('Überkategorien und Schalter', () => {
   beforeEach(() => localStorage.clear())
 
-  it('zeigt die Unterkategorien nur alle oder keine', async () => {
+  it('klappt eine Überkategorie per Klick einzeln auf und zu', async () => {
+    mockIdeas()
+    renderAt('/ideas')
+    const u = userEvent.setup()
+    const group = await screen.findByRole('button', { name: 'Access & Inclusion' })
+    expect(group).toHaveAttribute('aria-expanded', 'false')
+    expect(screen.queryByRole('button', { name: 'Accessibility & Access' })).toBeNull()
+
+    await u.click(group)
+    expect(group).toHaveAttribute('aria-expanded', 'true')
+    expect(screen.getByRole('button', { name: 'Accessibility & Access' })).toBeInTheDocument()
+    // Only this group is open.
+    expect(screen.queryByRole('button', { name: 'Digital Mediation' })).toBeNull()
+    expect(screen.getByRole('switch', { name: 'Show all subcategories' })).toHaveAttribute('aria-checked', 'false')
+
+    await u.click(screen.getByRole('button', { name: 'Accessibility & Access' }))
+    expect(screen.getByText('1 of 3 ideas')).toBeInTheDocument()
+    // Closing the group hides its chips but keeps the choice.
+    await u.click(group)
+    expect(group).toHaveAttribute('aria-expanded', 'false')
+    expect(screen.queryByRole('button', { name: 'Accessibility & Access' })).toBeNull()
+    expect(screen.getByText('1 of 3 ideas')).toBeInTheDocument()
+  })
+
+  it('öffnet und schliesst mit dem Schalter alle Überkategorien', async () => {
     mockIdeas()
     renderAt('/ideas')
     const u = userEvent.setup()
     const toggle = await screen.findByRole('switch', { name: 'Show all subcategories' })
+    // One group open by hand: the switch is still off, and switching on opens all.
+    await u.click(screen.getByRole('button', { name: 'Access & Inclusion' }))
     expect(toggle).toHaveAttribute('aria-checked', 'false')
-    // Main categories are headings, not buttons: there is no way to open just one.
-    expect(screen.getByRole('heading', { name: 'Access & Inclusion' })).toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: 'Access & Inclusion' })).toBeNull()
-    expect(screen.queryByRole('button', { name: 'Accessibility & Access' })).toBeNull()
 
     await u.click(toggle)
     expect(toggle).toHaveAttribute('aria-checked', 'true')
-    for (const name of ['Participation & Co-creation', 'Accessibility & Access', 'Digital Mediation', 'Sustainability & Climate']) {
-      expect(screen.getByRole('button', { name })).toBeInTheDocument()
+    for (const name of ['People & Participation', 'Access & Inclusion', 'Learning & Reflection', 'Responsibility & Care']) {
+      expect(screen.getByRole('button', { name })).toHaveAttribute('aria-expanded', 'true')
     }
-    await u.click(screen.getByRole('button', { name: 'Accessibility & Access' }))
-    expect(screen.getByText('1 of 3 ideas')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Sustainability & Climate' })).toBeInTheDocument()
 
-    // Switching off hides all chips but keeps the choice.
+    // Closing one group by hand turns the switch off again.
+    await u.click(screen.getByRole('button', { name: 'Learning & Reflection' }))
+    expect(toggle).toHaveAttribute('aria-checked', 'false')
+
+    await u.click(toggle)
     await u.click(toggle)
     expect(toggle).toHaveAttribute('aria-checked', 'false')
     expect(screen.queryByRole('button', { name: 'Sustainability & Climate' })).toBeNull()
-    expect(screen.getByText('1 of 3 ideas')).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Accessibility & Access' })).toBeNull()
   })
 })
 

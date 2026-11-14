@@ -175,13 +175,18 @@ function FilterBar({
   const lang = i18n.resolvedLanguage
   const active = categories.length + locations.length > 0
 
-  // One switch shows or hides the sub-categories of all main categories at once; there is no
-  // single-group toggle. It starts off, and turns on when a category is chosen (e.g. from a shared link).
-  const [showAll, setShowAll] = useState(categories.length > 0)
+  // Each main category opens or closes on click; the switch opens or closes all of them at once and
+  // shows «on» while all are open. A group with a chosen category (e.g. from a shared link) opens by itself.
+  const groupsWithSelection = () =>
+    ICOM_GROUPS.filter((g) => g.categories.some((c) => categories.includes(c.id))).map((g) => g.id)
+  const [open, setOpen] = useState<string[]>(groupsWithSelection)
   const categoriesKey = categories.join(',')
   useEffect(() => {
-    if (categoriesKey) setShowAll(true)
+    setOpen((cur) => [...new Set([...cur, ...groupsWithSelection()])])
   }, [categoriesKey])
+  const showAll = ICOM_GROUPS.every((g) => open.includes(g.id))
+  const toggleGroup = (id: string) => setOpen((cur) => (cur.includes(id) ? cur.filter((x) => x !== id) : [...cur, id]))
+  const setShowAll = (on: boolean) => setOpen(on ? ICOM_GROUPS.map((g) => g.id) : [])
   const panelIds = ICOM_GROUPS.map((g) => `filter-panel-${g.id}`).join(' ')
 
   return (
@@ -208,7 +213,7 @@ function FilterBar({
             role="switch"
             aria-checked={showAll}
             aria-controls={panelIds}
-            onClick={() => setShowAll((v) => !v)}
+            onClick={() => setShowAll(!showAll)}
             className="group inline-flex min-h-11 cursor-pointer items-center gap-3 rounded-full py-1 pr-1 pl-3 font-sans text-base font-semibold text-ink hover:bg-coral-soft"
           >
             <span>{t('ideas.filter.expandAll')}</span>
@@ -230,25 +235,37 @@ function FilterBar({
         <div className="grid items-start gap-y-4">
           {ICOM_GROUPS.map((g) => {
             const chosen = g.categories.filter((c) => categories.includes(c.id)).length
+            const isOpen = open.includes(g.id)
             return (
               <div key={g.id} className="grid gap-2">
-                <h4
-                  id={`filter-group-${g.id}`}
-                  className="m-0 flex min-h-11 items-center justify-between gap-2.5 rounded-full border-2 border-ink bg-ink py-2 pr-3 pl-5 font-display text-[17px] font-semibold tracking-[-0.01em] text-on-accent"
-                >
-                  <span>{pick(g.label, lang)}</span>
-                  {chosen > 0 && (
-                    <span
-                      aria-hidden="true"
-                      className="inline-flex h-6 min-w-6 items-center justify-center rounded-full bg-coral px-1.5 font-mono text-xs text-ink"
-                    >
-                      {chosen}
+                <h4 className="m-0">
+                  <button
+                    id={`filter-group-${g.id}`}
+                    type="button"
+                    aria-expanded={isOpen}
+                    aria-controls={`filter-panel-${g.id}`}
+                    onClick={() => toggleGroup(g.id)}
+                    className="flex min-h-11 w-full cursor-pointer items-center justify-between gap-2.5 rounded-full border-2 border-ink bg-ink py-2 pr-3 pl-5 text-left font-display text-[17px] font-semibold tracking-[-0.01em] text-on-accent transition-colors hover:border-accent hover:bg-accent"
+                  >
+                    <span>{pick(g.label, lang)}</span>
+                    <span className="inline-flex items-center gap-2">
+                      {chosen > 0 && (
+                        <span
+                          aria-hidden="true"
+                          className="inline-flex h-6 min-w-6 items-center justify-center rounded-full bg-coral px-1.5 font-mono text-xs text-ink"
+                        >
+                          {chosen}
+                        </span>
+                      )}
+                      <span aria-hidden="true" className={`inline-block text-sm transition-transform ${isOpen ? 'rotate-180' : ''}`}>
+                        ▾
+                      </span>
                     </span>
-                  )}
+                  </button>
                 </h4>
                 <div
                   id={`filter-panel-${g.id}`}
-                  hidden={!showAll}
+                  hidden={!isOpen}
                   role="group"
                   aria-labelledby={`filter-group-${g.id}`}
                   className="flex flex-wrap gap-2 px-1 pt-1 pb-2"
