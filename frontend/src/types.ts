@@ -59,6 +59,14 @@ export interface Idea {
   createdAt: string
 }
 
+// F-025: a feedback prompt. The text is only sent to admins.
+export interface FeedbackPrompt {
+  id: string
+  title: string
+  description: string
+  text?: string
+}
+
 // F-018: a prompt level (Detailgrad). Titles and descriptions per language, English always present.
 export interface PromptLevel {
   id: string

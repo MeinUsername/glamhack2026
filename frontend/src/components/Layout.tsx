@@ -20,6 +20,7 @@ export default function Layout() {
         <nav className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
           <Link to="/basket">{t('nav.basket')}</Link>
           <Link to="/ideas">{t('nav.ideas')}</Link>
+          <Link to="/feedback-prompts">{t('nav.feedback')}</Link>
           {me.status === 'ready' && me.me.role === 'admin' && (
             <>
               <Link to="/admin/users">{t('nav.users')}</Link>

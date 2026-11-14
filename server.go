@@ -95,10 +95,11 @@ func (s *server) routes() {
 	})
 	m.HandleFunc("GET /ideas/new", serveApp)
 	m.HandleFunc("GET /ideas/{id}", serveApp)
-	m.HandleFunc("GET /ideas/{id}/edit", serveApp) // F-012 T6
-	m.HandleFunc("GET /basket", serveApp)          // F-006: public, no redirect
-	m.HandleFunc("GET /ideas", serveApp)           // F-011: overview
-	m.HandleFunc("GET /imprint", serveApp)         // F-028: public legal pages
+	m.HandleFunc("GET /ideas/{id}/edit", serveApp)  // F-012 T6
+	m.HandleFunc("GET /basket", serveApp)           // F-006: public, no redirect
+	m.HandleFunc("GET /ideas", serveApp)            // F-011: overview
+	m.HandleFunc("GET /feedback-prompts", serveApp) // F-025: public page
+	m.HandleFunc("GET /imprint", serveApp)          // F-028: public legal pages
 	m.HandleFunc("GET /terms", serveApp)
 	m.HandleFunc("GET /admin/users", s.requireAdmin(s.adminPage))
 	m.HandleFunc("GET /admin/import", s.requireAdmin(s.adminPage))        // F-015: CSV import page
@@ -125,6 +126,13 @@ func (s *server) routes() {
 
 	// Prompt levels (F-018, replaces the single master prompt of F-008). Reading is open to every signed-in role.
 	m.HandleFunc("GET /api/prompt-levels", s.requireSignedIn(s.apiPromptLevels))
+	m.HandleFunc("GET /api/feedback-prompts", s.apiFeedbackPrompts) // F-025: public
+	m.HandleFunc("GET /api/feedback-prompts/{id}/render", s.apiRenderFeedbackPrompt)
+	m.HandleFunc("GET /api/admin/feedback-prompts", s.requireAdmin(s.apiAdminFeedbackPrompts))
+	m.HandleFunc("POST /api/admin/feedback-prompts", s.requireAdmin(s.apiCreateFeedbackPrompt))
+	m.HandleFunc("PUT /api/admin/feedback-prompts/order", s.requireAdmin(s.apiReorderFeedbackPrompts))
+	m.HandleFunc("PUT /api/admin/feedback-prompts/{id}", s.requireAdmin(s.apiSaveFeedbackPrompt))
+	m.HandleFunc("DELETE /api/admin/feedback-prompts/{id}", s.requireAdmin(s.apiDeleteFeedbackPrompt))
 	m.HandleFunc("GET /api/admin/prompt-levels", s.requireAdmin(s.apiAdminPromptLevels))
 	m.HandleFunc("POST /api/admin/prompt-levels", s.requireAdmin(s.apiCreatePromptLevel))
 	m.HandleFunc("PUT /api/admin/prompt-levels/order", s.requireAdmin(s.apiReorderPromptLevels))

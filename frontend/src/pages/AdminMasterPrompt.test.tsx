@@ -169,3 +169,38 @@ describe('AdminMasterPrompt', () => {
     })
   })
 })
+
+describe('AdminMasterPrompt: Kategorie Feedback-Prompt (F-025)', () => {
+  it('AC-025-4/5 wechselt die Kategorie, legt einen Feedback-Prompt an und zeigt Serverfehler', async () => {
+    const { calls } = routeFetch({
+      ...admin,
+      'GET /api/admin/prompt-levels': () => ({ json: [level(versions)] }),
+      'GET /api/admin/feedback-prompts': () => ({ json: [] }),
+      'POST /api/admin/feedback-prompts': (req) => {
+        const body = JSON.parse(String(req.body))
+        return body.text.includes('{{ideas}}')
+          ? { status: 400, json: { error: 'unbekannte Variablen: ideas', unknown: ['ideas'] } }
+          : { status: 201, json: { id: 'f1' } }
+      },
+    })
+    renderAt('/admin/master-prompt')
+    const u = userEvent.setup()
+    // the master prompts stay the default and are unchanged (AC-025-5)
+    expect(await screen.findByRole('tab', { name: 'Master prompts' })).toHaveAttribute('aria-selected', 'true')
+    expect(calls.some((c) => c.url === '/api/admin/feedback-prompts')).toBe(false)
+
+    await u.click(screen.getByRole('tab', { name: 'Feedback prompts' }))
+    expect(await screen.findByText('There are no feedback prompts yet.')).toBeInTheDocument()
+    await u.click(screen.getByRole('button', { name: 'New feedback prompt' }))
+    await u.type(screen.getByLabelText('Title'), 'Feedback')
+    fireEvent.change(screen.getByLabelText('Text'), { target: { value: 'Alle: {{ideas}}' } })
+    await u.click(screen.getByRole('button', { name: 'Save' }))
+    expect(await screen.findByRole('alert')).toHaveTextContent('unbekannte Variablen: ideas')
+
+    fireEvent.change(screen.getByLabelText('Text'), { target: { value: 'Alle: {{allideas}}' } })
+    await u.click(screen.getByRole('button', { name: 'Save' }))
+    expect(await screen.findByText('Saved.')).toBeInTheDocument()
+    const post = calls.filter((c) => c.method === 'POST').at(-1)
+    expect(JSON.parse(String(post?.body))).toMatchObject({ title: 'Feedback', text: 'Alle: {{allideas}}' })
+  })
+})

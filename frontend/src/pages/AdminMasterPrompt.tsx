@@ -8,6 +8,7 @@ import { localeFor, renderPrompt, unknownVariables } from '../prompt/render'
 import { pickLocalized } from '../prompt/localized'
 import { LANGUAGES, LANGUAGE_NAMES } from '../i18n'
 import type { Idea } from '../types'
+import AdminFeedbackPrompts from './AdminFeedbackPrompts'
 import { button, card, cell, errorText, h1, h2, input, linkButton, muted, noticeText, table } from '../ui'
 
 // F-008/F-018: editor for the prompt levels (Detailgrade). Only admins get here (the server checks too).
@@ -41,7 +42,30 @@ export default function AdminMasterPrompt() {
   if (me.status === 'loading') return <p className={muted}>{t('common.loading')}</p>
   if (me.status === 'anonymous') return <Navigate to="/login" replace />
   if (me.me.role !== 'admin') return <p role="alert" className={errorText}>{t('admin.onlyAdmins')}</p>
-  return <Levels />
+  return <Categories />
+}
+
+// F-025: two categories of prompts. Existing prompts are master prompts.
+function Categories() {
+  const { t } = useTranslation()
+  const [category, setCategory] = useState<'master' | 'feedback'>('master')
+  const tab = (active: boolean) =>
+    `cursor-pointer rounded-t-lg border border-b-0 px-3 py-1 text-sm ${
+      active ? 'border-slate-300 bg-white font-medium dark:border-slate-700 dark:bg-slate-900' : 'border-transparent text-slate-500 dark:text-slate-400'
+    }`
+  return (
+    <>
+      <div role="tablist" aria-label={t('feedback.admin.category')} className="mb-4 flex gap-1">
+        <button type="button" role="tab" aria-selected={category === 'master'} className={tab(category === 'master')} onClick={() => setCategory('master')}>
+          {t('feedback.admin.master')}
+        </button>
+        <button type="button" role="tab" aria-selected={category === 'feedback'} className={tab(category === 'feedback')} onClick={() => setCategory('feedback')}>
+          {t('feedback.admin.feedback')}
+        </button>
+      </div>
+      {category === 'master' ? <Levels /> : <AdminFeedbackPrompts />}
+    </>
+  )
 }
 
 function Levels() {

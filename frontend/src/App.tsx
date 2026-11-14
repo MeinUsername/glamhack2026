@@ -10,6 +10,7 @@ import IdeaForm, { IdeaEdit } from './ideas/IdeaForm'
 import IdeaPage from './ideas/IdeaPage'
 import Basket from './pages/Basket'
 import IdeasList from './ideas/IdeasList'
+import FeedbackPrompts from './pages/FeedbackPrompts'
 import Imprint from './pages/Imprint'
 import Terms from './pages/Terms'
 
@@ -29,6 +30,7 @@ export default function App() {
         <Route path="/ideas/:id/edit" element={<IdeaEdit />} />
         <Route path="/basket" element={<Basket />} />
         <Route path="/ideas" element={<IdeasList />} />
+        <Route path="/feedback-prompts" element={<FeedbackPrompts />} />
         <Route path="/imprint" element={<Imprint />} />
         <Route path="/terms" element={<Terms />} />
       </Route>

@@ -156,3 +156,13 @@ func TestLegalRoutesServeReactIndexWithoutSession(t *testing.T) {
 		}
 	}
 }
+
+// AC-025-1: the feedback prompts page is served without a session.
+func TestFeedbackPromptsRouteServesReactIndexWithoutSession(t *testing.T) {
+	s := newRouteServer(t)
+	rec := httptest.NewRecorder()
+	s.mux.ServeHTTP(rec, httptest.NewRequest("GET", "/feedback-prompts", nil))
+	if rec.Code != http.StatusOK || !strings.Contains(rec.Body.String(), `<div id="root">`) {
+		t.Errorf("GET /feedback-prompts: status %d", rec.Code)
+	}
+}
