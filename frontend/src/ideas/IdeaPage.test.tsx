@@ -34,6 +34,17 @@ describe('IdeaPage mediation concept', () => {
     expect(container.querySelector('script')).toBeNull()
   })
 
+  it('AC-026-1 zeigt das Concept als letzten Abschnitt nach Budget', async () => {
+    routeFetch({
+      'GET /api/ideas/i1': () => ({ json: { ...base, categories: [], mediationConcept: 'Text' } }),
+    })
+    renderAt('/ideas/i1')
+    await screen.findByRole('heading', { name: 'Mediation concept' })
+    const names = screen.getAllByRole('heading', { level: 2 }).map((h) => h.textContent)
+    expect(names.at(-1)).toBe('Mediation concept')
+    expect(names.at(-2)).toBe('Budget')
+  })
+
   it('AC-023-6 blendet den Abschnitt ohne Concept aus, auch bei fehlendem Feld', async () => {
     routeFetch({ 'GET /api/ideas/i1': () => ({ json: { ...base, categories: [] } }) })
     renderAt('/ideas/i1')

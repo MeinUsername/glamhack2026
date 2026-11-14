@@ -196,4 +196,25 @@ describe('IdeaForm', () => {
     const data = JSON.parse(String(formData(post?.body).get('data')))
     expect(data.categories).toEqual([])
   })
+
+  // AC-026-3: the concept is the last input, after the budget and before the save button.
+  it('AC-026-3 setzt das Concept-Feld ans Ende, beim Anlegen und Bearbeiten', async () => {
+    for (const path of ['/ideas/new', '/ideas/i1/edit']) {
+      routeFetch({
+        'GET /api/me': () => user,
+        'GET /api/ideas/i1': () => ({ json: { ...savedIdea.json, title: 'X' } }),
+      })
+      const { unmount } = renderAt(path)
+      const budget = await screen.findByLabelText('Budget')
+      const tab = screen.getByRole('tab', { name: 'Write' })
+      const save = screen.getByRole('button', { name: 'Save idea' })
+      const before = (a: Node, b: Node) => Boolean(a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING)
+      expect(before(budget, tab)).toBe(true)
+      expect(before(tab, save)).toBe(true)
+      const fields = [...document.querySelectorAll('form input, form select, form textarea, form [role="tab"]')]
+      const lastInput = fields.filter((e) => !e.closest('.cm-editor') && e.getAttribute('role') !== 'tab').at(-1)
+      expect(lastInput).toBe(budget) // nothing but the editor follows the budget
+      unmount()
+    }
+  })
 })

@@ -199,12 +199,6 @@ function IdeaEditor({ edit }: { edit?: Idea }) {
         <Field label={t('ideas.field.description')}>
           <textarea className={input} rows={4} value={draft.description} onChange={(e) => set('description', e.target.value)} />
         </Field>
-        <MarkdownEditor
-          label={t('ideas.field.mediationConcept')}
-          value={draft.mediationConcept}
-          onChange={(v) => set('mediationConcept', v)}
-        />
-        <p className={muted}>{t('ideas.markdown.help')}</p>
         <Field label={t('ideas.field.descriptionOfInteraction')}>
           <textarea className={input} rows={3} value={draft.descriptionOfInteraction} onChange={(e) => set('descriptionOfInteraction', e.target.value)} />
         </Field>
@@ -278,6 +272,12 @@ function IdeaEditor({ edit }: { edit?: Idea }) {
             ))}
           </select>
         </Field>
+        <MarkdownEditor
+          label={t('ideas.field.mediationConcept')}
+          value={draft.mediationConcept}
+          onChange={(v) => set('mediationConcept', v)}
+        />
+        <p className={muted}>{t('ideas.markdown.help')}</p>
         {error && <p className={errorText}>{error}</p>}
         <div>
           <button type="submit" className={button} disabled={busy || !!imageError}>
