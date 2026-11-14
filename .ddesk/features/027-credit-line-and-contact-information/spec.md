@@ -1,7 +1,7 @@
 ---
 id: F-027
 title: Credit Line and Contact Information
-status: plan-ready
+status: done
 ---
 
 # F-027 Credit Line and Contact Information
