@@ -1,7 +1,7 @@
 ---
 id: F-031
 title: Upload Section
-status: plan-creation
+status: plan-ready
 ---
 
 # F-031 Upload Section
