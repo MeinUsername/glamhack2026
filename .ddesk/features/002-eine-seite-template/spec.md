@@ -1,7 +1,7 @@
 ---
 id: F-002
 title: Eine Seite-Template
-status: testing
+status: done
 ---
 
 # F-002 Eine Seite-Template
