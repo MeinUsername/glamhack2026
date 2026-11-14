@@ -6,7 +6,7 @@ import { useBasket } from '../basket/useBasket'
 import type { Idea } from '../types'
 import PromptGenerator from '../prompt/PromptGenerator'
 import { imageUrl } from '../ideas/imageUrl'
-import { button, errorText, h1, muted } from '../ui'
+import { buttonSecondary, errorText, h1, mark, muted } from '../ui'
 
 // The basket page. Public: visitors without login see it too (Q-006-06).
 export default function Basket() {
@@ -15,11 +15,13 @@ export default function Basket() {
 
   return (
     <>
-      <h1 className={h1}>{t('basket.title')}</h1>
+      <h1 className={h1}>
+        <span className={mark}>{t('basket.title')}</span>
+      </h1>
       {ids.length === 0 ? (
         <p className={muted}>{t('basket.empty')}</p>
       ) : (
-        <ul className="grid gap-3">
+        <ul className="grid max-w-3xl gap-4">
           {ids.map((id) => (
             <BasketEntry key={id} id={id} onGone={() => remove(id)} />
           ))}
@@ -57,7 +59,7 @@ function BasketEntry({ id, onGone }: { id: string; onGone: () => void }) {
   if (entry.status === 'loading') return <li className={muted}>{t('common.loading')}</li>
   if (entry.status === 'failed') {
     return (
-      <li className="flex items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white p-3 shadow-sm dark:border-slate-700 dark:bg-slate-900">
+      <li className="flex flex-wrap items-center justify-between gap-3 rounded-card border-2 border-ink bg-paper p-4">
         <span className={errorText}>{t('ideas.loadError')}</span>
         <RemoveButton title={id} onClick={onGone} />
       </li>
@@ -66,15 +68,15 @@ function BasketEntry({ id, onGone }: { id: string; onGone: () => void }) {
   const { idea } = entry
   const title = idea.title || t('ideas.untitled')
   return (
-    <li className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white p-3 shadow-sm dark:border-slate-700 dark:bg-slate-900">
+    <li className="flex flex-wrap items-center gap-4 rounded-card border-2 border-ink bg-paper p-4">
       {idea.images.length > 0 && (
         <img
           src={imageUrl(idea.id, 0, idea.images[0].version)}
           alt=""
-          className="h-16 w-16 rounded object-cover"
+          className="aspect-[16/10] w-28 rounded-field border-2 border-ink object-cover"
         />
       )}
-      <Link to={`/ideas/${idea.id}`} className="flex-1 font-medium">
+      <Link to={`/ideas/${idea.id}`} className="min-w-0 flex-1 font-display text-[26px] leading-tight font-semibold tracking-[-0.03em] text-ink no-underline hover:text-accent">
         {title}
       </Link>
       <RemoveButton title={title} onClick={onGone} />
@@ -88,7 +90,7 @@ function RemoveButton({ title, onClick }: { title: string; onClick: () => void }
     <button
       type="button"
       aria-label={t('basket.removeNamed', { title })}
-      className={`${button} px-2 py-1 text-sm`}
+      className={buttonSecondary}
       onClick={onClick}
     >
       {t('basket.remove')}

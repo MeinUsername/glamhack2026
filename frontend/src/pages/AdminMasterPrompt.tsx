@@ -9,7 +9,7 @@ import { pickLocalized } from '../prompt/localized'
 import { LANGUAGES, LANGUAGE_NAMES } from '../i18n'
 import type { Idea } from '../types'
 import AdminFeedbackPrompts from './AdminFeedbackPrompts'
-import { button, card, cell, errorText, h1, h2, input, linkButton, muted, noticeText, table } from '../ui'
+import { button, buttonSecondary, cell, errorText, h1, h2, headCell, iconButton, input, label, linkButton, muted, noticeText, table, tableWrap } from '../ui'
 
 // F-008/F-018: editor for the prompt levels (Detailgrade). Only admins get here (the server checks too).
 interface Version {
@@ -50,12 +50,12 @@ function Categories() {
   const { t } = useTranslation()
   const [category, setCategory] = useState<'master' | 'feedback'>('master')
   const tab = (active: boolean) =>
-    `cursor-pointer rounded-t-lg border border-b-0 px-3 py-1 text-sm ${
-      active ? 'border-slate-300 bg-white font-medium dark:border-slate-700 dark:bg-slate-900' : 'border-transparent text-slate-500 dark:text-slate-400'
+    `inline-flex min-h-11 cursor-pointer items-center rounded-full border-2 px-5 font-sans text-base ${
+      active ? 'border-ink bg-ink font-semibold text-on-accent' : 'border-ink bg-paper text-ink hover:bg-coral-soft'
     }`
   return (
     <>
-      <div role="tablist" aria-label={t('feedback.admin.category')} className="mb-4 flex gap-1">
+      <div role="tablist" aria-label={t('feedback.admin.category')} className="mb-4 flex flex-wrap gap-2">
         <button type="button" role="tab" aria-selected={category === 'master'} className={tab(category === 'master')} onClick={() => setCategory('master')}>
           {t('feedback.admin.master')}
         </button>
@@ -126,31 +126,31 @@ function Levels() {
 
       <h2 className={h2}>{t('masterPrompt.levels')}</h2>
       {levels !== null && levels.length === 0 && <p className={muted}>{t('masterPrompt.noLevels')}</p>}
-      <ul className="grid gap-2">
+      <ul className="grid max-w-3xl gap-3">
         {levels?.map((l, i) => (
-          <li key={l.id} className={`${card} flex items-center gap-2 py-2`}>
+          <li key={l.id} className="flex items-center gap-1 rounded-full border-2 border-ink bg-paper p-1">
             <button
               type="button"
               aria-pressed={selected === l.id}
               onClick={() => setSelected(l.id)}
-              className={`flex-1 cursor-pointer bg-transparent text-left ${selected === l.id ? 'font-semibold' : ''}`}
+              className="min-h-11 flex-1 cursor-pointer rounded-full bg-transparent px-4 py-2 text-left font-medium hover:bg-accent-soft aria-pressed:bg-accent aria-pressed:text-on-accent"
             >
               {pickLocalized(l.titles, i18n.resolvedLanguage)}
             </button>
-            <button type="button" className={linkButton} disabled={i === 0} onClick={() => move(i, -1)} aria-label={t('masterPrompt.moveUp')}>
+            <button type="button" className={iconButton} disabled={i === 0} onClick={() => move(i, -1)} aria-label={t('masterPrompt.moveUp')}>
               ↑
             </button>
-            <button type="button" className={linkButton} disabled={i === levels.length - 1} onClick={() => move(i, 1)} aria-label={t('masterPrompt.moveDown')}>
+            <button type="button" className={iconButton} disabled={i === levels.length - 1} onClick={() => move(i, 1)} aria-label={t('masterPrompt.moveDown')}>
               ↓
             </button>
-            <button type="button" className={linkButton} disabled={levels.length <= 1} onClick={() => remove(l)} aria-label={t('masterPrompt.delete')}>
+            <button type="button" className={iconButton} disabled={levels.length <= 1} onClick={() => remove(l)} aria-label={t('masterPrompt.delete')}>
               {t('masterPrompt.delete')}
             </button>
           </li>
         ))}
       </ul>
       <div className="mt-3">
-        <button type="button" className={button} onClick={() => setSelected(NEW)}>
+        <button type="button" className={buttonSecondary} onClick={() => setSelected(NEW)}>
           {t('masterPrompt.new')}
         </button>
       </div>
@@ -256,19 +256,19 @@ function LevelEditor({ level, onSaved }: { level?: Level; onSaved: (id: string, 
       type="button"
       aria-pressed={mode === value}
       onClick={() => setMode(value)}
-      className={`cursor-pointer rounded-lg border border-slate-200 dark:border-slate-700 px-3 py-1 ${mode === value ? 'font-semibold' : ''}`}
+      className="min-h-11 cursor-pointer rounded-full border-2 border-ink bg-paper px-5 font-sans text-base font-medium text-ink hover:bg-coral-soft aria-pressed:bg-coral"
     >
       {label}
     </button>
   )
 
   return (
-    <section>
+    <section className="max-w-3xl">
       <h2 className={h2}>{level ? t('masterPrompt.edit') : t('masterPrompt.new')}</h2>
       <div className="grid gap-3">
         {LANGUAGES.map((lang) => (
-          <fieldset key={lang} className="grid gap-2 rounded-lg border border-slate-200 p-3 dark:border-slate-700">
-            <legend className="px-1 text-sm font-medium">
+          <fieldset key={lang} className="grid gap-3 rounded-card border-2 border-ink bg-paper p-5">
+            <legend className={`${label} px-2`}>
               {LANGUAGE_NAMES[lang]}
               {lang === 'en' && <span className={muted}> ({t('masterPrompt.required')})</span>}
             </legend>
@@ -289,7 +289,7 @@ function LevelEditor({ level, onSaved }: { level?: Level; onSaved: (id: string, 
         ))}
       </div>
 
-      <div className="mt-4 flex gap-2">
+      <div className="mt-6 flex flex-wrap gap-2">
         {modeButton('source', t('masterPrompt.modeSource'))}
         {modeButton('preview', t('masterPrompt.modePreview'))}
       </div>
@@ -305,7 +305,7 @@ function LevelEditor({ level, onSaved }: { level?: Level; onSaved: (id: string, 
       ) : (
         <>
           <p className={`${muted} mt-3`}>{t('masterPrompt.previewNote', { n: ideas.length })}</p>
-          <pre className="mt-2 rounded-xl border border-slate-200 bg-white p-3 shadow-sm dark:border-slate-700 dark:bg-slate-900 whitespace-pre-wrap text-sm">
+          <pre className="mt-2 rounded-card border-2 border-ink bg-paper p-5 font-mono text-sm leading-[1.6] whitespace-pre-wrap">
             {renderPrompt(text, ideas, localeFor(i18n.resolvedLanguage))}
           </pre>
         </>
@@ -322,13 +322,14 @@ function LevelEditor({ level, onSaved }: { level?: Level; onSaved: (id: string, 
       {level && (
         <>
           <h2 className={h2}>{t('masterPrompt.versions')}</h2>
+          <div className={tableWrap}>
           <table className={table}>
             <thead>
               <tr>
-                <th className={cell}>{t('masterPrompt.colVersion')}</th>
-                <th className={cell}>{t('masterPrompt.colDate')}</th>
-                <th className={cell}>{t('masterPrompt.colAuthor')}</th>
-                <th className={cell} />
+                <th className={headCell}>{t('masterPrompt.colVersion')}</th>
+                <th className={headCell}>{t('masterPrompt.colDate')}</th>
+                <th className={headCell}>{t('masterPrompt.colAuthor')}</th>
+                <th className={headCell} />
               </tr>
             </thead>
             <tbody>
@@ -350,6 +351,7 @@ function LevelEditor({ level, onSaved }: { level?: Level; onSaved: (id: string, 
               ))}
             </tbody>
           </table>
+          </div>
         </>
       )}
     </section>

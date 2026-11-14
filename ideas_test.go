@@ -294,15 +294,16 @@ func TestAC014_4_NewTextFieldsLimit(t *testing.T) {
 	}
 }
 
-// AC-014-6: the overview row carries id, title, imageCount and description only.
+// AC-014-6: the overview row carries id, title, imageCount and description; F-024 adds
+// icomCategories and locations for the filter bar.
 func TestAC014_6_SummaryFields(t *testing.T) {
 	b, _ := json.Marshal(ideaSummary{})
 	var m map[string]any
 	_ = json.Unmarshal(b, &m)
-	if len(m) != 4 {
+	if len(m) != 6 {
 		t.Errorf("summary keys: %v", m)
 	}
-	for _, k := range []string{"id", "title", "imageCount", "description"} {
+	for _, k := range []string{"id", "title", "imageCount", "description", "icomCategories", "locations"} {
 		if _, ok := m[k]; !ok {
 			t.Errorf("missing %q", k)
 		}

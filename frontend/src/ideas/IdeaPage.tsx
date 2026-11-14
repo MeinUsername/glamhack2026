@@ -3,11 +3,62 @@ import { Link, useParams } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { api, ApiError } from '../api'
 import type { Idea } from '../types'
-import { button, errorText, h1, h2, muted } from '../ui'
+import { buttonSecondary, chip, errorText, h1Compact, label, muted } from '../ui'
 import { CATEGORY_LABEL } from './categories'
 import BasketButton from '../basket/BasketButton'
-import { imageUrl } from './imageUrl'
+import { icomCategory, location, LOCATION_LABEL, pick } from './icom'
+import Gallery from './Gallery'
 import MarkdownView from '../components/MarkdownView'
+
+const tagLink =
+  'inline-flex min-h-11 items-center rounded-full border-2 border-ink bg-paper px-[18px] py-2 text-[15px] leading-tight font-medium text-ink no-underline hover:bg-coral hover:text-ink'
+
+// F-024: the ICOM categories and locations of the idea. Each one links to the overview filtered by it.
+function IcomTags({ idea }: { idea: Idea }) {
+  const { t, i18n } = useTranslation()
+  const lang = i18n.resolvedLanguage
+  const cats = (idea.icomCategories ?? []).flatMap((id) => {
+    const c = icomCategory(id)
+    return c ? [c] : []
+  })
+  const locs = (idea.locations ?? []).flatMap((id) => {
+    const o = location(id)
+    return o ? [o] : []
+  })
+  if (cats.length === 0 && locs.length === 0) return null
+  return (
+    <div className="grid gap-3">
+      {cats.length > 0 && (
+        <div className="grid gap-2">
+          <h2 className={`${label} m-0`}>{t('ideas.filter.categories')}</h2>
+          <ul className="flex flex-wrap gap-2">
+            {cats.map((c) => (
+              <li key={c.id}>
+                <Link to={`/ideas?categories=${c.id}`} title={pick(c.description, lang)} className={tagLink}>
+                  {pick(c.label, lang)}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+      {locs.length > 0 && (
+        <div className="grid gap-2">
+          <h2 className={`${label} m-0`}>{pick(LOCATION_LABEL, lang)}</h2>
+          <ul className="flex flex-wrap gap-2">
+            {locs.map((o) => (
+              <li key={o.id}>
+                <Link to={`/ideas?locations=${o.id}`} className={tagLink}>
+                  {pick(o.label, lang)}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </div>
+  )
+}
 
 type State =
   | { status: 'loading' }
@@ -46,36 +97,25 @@ function Show({ idea }: { idea: Idea }) {
   const { space } = idea
   const title = idea.title || t('ideas.untitled')
   return (
-    <article className="grid max-w-2xl gap-4">
-      <h1 className={h1}>{title}</h1>
+    <article className="grid max-w-3xl gap-5">
+      <h1 className={`${h1Compact} mb-0`}>{title}</h1>
       <div className="flex flex-wrap items-center gap-3">
         <BasketButton ideaId={idea.id} />
-        <Link to={`/ideas/${idea.id}/edit`} className={button}>
+        <Link to={`/ideas/${idea.id}/edit`} className={buttonSecondary}>
           {t('ideas.edit')}
         </Link>
       </div>
       {idea.categories.length > 0 && (
         <ul aria-label={t('ideas.categories.chips')} className="flex flex-wrap gap-2">
           {idea.categories.map((key) => (
-            <li key={key} className="rounded-full border border-slate-200 dark:border-slate-700 px-3 py-1 text-sm">
+            <li key={key} className={chip}>
               {CATEGORY_LABEL[key]}
             </li>
           ))}
         </ul>
       )}
-      {idea.images.length > 0 && (
-        <ul className="grid grid-cols-2 gap-3">
-          {idea.images.map((_, n) => (
-            <li key={n}>
-              <img
-                src={imageUrl(idea.id, n, idea.images[n].version)}
-                alt={t('ideas.imageAlt', { title, n: n + 1 })}
-                className="w-full rounded-lg object-cover"
-              />
-            </li>
-          ))}
-        </ul>
-      )}
+      <IcomTags idea={idea} />
+      <Gallery ideaId={idea.id} versions={idea.images.map((img) => img.version)} title={title} />
       <Section title={t('ideas.field.description')} text={idea.description} />
       <Section title={t('ideas.field.descriptionOfInteraction')} text={idea.descriptionOfInteraction} />
       <Section title={t('ideas.field.targetGroup')} text={idea.targetGroup} />
@@ -85,13 +125,13 @@ function Show({ idea }: { idea: Idea }) {
       <Section title={t('ideas.field.exhibitRelated')} text={idea.exhibitRelated} />
       <Section title={t('ideas.accessibility')} text={idea.accessibility} />
       <section>
-        <h2 className={h2}>{t('ideas.space.legend')}</h2>
+        <h2 className={sectionHead}>{t('ideas.space.legend')}</h2>
         <p>
           {space.areaM2 == null ? '—' : `${space.areaM2} m²`} · {space.volumeM3 == null ? '—' : `${space.volumeM3} m³`}
         </p>
       </section>
       <section>
-        <h2 className={h2}>{t('ideas.equipment.label')}</h2>
+        <h2 className={sectionHead}>{t('ideas.equipment.label')}</h2>
         {idea.equipment.length === 0 ? (
           <p className={muted}>{t('ideas.equipment.none')}</p>
         ) : (
@@ -103,19 +143,22 @@ function Show({ idea }: { idea: Idea }) {
         )}
       </section>
       <section>
-        <h2 className={h2}>{t('ideas.budget')}</h2>
+        <h2 className={sectionHead}>{t('ideas.budget')}</h2>
         <p>{idea.budget ?? t('ideas.budget.notSet')}</p>
       </section>
       <Credit idea={idea} />
       {idea.mediationConcept?.trim() && (
         <section>
-          <h2 className={h2}>{t('ideas.field.mediationConcept')}</h2>
+          <h2 className={sectionHead}>{t('ideas.field.mediationConcept')}</h2>
           <MarkdownView text={idea.mediationConcept} />
         </section>
       )}
     </article>
   )
 }
+
+// Section heads look like the metadata lines of an object label.
+const sectionHead = `${label} mb-2 border-t border-ink/20 pt-4`
 
 // F-027: credit line and contact; only the filled parts, and nothing at all if all are empty.
 function Credit({ idea }: { idea: Idea }) {
@@ -126,11 +169,11 @@ function Credit({ idea }: { idea: Idea }) {
   if (!name && !institute && !email) return null
   return (
     <section>
-      <h2 className={h2}>{t('ideas.credit.legend')}</h2>
-      {name && <p>{name}</p>}
-      {institute && <p>{institute}</p>}
+      <h2 className={sectionHead}>{t('ideas.credit.legend')}</h2>
+      {name && <p className="m-0">{name}</p>}
+      {institute && <p className="m-0">{institute}</p>}
       {email && (
-        <p>
+        <p className="m-0">
           <a href={`mailto:${email}`}>{email}</a>
         </p>
       )}
@@ -141,8 +184,8 @@ function Credit({ idea }: { idea: Idea }) {
 function Section({ title, text }: { title: string; text: string }) {
   return (
     <section>
-      <h2 className={h2}>{title}</h2>
-      {text ? <p className="whitespace-pre-line">{text}</p> : <p className={muted}>—</p>}
+      <h2 className={sectionHead}>{title}</h2>
+      {text ? <p className="m-0 whitespace-pre-line leading-[1.55]">{text}</p> : <p className={muted}>—</p>}
     </section>
   )
 }

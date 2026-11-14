@@ -49,7 +49,7 @@ describe('IdeasList (F-011)', () => {
     await u.click(within(row).getByRole('button', { name: 'Add to basket' }))
 
     expect(readBasket()).toEqual(['b'])
-    expect(within(row).getByText('Bought')).toBeInTheDocument()
+    expect(within(row).getByText('In basket')).toBeInTheDocument()
   })
 
   // AK3: an idea already in the basket is marked and cannot be chosen again.
@@ -59,7 +59,7 @@ describe('IdeasList (F-011)', () => {
     renderAt('/ideas')
     const row = (await screen.findByRole('link', { name: 'Lichtinstallation' })).closest('li') as HTMLElement
 
-    expect(within(row).getByText('Bought')).toBeInTheDocument()
+    expect(within(row).getByText('In basket')).toBeInTheDocument()
     expect(within(row).queryByRole('button', { name: 'Add to basket' })).toBeNull()
   })
 
@@ -68,7 +68,7 @@ describe('IdeasList (F-011)', () => {
     setBasket(['a'])
     routeFetch({ 'GET /api/me': () => user, 'GET /api/ideas': () => ({ json: rows }) })
     const before = renderAt('/ideas')
-    expect(await screen.findByText('Bought')).toBeInTheDocument()
+    expect(await screen.findByText('In basket')).toBeInTheDocument()
     before.unmount()
 
     // removal happens on the basket page; the overview is shown again afterwards
@@ -76,7 +76,7 @@ describe('IdeasList (F-011)', () => {
     renderAt('/ideas')
     const row = (await screen.findByRole('link', { name: 'Lichtinstallation' })).closest('li') as HTMLElement
     expect(within(row).getByRole('button', { name: 'Add to basket' })).toBeInTheDocument()
-    expect(within(row).queryByText('Bought')).toBeNull()
+    expect(within(row).queryByText('In basket')).toBeNull()
   })
 
   // AC-012-1 (replaces AK5): the overview is public, visitors see it without login (D1).

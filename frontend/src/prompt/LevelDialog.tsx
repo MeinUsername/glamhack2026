@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { PromptLevel } from '../types'
-import { button } from '../ui'
+import { button, buttonSecondary } from '../ui'
 import { pickLocalized } from './localized'
 
 interface Props {
@@ -25,23 +25,23 @@ export default function LevelDialog({ levels, initialId, onConfirm, onCancel }: 
 
   return (
     <div
-      className="fixed inset-0 z-20 flex items-center justify-center bg-slate-900/50 p-4"
+      className="fixed inset-0 z-20 flex items-center justify-center bg-ink/60 p-4"
       onKeyDown={(e) => e.key === 'Escape' && onCancel()}
     >
       <div
         role="dialog"
         aria-modal="true"
         aria-labelledby="level-dialog-title"
-        className="w-full max-w-md rounded-xl border border-slate-200 bg-white p-5 shadow-xl dark:border-slate-700 dark:bg-slate-900"
+        className="w-full max-w-md rounded-card border-2 border-ink bg-paper p-7"
       >
-        <h2 id="level-dialog-title" className="mb-3 text-lg font-semibold">
+        <h2 id="level-dialog-title" className="mt-0 mb-4 font-display text-[30px] leading-tight font-semibold tracking-[-0.03em]">
           {t('prompt.level.title')}
         </h2>
         <div role="radiogroup" className="grid gap-2">
           {levels.map((l, i) => (
             <label
               key={l.id}
-              className="flex cursor-pointer items-start gap-3 rounded-lg border border-slate-200 p-3 dark:border-slate-700"
+              className="group flex cursor-pointer items-start gap-3 rounded-field border-2 border-ink p-3 hover:bg-coral-soft has-checked:bg-accent has-checked:text-on-accent"
             >
               <input
                 ref={i === 0 ? first : undefined}
@@ -53,19 +53,19 @@ export default function LevelDialog({ levels, initialId, onConfirm, onCancel }: 
                 className="mt-1"
               />
               <span>
-                <span className="block font-medium">{pickLocalized(l.titles, i18n.resolvedLanguage)}</span>
-                <span className="block text-sm text-slate-500 dark:text-slate-400">
+                <span className="block font-bold">{pickLocalized(l.titles, i18n.resolvedLanguage)}</span>
+                <span className="block text-sm text-ink-2 group-has-checked:text-on-accent">
                   {pickLocalized(l.descriptions, i18n.resolvedLanguage)}
                 </span>
               </span>
             </label>
           ))}
         </div>
-        <div className="mt-4 flex justify-end gap-2">
+        <div className="mt-6 flex flex-wrap justify-end gap-2">
           <button
             type="button"
             onClick={onCancel}
-            className="cursor-pointer rounded-lg border border-slate-300 px-4 py-2 dark:border-slate-700"
+            className={buttonSecondary}
           >
             {t('prompt.level.cancel')}
           </button>

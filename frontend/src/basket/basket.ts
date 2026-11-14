@@ -1,5 +1,7 @@
 // The basket lives in the browser's localStorage (F-006 D5). It stores idea IDs only, without login.
 export const BASKET_KEY = 'hackathon-basket'
+// Sent on window after every change in this tab, with the new list as detail (header count).
+export const BASKET_EVENT = 'basket-change'
 
 // Reads the basket. Broken JSON, a non-array or non-string entries give an empty or filtered basket.
 export function readBasket(): string[] {
@@ -21,6 +23,7 @@ function write(ids: string[]) {
   } catch {
     // storage blocked: the basket lasts for this page only
   }
+  window.dispatchEvent(new CustomEvent<string[]>(BASKET_EVENT, { detail: ids }))
 }
 
 // Adds an ID once; a second call changes nothing (AK2).

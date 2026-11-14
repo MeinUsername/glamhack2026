@@ -66,7 +66,7 @@ export default function FeedbackPrompts() {
           {list.map((p) => (
             <li key={p.id} className={card}>
               <h2 className="text-base font-semibold">{p.title}</h2>
-              {p.description && <p className="mt-1 whitespace-pre-line text-sm text-slate-600 dark:text-slate-300">{p.description}</p>}
+              {p.description && <p className="mt-1 whitespace-pre-line text-[15px] leading-[1.55] text-ink-2">{p.description}</p>}
               <div className="mt-3 flex flex-wrap gap-2">
                 <button type="button" className={button} onClick={() => download(p)}>
                   {t('prompt.download')}

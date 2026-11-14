@@ -54,6 +54,9 @@ export interface Idea {
   space: { areaM2: number | null; volumeM3: number | null }
   equipment: string[]
   categories: Category[]
+  // F-024: IDs from data/icom-filter-kategorien.json. Optional, because older test data lacks them.
+  icomCategories?: string[]
+  locations?: string[]
   budget: Budget | null
   images: IdeaImage[]
   createdAt: string

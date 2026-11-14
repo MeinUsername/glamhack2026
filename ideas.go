@@ -58,6 +58,8 @@ type ideaDoc struct {
 	Space                    spaceDoc   `firestore:"space"`
 	Equipment                []string   `firestore:"equipment"`
 	Categories               []string   `firestore:"categories"`
+	ICOMCategories           []string   `firestore:"icom_categories"` // F-024
+	Locations                []string   `firestore:"locations"`       // F-024
 	Budget                   *string    `firestore:"budget"`
 	Images                   []imageDoc `firestore:"images"`
 	// TermsAcceptedAt is when the author confirmed the Terms and Conditions (F-028); nil if never (old or imported ideas).
@@ -104,9 +106,11 @@ type ideaInput struct {
 		AreaM2   string `json:"areaM2"`
 		VolumeM3 string `json:"volumeM3"`
 	} `json:"space"`
-	Equipment  []string `json:"equipment"`
-	Budget     string   `json:"budget"`
-	Categories []string `json:"categories"`
+	Equipment      []string `json:"equipment"`
+	Budget         string   `json:"budget"`
+	Categories     []string `json:"categories"`
+	ICOMCategories []string `json:"icomCategories"` // F-024
+	Locations      []string `json:"locations"`      // F-024
 	// TermsAccepted must be true when an idea is created or changed through the form (F-028).
 	TermsAccepted bool `json:"termsAccepted"`
 }
@@ -131,6 +135,8 @@ type ideaView struct {
 	Space                    spaceView   `json:"space"`
 	Equipment                []string    `json:"equipment"`
 	Categories               []string    `json:"categories"`
+	ICOMCategories           []string    `json:"icomCategories"`
+	Locations                []string    `json:"locations"`
 	Budget                   *string     `json:"budget"`
 	Images                   []imageView `json:"images"`
 	CreatedAt                string      `json:"createdAt"`
@@ -247,6 +253,12 @@ func validateIdeaInput(in ideaInput) (ideaDoc, []equipmentDoc, error) {
 		return ideaDoc{}, nil, err
 	}
 	doc.Categories = categories
+	if doc.ICOMCategories, err = normalizeIDs(in.ICOMCategories, icomCategoryIDs, "ICOM category"); err != nil {
+		return ideaDoc{}, nil, err
+	}
+	if doc.Locations, err = normalizeIDs(in.Locations, locationIDs, "location"); err != nil {
+		return ideaDoc{}, nil, err
+	}
 	return doc, catalog, nil
 }
 
@@ -476,6 +488,8 @@ func toIdeaView(id string, d ideaDoc) ideaView {
 		Equipment:                d.Equipment,
 		Budget:                   d.Budget,
 		Categories:               d.Categories,
+		ICOMCategories:           emptyIfNil(d.ICOMCategories), // pages saved before F-024 have no field
+		Locations:                emptyIfNil(d.Locations),
 		CreatedAt:                d.CreatedAt.Format(time.RFC3339),
 	}
 	if v.TargetGroup == "" {
@@ -581,6 +595,9 @@ type ideaSummary struct {
 	Description string `json:"description"`
 	// CoverVersion is the version of the first image, for its cache-proof URL (F-029).
 	CoverVersion string `json:"coverVersion,omitempty"`
+	// F-024: for the filter bar of the overview.
+	ICOMCategories []string `json:"icomCategories"`
+	Locations      []string `json:"locations"`
 }
 
 // apiListIdeas handles GET /api/ideas: all ideas, newest first (F-011).
@@ -603,7 +620,14 @@ func (s *server) apiListIdeas(w http.ResponseWriter, r *http.Request) {
 			log.Printf("decode idea %s: %v", snap.Ref.ID, err)
 			continue
 		}
-		row := ideaSummary{ID: snap.Ref.ID, Title: d.Title, ImageCount: len(d.Images), Description: d.Description}
+		row := ideaSummary{
+			ID:             snap.Ref.ID,
+			Title:          d.Title,
+			ImageCount:     len(d.Images),
+			Description:    d.Description,
+			ICOMCategories: emptyIfNil(d.ICOMCategories),
+			Locations:      emptyIfNil(d.Locations),
+		}
 		if len(d.Images) > 0 {
 			row.CoverVersion = imageVersion(d.Images[0].Object)
 		}

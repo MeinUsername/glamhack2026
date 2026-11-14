@@ -13,7 +13,7 @@ describe('BasketButton', () => {
     await userEvent.setup().click(screen.getByRole('button', { name: 'Add to basket' }))
 
     expect(readBasket()).toEqual(['i1'])
-    expect(screen.getByText('Bought')).toBeInTheDocument()
+    expect(screen.getByText('In basket')).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Add to basket' })).toBeNull()
   })
 
@@ -23,7 +23,7 @@ describe('BasketButton', () => {
     render(<BasketButton ideaId="i1" />)
 
     expect(screen.queryByRole('button', { name: 'Add to basket' })).toBeNull()
-    expect(screen.getByText('Bought')).toBeInTheDocument()
+    expect(screen.getByText('In basket')).toBeInTheDocument()
     expect(readBasket()).toEqual(['i1'])
   })
 })

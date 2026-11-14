@@ -3,7 +3,41 @@ import { Navigate } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { api, ApiError } from '../api'
 import { useMe } from '../auth/useMe'
-import { button, cell, errorText, h1, h2, input, muted, noticeText, table } from '../ui'
+import { button, cell, errorText, h1, h2, headCell, input, label, muted, noticeText, table, tableWrap } from '../ui'
+import { ICOM_GROUPS, LOCATION_LABEL, LOCATIONS, pick } from '../ideas/icom'
+
+// F-024: which IDs the optional columns «ICOM categories» and «Location» accept.
+function IcomColumnsHelp() {
+  const { t, i18n } = useTranslation()
+  const lang = i18n.resolvedLanguage
+  const groups = [
+    ...ICOM_GROUPS.map((g) => ({ id: g.id, title: pick(g.label, lang), items: g.categories })),
+    { id: 'location', title: pick(LOCATION_LABEL, lang), items: LOCATIONS },
+  ]
+  return (
+    <details className="mt-4 max-w-3xl overflow-hidden rounded-card border-2 border-ink bg-paper">
+      <summary className={`${label} flex min-h-11 cursor-pointer items-center px-5 py-2 hover:bg-coral-soft`}>
+        {t('admin.import.icomTitle')}
+      </summary>
+      <div className="grid gap-4 border-t-2 border-ink px-4 py-4">
+        <p className={`${muted} m-0`}>{t('admin.import.icomHint')}</p>
+        {groups.map((g) => (
+          <div key={g.id} className="grid gap-1">
+            <h3 className="m-0 text-sm font-bold">{g.title}</h3>
+            <ul className="m-0 grid gap-1 p-0">
+              {g.items.map((item) => (
+                <li key={item.id} className="flex flex-wrap items-baseline gap-x-3">
+                  <code className="font-mono text-sm text-accent">{item.id}</code>
+                  <span className="text-sm text-ink-2">{pick(item.label, lang)}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ))}
+      </div>
+    </details>
+  )
+}
 
 // F-015: CSV import of ideas. Two steps: preview (stores nothing), then confirm (same file again).
 interface RowInfo {
@@ -77,9 +111,10 @@ function Importer() {
     <>
       <h1 className={h1}>{t('admin.import.title')}</h1>
       <p className={muted}>{t('admin.import.intro')}</p>
-      <form onSubmit={handlePreview} className="mt-4 flex flex-wrap items-center gap-3">
-        <label className="grid gap-1">
-          <span className="font-medium">{t('admin.import.file')}</span>
+      <IcomColumnsHelp />
+      <form onSubmit={handlePreview} className="mt-6 flex max-w-3xl flex-wrap items-end gap-3">
+        <label className="grid min-w-0 flex-1 basis-72 gap-2">
+          <span className={label}>{t('admin.import.file')}</span>
           <input
             type="file"
             accept=".csv,text/csv"
@@ -105,13 +140,14 @@ function Importer() {
             {t('admin.import.countInvalid', { count: shown.invalid })}
           </p>
           {shown.rows.length > 0 && (
-            <table className={`${table} mt-3`}>
+            <div className={`${tableWrap} mt-4`}>
+            <table className={table}>
               <thead>
                 <tr>
-                  <th className={cell}>{t('admin.import.colLine')}</th>
-                  <th className={cell}>{t('admin.import.colTitle')}</th>
-                  <th className={cell}>{t('admin.import.colStatus')}</th>
-                  <th className={cell}>{t('admin.import.colMessage')}</th>
+                  <th className={headCell}>{t('admin.import.colLine')}</th>
+                  <th className={headCell}>{t('admin.import.colTitle')}</th>
+                  <th className={headCell}>{t('admin.import.colStatus')}</th>
+                  <th className={headCell}>{t('admin.import.colMessage')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -125,6 +161,7 @@ function Importer() {
                 ))}
               </tbody>
             </table>
+            </div>
           )}
           {preview && (
             <div className="mt-4">

@@ -25,15 +25,15 @@ export default function MarkdownEditor({
   const { t } = useTranslation()
   const [preview, setPreview] = useState(false)
   const tab = (active: boolean) =>
-    `cursor-pointer rounded-t-lg border border-b-0 px-3 py-1 text-sm ${
+    `inline-flex min-h-11 cursor-pointer items-center rounded-full border-2 px-5 font-sans text-base ${
       active
-        ? 'border-slate-300 bg-white font-medium dark:border-slate-700 dark:bg-slate-900'
-        : 'border-transparent text-slate-500 dark:text-slate-400'
+        ? 'border-ink bg-ink font-semibold text-on-accent'
+        : 'border-ink bg-paper text-ink hover:bg-coral-soft'
     }`
   return (
-    <div className="grid gap-1">
-      <span className="text-sm font-medium">{label}</span>
-      <div role="tablist" className="flex gap-1">
+    <div className="grid gap-2">
+      <span className="font-mono text-[13px] font-medium tracking-[0.05em] text-ink uppercase">{label}</span>
+      <div role="tablist" className="flex flex-wrap gap-2">
         <button type="button" role="tab" aria-selected={!preview} className={tab(!preview)} onClick={() => setPreview(false)}>
           {t('ideas.markdown.write')}
         </button>
@@ -42,11 +42,11 @@ export default function MarkdownEditor({
         </button>
       </div>
       {preview ? (
-        <div role="tabpanel" className="min-h-48 rounded-lg border border-slate-300 bg-white p-3 dark:border-slate-700 dark:bg-slate-900">
+        <div role="tabpanel" className="min-h-48 rounded-field border-2 border-ink bg-paper p-3">
           {value.trim() ? <MarkdownView text={value} /> : <p className={muted}>{t('ideas.markdown.empty')}</p>}
         </div>
       ) : (
-        <div role="tabpanel" className="overflow-hidden rounded-lg border border-slate-300 dark:border-slate-700">
+        <div role="tabpanel" className="overflow-hidden rounded-field border-2 border-ink bg-paper">
           <CodeMirror
             value={value}
             onChange={onChange}

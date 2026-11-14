@@ -1,0 +1,254 @@
+{
+  "source": "ICOM Code of Ethics for Museums (2026)",
+  "filterGroups": [
+    {
+      "id": "people-participation",
+      "label": {
+        "de": "Menschen & Teilhabe",
+        "en": "People & Participation"
+      },
+      "categories": [
+        {
+          "id": "participation-cocreation",
+          "label": {
+            "de": "Teilhabe & Ko-Kreation",
+            "en": "Participation & Co-creation"
+          },
+          "description": {
+            "de": "Besuchende gestalten mit, bringen eigenes Wissen ein und werden als aktive Beteiligte ernst genommen.",
+            "en": "Visitors co-create, contribute their own knowledge and are taken seriously as active participants."
+          },
+          "icomRefs": ["S.2", "S.3", "G.6"]
+        },
+        {
+          "id": "dialogue-exchange",
+          "label": {
+            "de": "Dialog & Austausch",
+            "en": "Dialogue & Exchange"
+          },
+          "description": {
+            "de": "Formate, die Gespräche zwischen Besuchenden, Personal und Werken anstossen – auch bei unterschiedlichen Meinungen.",
+            "en": "Formats that spark conversation between visitors, staff and works – including across differing opinions."
+          },
+          "icomRefs": ["S.2", "E.1", "E.6"]
+        },
+        {
+          "id": "visitor-feedback",
+          "label": {
+            "de": "Feedback & Besucherfragen",
+            "en": "Feedback & Visitor Questions"
+          },
+          "description": {
+            "de": "Fragen, Rückmeldungen und Perspektiven des Publikums werden gesammelt, sichtbar gemacht und fliessen in die Vermittlung ein.",
+            "en": "Audience questions, feedback and perspectives are collected, made visible and fed back into programming."
+          },
+          "icomRefs": ["E.4"]
+        },
+        {
+          "id": "community-partnerships",
+          "label": {
+            "de": "Community-Partnerschaften",
+            "en": "Community Partnerships"
+          },
+          "description": {
+            "de": "Langfristige Zusammenarbeit mit Gemeinschaften, Schulen, Vereinen oder anderen Kulturinstitutionen.",
+            "en": "Long-term collaboration with communities, schools, associations or other cultural institutions."
+          },
+          "icomRefs": ["S.3", "E.3", "P.8"]
+        }
+      ]
+    },
+    {
+      "id": "access-inclusion",
+      "label": {
+        "de": "Zugang & Inklusion",
+        "en": "Access & Inclusion"
+      },
+      "categories": [
+        {
+          "id": "accessibility",
+          "label": {
+            "de": "Barrierefreiheit & Zugang",
+            "en": "Accessibility & Access"
+          },
+          "description": {
+            "de": "Abbau physischer, digitaler, sprachlicher, soziokultureller und finanzieller Hürden.",
+            "en": "Removing physical, digital, linguistic, socio-cultural and economic barriers."
+          },
+          "icomRefs": ["S.4", "E.4"]
+        },
+        {
+          "id": "inclusion-antidiscrimination",
+          "label": {
+            "de": "Inklusion & Antidiskriminierung",
+            "en": "Inclusion & Anti-discrimination"
+          },
+          "description": {
+            "de": "Formate, die Ausgrenzung entgegenwirken und Vorurteile kritisch thematisieren.",
+            "en": "Formats that counter exclusion and critically address prejudice."
+          },
+          "icomRefs": ["S.5"]
+        },
+        {
+          "id": "multiple-perspectives",
+          "label": {
+            "de": "Vielstimmigkeit & Interkulturalität",
+            "en": "Multiple Perspectives & Interculturality"
+          },
+          "description": {
+            "de": "Mehrere Deutungen, Sprachen und kulturelle Sichtweisen auf Werke werden nebeneinander gezeigt.",
+            "en": "Several interpretations, languages and cultural viewpoints on works are presented side by side."
+          },
+          "icomRefs": ["S.6", "E.1"]
+        },
+        {
+          "id": "diverse-audiences",
+          "label": {
+            "de": "Diverse Zielgruppen & lebenslanges Lernen",
+            "en": "Diverse Audiences & Lifelong Learning"
+          },
+          "description": {
+            "de": "Angebote für neue oder unterrepräsentierte Gruppen und für alle Generationen.",
+            "en": "Offers for new or underrepresented groups and for all generations."
+          },
+          "icomRefs": ["E.1", "S.1"]
+        }
+      ]
+    },
+    {
+      "id": "learning-reflection",
+      "label": {
+        "de": "Lernen & Reflexion",
+        "en": "Learning & Reflection"
+      },
+      "categories": [
+        {
+          "id": "active-learning",
+          "label": {
+            "de": "Aktives Lernen & kritisches Denken",
+            "en": "Active Learning & Critical Thinking"
+          },
+          "description": {
+            "de": "Vielfältige Methoden, die zum Selbermachen, Hinterfragen und Reflektieren anregen.",
+            "en": "Varied methods that invite hands-on engagement, questioning and reflection."
+          },
+          "icomRefs": ["E.6"]
+        },
+        {
+          "id": "transparency-insights",
+          "label": {
+            "de": "Transparenz & Einblicke",
+            "en": "Transparency & Insights"
+          },
+          "description": {
+            "de": "Einblicke in Forschung, Provenienz und Museumsarbeit; gesichertes, nachvollziehbares Wissen.",
+            "en": "Insights into research, provenance and museum work; reliable, traceable information."
+          },
+          "icomRefs": ["E.2", "C.9", "C.10"]
+        },
+        {
+          "id": "digital-mediation",
+          "label": {
+            "de": "Digitale Vermittlung",
+            "en": "Digital Mediation"
+          },
+          "description": {
+            "de": "Verantwortungsvoller Einsatz digitaler Medien und Technologien in der Vermittlung.",
+            "en": "Responsible use of digital media and technology in mediation."
+          },
+          "icomRefs": ["E.7", "P.7"]
+        }
+      ]
+    },
+    {
+      "id": "care-responsibility",
+      "label": {
+        "de": "Verantwortung & Care",
+        "en": "Responsibility & Care"
+      },
+      "categories": [
+        {
+          "id": "wellbeing-safe-space",
+          "label": {
+            "de": "Wohlbefinden & Safe Space",
+            "en": "Well-being & Safe Space"
+          },
+          "description": {
+            "de": "Formate, die auf körperliches, mentales und emotionales Wohlbefinden achten und geschützte Räume für Austausch schaffen.",
+            "en": "Formats that attend to physical, mental and emotional well-being and create safe spaces for exchange."
+          },
+          "icomRefs": ["S.2", "E.7", "G.4"]
+        },
+        {
+          "id": "sensitive-content",
+          "label": {
+            "de": "Sensible Inhalte",
+            "en": "Sensitive Content"
+          },
+          "description": {
+            "de": "Sorgfältiger Umgang mit sakralen, kulturell sensiblen oder belastenden Objekten und Themen.",
+            "en": "Careful handling of sacred, culturally sensitive or difficult objects and topics."
+          },
+          "icomRefs": ["E.5", "S.6", "C.3"]
+        },
+        {
+          "id": "colonial-restitution",
+          "label": {
+            "de": "Kolonialität & Restitution",
+            "en": "Coloniality & Restitution"
+          },
+          "description": {
+            "de": "Reparative Ansätze, kritische Auseinandersetzung mit Sammlungsgeschichte und Dialog über Rückgaben.",
+            "en": "Reparative approaches, critical engagement with collection history and dialogue on returns."
+          },
+          "icomRefs": ["E.9", "C.10"]
+        },
+        {
+          "id": "sustainability",
+          "label": {
+            "de": "Nachhaltigkeit & Klima",
+            "en": "Sustainability & Climate"
+          },
+          "description": {
+            "de": "Vermittlung zu Nachhaltigkeit und ressourcenschonende Formate.",
+            "en": "Mediation about sustainability and resource-conscious formats."
+          },
+          "icomRefs": ["S.7", "E.8"]
+        }
+      ]
+    }
+  ],
+  "secondaryFilters": [
+    {
+      "id": "location",
+      "label": {
+        "de": "Ort",
+        "en": "Location"
+      },
+      "options": [
+        {
+          "id": "onsite",
+          "label": {
+            "de": "Im Museum",
+            "en": "Onsite"
+          }
+        },
+        {
+          "id": "offsite",
+          "label": {
+            "de": "Ausserhalb",
+            "en": "Offsite"
+          }
+        },
+        {
+          "id": "online",
+          "label": {
+            "de": "Online",
+            "en": "Online"
+          }
+        }
+      ],
+      "icomRefs": ["E.1", "E.4"]
+    }
+  ]
+}

@@ -112,15 +112,15 @@ export default function AdminFeedbackPrompts() {
       {editing !== '' && (
         <form onSubmit={save} className="mt-4 grid max-w-2xl gap-3">
           <label className="grid gap-1">
-            <span className="text-sm font-medium">{t('feedback.admin.fieldTitle')}</span>
+            <span className="font-mono text-[13px] font-medium tracking-[0.05em] text-ink uppercase">{t('feedback.admin.fieldTitle')}</span>
             <input className={input} value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
           </label>
           <label className="grid gap-1">
-            <span className="text-sm font-medium">{t('feedback.admin.fieldDescription')}</span>
+            <span className="font-mono text-[13px] font-medium tracking-[0.05em] text-ink uppercase">{t('feedback.admin.fieldDescription')}</span>
             <textarea className={input} rows={2} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
           </label>
           <label className="grid gap-1">
-            <span className="text-sm font-medium">{t('feedback.admin.fieldText')}</span>
+            <span className="font-mono text-[13px] font-medium tracking-[0.05em] text-ink uppercase">{t('feedback.admin.fieldText')}</span>
             <textarea className={`${input} font-mono`} rows={12} value={form.text} onChange={(e) => setForm({ ...form, text: e.target.value })} />
           </label>
           <div className="flex gap-2">

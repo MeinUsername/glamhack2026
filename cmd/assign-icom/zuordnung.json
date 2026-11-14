@@ -1,0 +1,20 @@
+[
+  { "title": "E-ink", "icomCategories": ["visitor-feedback", "active-learning", "digital-mediation"], "locations": ["onsite"] },
+  { "title": "Postcards", "icomCategories": ["visitor-feedback", "active-learning"], "locations": ["onsite"] },
+  { "title": "\"Am I the only one?\" counter", "icomCategories": ["visitor-feedback", "wellbeing-safe-space", "digital-mediation"], "locations": ["onsite"] },
+  { "title": "Second label", "icomCategories": ["visitor-feedback", "transparency-insights", "accessibility"], "locations": ["onsite"] },
+  { "title": "Question wall over time", "icomCategories": ["participation-cocreation", "visitor-feedback", "diverse-audiences"], "locations": ["onsite"] },
+  { "title": "Talking hour", "icomCategories": ["dialogue-exchange", "community-partnerships", "wellbeing-safe-space", "diverse-audiences"], "locations": ["onsite"] },
+  { "title": "The museum asks back", "icomCategories": ["dialogue-exchange", "participation-cocreation", "multiple-perspectives"], "locations": ["onsite", "online"] },
+  { "title": "Mediator logbook", "icomCategories": ["visitor-feedback", "transparency-insights"], "locations": ["onsite"] },
+  { "title": "Exit question (QR)", "icomCategories": ["visitor-feedback", "digital-mediation"], "locations": ["onsite", "online"] },
+  { "title": "Digital feedback station", "icomCategories": ["visitor-feedback", "digital-mediation", "multiple-perspectives"], "locations": ["onsite"] },
+  { "title": "Audio guide question track", "icomCategories": ["multiple-perspectives", "accessibility", "digital-mediation"], "locations": ["onsite"] },
+  { "title": "Question-led guided tour", "icomCategories": ["dialogue-exchange", "active-learning", "participation-cocreation"], "locations": ["onsite"] },
+  { "title": "Question workshop", "icomCategories": ["active-learning", "community-partnerships", "diverse-audiences"], "locations": ["onsite"] },
+  { "title": "Visitor meetups", "icomCategories": ["community-partnerships", "dialogue-exchange", "diverse-audiences"], "locations": ["onsite", "online"] },
+  { "title": "Social media video answers", "icomCategories": ["digital-mediation", "multiple-perspectives", "transparency-insights"], "locations": ["onsite", "online"] },
+  { "title": "FAQ booklet / page", "icomCategories": ["transparency-insights", "accessibility"], "locations": ["onsite", "online"] },
+  { "title": "Online question archive", "icomCategories": ["transparency-insights", "digital-mediation", "visitor-feedback"], "locations": ["online"] },
+  { "title": "Curator AI assistant", "icomCategories": ["digital-mediation", "active-learning"], "locations": ["online"] }
+]
