@@ -6,6 +6,7 @@ const base: Idea = {
   id: '1',
   title: 'Lichtkabine',
   description: 'Eine Kabine aus Licht.',
+  mediationConcept: '',
   targetGroup: 'Schulklassen',
   descriptionOfInteraction: '',
   staffNeeded: '',
@@ -58,6 +59,16 @@ describe('renderPrompt', () => {
 
   it('lässt unbekannte Platzhalter stehen', () => {
     expect(renderPrompt('{{foo}} {{ideas}}', [], de)).toBe('{{foo}} ')
+  })
+
+  // AC-023-8
+  it('AC-023-8 hängt das Concept an den Idee-Block, nur wenn es eines gibt', () => {
+    const withConcept = { ...base, mediationConcept: '  ## Ablauf\n- eins  ' }
+    expect(formatIdea(withConcept)).toBe(formatIdea(base) + '\n\n#### Mediation Concept\n## Ablauf\n- eins')
+    const out = renderPrompt('{{ideas}}', [withConcept, second], de)
+    expect(out).toContain('## Ablauf')
+    expect(out.endsWith('### Zweite')).toBe(true)
+    expect(formatIdea({ ...base, mediationConcept: '   ' })).toBe(formatIdea(base))
   })
 
   it('fügt keine leeren Felder und keine Bilder ein', () => {

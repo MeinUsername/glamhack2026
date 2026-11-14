@@ -26,6 +26,7 @@ const (
 	maxIdeaImageBytes   = 5 << 20  // 5 MiB per image
 	maxIdeaBodyBytes    = 26 << 20 // 5 images plus text, under the Cloud Run limit of 32 MiB
 	maxIdeaTextRunes    = 5000
+	maxConceptRunes     = 200000 // technical cap only (F-023 D7): stays under the 1 MiB Firestore document limit
 	maxDeviceRunes      = 50
 	maxDevicesPerIdea   = 50
 	equipmentSuggestMax = 10
@@ -37,7 +38,9 @@ var budgetSizes = map[string]bool{"S": true, "M": true, "L": true, "XL": true}
 type ideaDoc struct {
 	Title       string `firestore:"title"`
 	Description string `firestore:"description"`
-	TargetGroup string `firestore:"target_group"`
+	// MediationConcept is Markdown, shown only on the detail page (F-023).
+	MediationConcept string `firestore:"mediation_concept"`
+	TargetGroup      string `firestore:"target_group"`
 	// LegacyAudience is only read: pages saved before F-014 hold the target group here.
 	LegacyAudience           string     `firestore:"audience"`
 	Goal                     string     `firestore:"goal"`
@@ -77,6 +80,7 @@ type equipmentDoc struct {
 type ideaInput struct {
 	Title                    string `json:"title"`
 	Description              string `json:"description"`
+	MediationConcept         string `json:"mediationConcept"`
 	TargetGroup              string `json:"targetGroup"`
 	Goal                     string `json:"goal"`
 	DescriptionOfInteraction string `json:"descriptionOfInteraction"`
@@ -98,6 +102,7 @@ type ideaView struct {
 	ID                       string      `json:"id"`
 	Title                    string      `json:"title"`
 	Description              string      `json:"description"`
+	MediationConcept         string      `json:"mediationConcept"`
 	TargetGroup              string      `json:"targetGroup"`
 	Goal                     string      `json:"goal"`
 	DescriptionOfInteraction string      `json:"descriptionOfInteraction"`
@@ -143,7 +148,12 @@ func validateIdeaInput(in ideaInput) (ideaDoc, []equipmentDoc, error) {
 		}
 	}
 
+	if utf8.RuneCountInString(in.MediationConcept) > maxConceptRunes {
+		return ideaDoc{}, nil, userError(fmt.Sprintf("Mediation concept is longer than %d characters.", maxConceptRunes))
+	}
+
 	var doc ideaDoc
+	doc.MediationConcept = strings.TrimSpace(in.MediationConcept)
 	doc.Title = strings.TrimSpace(in.Title)
 	doc.Description = strings.TrimSpace(in.Description)
 	doc.TargetGroup = strings.TrimSpace(in.TargetGroup)
@@ -393,6 +403,7 @@ func toIdeaView(id string, d ideaDoc) ideaView {
 		ID:                       id,
 		Title:                    d.Title,
 		Description:              d.Description,
+		MediationConcept:         d.MediationConcept,
 		TargetGroup:              d.TargetGroup,
 		Goal:                     d.Goal,
 		DescriptionOfInteraction: d.DescriptionOfInteraction,

@@ -307,3 +307,38 @@ func TestAC014_6_SummaryFields(t *testing.T) {
 		}
 	}
 }
+
+// AC-023-3, AC-023-6: the concept keeps inner line breaks, may exceed 5000 characters and is optional.
+func TestAC023_ConceptIsKeptAndOptional(t *testing.T) {
+	md := "# Titel\n\n- eins\n  - zwei\n\n```\ncode\n```"
+	doc, _, err := validateIdeaInput(ideaInput{MediationConcept: "\n" + md + "\n"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if doc.MediationConcept != md {
+		t.Errorf("concept = %q, want %q", doc.MediationConcept, md)
+	}
+	if _, _, err := validateIdeaInput(ideaInput{MediationConcept: strings.Repeat("ä", maxIdeaTextRunes+1)}); err != nil {
+		t.Errorf("long concept rejected: %v", err)
+	}
+	if _, _, err := validateIdeaInput(ideaInput{MediationConcept: strings.Repeat("ä", maxConceptRunes+1)}); err == nil {
+		t.Error("concept over the technical cap accepted")
+	}
+	if doc, _, err := validateIdeaInput(ideaInput{}); err != nil || doc.MediationConcept != "" {
+		t.Errorf("empty concept: %v %q", err, doc.MediationConcept)
+	}
+	if v := toIdeaView("x", ideaDoc{MediationConcept: md}); v.MediationConcept != md {
+		t.Errorf("view concept = %q", v.MediationConcept)
+	}
+	if v := toIdeaView("x", ideaDoc{}); v.MediationConcept != "" {
+		t.Errorf("old idea concept = %q", v.MediationConcept)
+	}
+}
+
+// AC-023-7: the overview row never carries the concept.
+func TestAC023_7_SummaryHasNoConcept(t *testing.T) {
+	b, _ := json.Marshal(ideaSummary{})
+	if strings.Contains(string(b), "oncept") {
+		t.Errorf("summary: %s", b)
+	}
+}

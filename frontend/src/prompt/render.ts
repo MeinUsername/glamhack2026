@@ -58,6 +58,8 @@ export function formatIdea(idea: Idea): string {
 
   if (idea.equipment.length > 0) lines.push(`- Ausstattung: ${idea.equipment.join(', ')}`)
   add('Budget', idea.budget)
+  const concept = idea.mediationConcept?.trim()
+  if (concept) lines.push('', '#### Mediation Concept', concept)
   return lines.join('\n')
 }
 

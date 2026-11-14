@@ -7,12 +7,14 @@ import EquipmentInput from './EquipmentInput'
 import { BUDGETS, imageProblem, MAX_IDEA_IMAGES } from './rules'
 import { CATEGORIES } from './categories'
 import CategoriesInfo from './CategoriesInfo'
+import MarkdownEditor from './MarkdownEditor'
 import type { Category, Idea } from '../types'
 
 // Text fields of the form; the names are the English field names of the spec.
 interface Draft {
   title: string
   description: string
+  mediationConcept: string
   targetGroup: string
   descriptionOfInteraction: string
   staffNeeded: string
@@ -32,6 +34,7 @@ function draftFrom(idea: Idea): Draft {
   return {
     title: idea.title,
     description: idea.description,
+    mediationConcept: idea.mediationConcept ?? '',
     targetGroup: idea.targetGroup,
     descriptionOfInteraction: idea.descriptionOfInteraction,
     staffNeeded: idea.staffNeeded,
@@ -50,6 +53,7 @@ function draftFrom(idea: Idea): Draft {
 const emptyDraft: Draft = {
   title: '',
   description: '',
+  mediationConcept: '',
   targetGroup: '',
   descriptionOfInteraction: '',
   staffNeeded: '',
@@ -144,6 +148,7 @@ function IdeaEditor({ edit }: { edit?: Idea }) {
     const data: Record<string, unknown> = {
       title: draft.title,
       description: draft.description,
+      mediationConcept: draft.mediationConcept,
       targetGroup: draft.targetGroup,
       descriptionOfInteraction: draft.descriptionOfInteraction,
       staffNeeded: draft.staffNeeded,
@@ -194,6 +199,12 @@ function IdeaEditor({ edit }: { edit?: Idea }) {
         <Field label={t('ideas.field.description')}>
           <textarea className={input} rows={4} value={draft.description} onChange={(e) => set('description', e.target.value)} />
         </Field>
+        <MarkdownEditor
+          label={t('ideas.field.mediationConcept')}
+          value={draft.mediationConcept}
+          onChange={(v) => set('mediationConcept', v)}
+        />
+        <p className={muted}>{t('ideas.markdown.help')}</p>
         <Field label={t('ideas.field.descriptionOfInteraction')}>
           <textarea className={input} rows={3} value={draft.descriptionOfInteraction} onChange={(e) => set('descriptionOfInteraction', e.target.value)} />
         </Field>

@@ -6,6 +6,7 @@ import type { Idea } from '../types'
 import { errorText, h1, h2, muted } from '../ui'
 import { CATEGORY_LABEL } from './categories'
 import BasketButton from '../basket/BasketButton'
+import MarkdownView from '../components/MarkdownView'
 
 type State =
   | { status: 'loading' }
@@ -73,6 +74,12 @@ function Show({ idea }: { idea: Idea }) {
         </ul>
       )}
       <Section title={t('ideas.field.description')} text={idea.description} />
+      {idea.mediationConcept?.trim() && (
+        <section>
+          <h2 className={h2}>{t('ideas.field.mediationConcept')}</h2>
+          <MarkdownView text={idea.mediationConcept} />
+        </section>
+      )}
       <Section title={t('ideas.field.descriptionOfInteraction')} text={idea.descriptionOfInteraction} />
       <Section title={t('ideas.field.targetGroup')} text={idea.targetGroup} />
       <Section title={t('ideas.goal')} text={idea.goal} />

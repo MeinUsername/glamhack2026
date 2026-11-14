@@ -38,6 +38,7 @@ export interface Idea {
   id: string
   title: string
   description: string
+  mediationConcept: string
   targetGroup: string
   goal: string
   descriptionOfInteraction: string

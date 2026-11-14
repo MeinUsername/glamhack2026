@@ -74,6 +74,22 @@ describe('IdeaForm', () => {
     expect(data.audience).toBeUndefined()
   })
 
+  it('AC-023-1/3 sendet das Concept unverändert mit Zeilenumbrüchen; ohne Concept bleibt es leer', async () => {
+    const { calls } = routeFetch({
+      'GET /api/me': () => user,
+      'POST /api/ideas': () => ({ status: 201, json: { id: 'i1' } }),
+      'GET /api/ideas/i1': () => savedIdea,
+    })
+    renderAt('/ideas/new')
+    const u = userEvent.setup()
+    await screen.findByRole('tab', { name: 'Write' })
+    await u.click(document.querySelector('.cm-content') as HTMLElement)
+    await u.keyboard('# Titel{Enter}- eins')
+    await u.click(screen.getByRole('button', { name: 'Save idea' }))
+    const data = JSON.parse(String(formData(calls.find((c) => c.method === 'POST')?.body).get('data')))
+    expect(data.mediationConcept).toBe('# Titel\n- eins')
+  })
+
   it('AC-002-3 lehnt mehr als 5 Bilder ab und sendet nichts', async () => {
     const { calls } = routeFetch({ 'GET /api/me': () => user })
     renderAt('/ideas/new')
