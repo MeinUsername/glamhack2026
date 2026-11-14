@@ -10,7 +10,7 @@ export default function LanguageSwitch() {
       aria-label={t('nav.language')}
       value={current}
       onChange={(e) => chooseLanguage(e.target.value as Language)}
-      className="rounded-md border border-slate-300 bg-white px-1.5 py-0.5 text-sm dark:border-slate-700 dark:bg-slate-900"
+      className="min-h-11 cursor-pointer rounded-none border-2 border-ink bg-paper px-2 font-mono text-sm uppercase text-ink"
     >
       {LANGUAGES.map((lng) => (
         <option key={lng} value={lng}>

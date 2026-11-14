@@ -2,7 +2,7 @@ import { useEffect, useState, type ChangeEvent, type FormEvent, type ReactNode }
 import { useNavigate, useParams } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { api, ApiError } from '../api'
-import { button, errorText, h1, input, muted } from '../ui'
+import { button, errorText, h1, input, label as labelClass, muted } from '../ui'
 import EquipmentInput from './EquipmentInput'
 import { BUDGETS, imageProblem, MAX_IDEA_IMAGES } from './rules'
 import { CATEGORIES } from './categories'
@@ -175,14 +175,14 @@ function IdeaEditor({ edit }: { edit?: Idea }) {
   return (
     <>
       <h1 className={h1}>{edit ? t('ideas.editTitle') : t('ideas.new.title')}</h1>
-      <form onSubmit={handleSubmit} className="grid max-w-xl gap-4">
+      <form onSubmit={handleSubmit} className="grid max-w-2xl gap-6">
         {edit && edit.images.length > 0 && (
           <fieldset className="grid gap-2">
-            <legend className="font-medium">{t('ideas.existingImages')}</legend>
+            <legend className={`${labelClass} mb-2`}>{t('ideas.existingImages')}</legend>
             {edit.images.map((_, n) => (
-              <label key={n} className="flex items-center gap-3">
+              <label key={n} className="flex min-h-11 cursor-pointer items-center gap-3">
                 <input type="checkbox" checked={keep.includes(n)} onChange={() => toggleKeep(n)} />
-                <img src={`/api/ideas/${edit.id}/images/${n}`} alt="" className="h-12 w-12 rounded object-cover" />
+                <img src={`/api/ideas/${edit.id}/images/${n}`} alt="" className="h-12 w-12 border-2 border-ink object-cover" />
                 <span>{t('ideas.keepImage', { n: n + 1 })}</span>
               </label>
             ))}
@@ -212,7 +212,7 @@ function IdeaEditor({ edit }: { edit?: Idea }) {
           <input className={input} value={draft.targetGroup} onChange={(e) => set('targetGroup', e.target.value)} />
         </Field>
         <fieldset className="grid gap-2">
-          <legend className="font-medium">{t('ideas.space.legend')}</legend>
+          <legend className={`${labelClass} mb-2`}>{t('ideas.space.legend')}</legend>
           <div className="grid grid-cols-2 gap-3">
             <Field label={t('ideas.space.area')}>
               <input className={input} inputMode="decimal" value={draft.areaM2} onChange={(e) => set('areaM2', e.target.value)} />
@@ -232,12 +232,12 @@ function IdeaEditor({ edit }: { edit?: Idea }) {
           <EquipmentInput value={draft.equipment} onChange={(next) => set('equipment', next)} />
         </Field>
         <fieldset className="grid gap-2">
-          <legend className="font-medium">
+          <legend className={`${labelClass} mb-2`}>
             {t('ideas.categories.legend')}
             <CategoriesInfo />
           </legend>
           {CATEGORIES.map((c) => (
-            <label key={c.key} className="flex items-center gap-2">
+            <label key={c.key} className="flex min-h-11 cursor-pointer items-center gap-3">
               <input
                 type="checkbox"
                 value={c.key}
@@ -281,8 +281,8 @@ function IdeaEditor({ edit }: { edit?: Idea }) {
 // A labelled form field; the label wraps the control so tests and screen readers find it.
 function Field({ label, children }: { label: string; children: ReactNode }) {
   return (
-    <label className="grid gap-1">
-      <span className="text-sm font-medium">{label}</span>
+    <label className="grid gap-2">
+      <span className={labelClass}>{label}</span>
       {children}
     </label>
   )

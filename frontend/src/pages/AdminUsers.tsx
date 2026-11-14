@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { api, ApiError } from '../api'
 import { useMe } from '../auth/useMe'
 import type { AdminUser, Role } from '../types'
-import { button, cell, errorText, h1, h2, input, muted, noticeText, table } from '../ui'
+import { button, cell, errorText, h1, h2, headCell, input, inputBase, linkButton, muted, noticeText, table, tableWrap } from '../ui'
 
 export default function AdminUsers() {
   const me = useMe()
@@ -67,13 +67,14 @@ function UserTable() {
       {message && <p role="status" className={noticeText}>{message}</p>}
       {error && <p role="alert" className={errorText}>{error}</p>}
       {users.length > 0 ? (
-        <table className={`${table} mt-4`}>
+        <div className={`${tableWrap} mt-6`}>
+        <table className={table}>
           <thead>
             <tr>
-              <th className={cell}>{t('admin.colEmail')}</th>
-              <th className={cell}>{t('admin.colRole')}</th>
-              <th className={cell}>{t('admin.colStatus')}</th>
-              <th className={cell} />
+              <th className={headCell}>{t('admin.colEmail')}</th>
+              <th className={headCell}>{t('admin.colRole')}</th>
+              <th className={headCell}>{t('admin.colStatus')}</th>
+              <th className={headCell} />
             </tr>
           </thead>
           <tbody>
@@ -85,7 +86,7 @@ function UserTable() {
                     aria-label={t('admin.roleOf', { email: u.email })}
                     value={u.role}
                     onChange={(e) => setRole(u.uid, e.target.value as Role)}
-                    className="rounded border border-slate-200 dark:border-slate-700 bg-transparent px-1"
+                    className={`${inputBase} cursor-pointer py-1`}
                   >
                     <option value="user">{t('admin.roleUser')}</option>
                     <option value="admin">{t('admin.roleAdmin')}</option>
@@ -101,7 +102,7 @@ function UserTable() {
                 <td className={cell}>
                   <button
                     type="button"
-                    className="cursor-pointer bg-transparent p-0 text-indigo-600 dark:text-indigo-400"
+                    className={linkButton}
                     onClick={() => setBlocked(u)}
                   >
                     {u.disabled ? t('admin.unblock') : t('admin.block')}
@@ -111,6 +112,7 @@ function UserTable() {
             ))}
           </tbody>
         </table>
+        </div>
       ) : (
         <p className={`${muted} mt-4`}>{t('admin.none')}</p>
       )}
@@ -124,7 +126,7 @@ function UserTable() {
       {invite && (
         <div className="mt-3">
           <p className={noticeText}>{t('files.invite.created')}</p>
-          <code className={`${input} mt-2 block break-all`}>{invite.link}</code>
+          <code className={`${input} mt-2 block font-mono text-sm break-all`}>{invite.link}</code>
         </div>
       )}
     </>

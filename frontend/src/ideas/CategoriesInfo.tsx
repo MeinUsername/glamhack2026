@@ -34,7 +34,7 @@ export default function CategoriesInfo() {
         type="button"
         aria-label={t('ideas.categories.about')}
         aria-describedby={id}
-        className="ml-1 cursor-pointer rounded-full border border-slate-200 dark:border-slate-700 px-1.5 text-xs leading-5"
+        className="ml-2 inline-flex h-7 w-7 cursor-pointer items-center justify-center border-2 border-ink bg-paper font-mono text-xs normal-case hover:bg-accent hover:text-on-accent"
         onMouseEnter={() => setOpen(true)}
         onMouseLeave={() => setOpen(false)}
         onFocus={handleFocus}
@@ -47,16 +47,16 @@ export default function CategoriesInfo() {
         role="tooltip"
         id={id}
         hidden={!open}
-        className="absolute top-full left-0 z-10 mt-2 grid w-80 max-w-[80vw] gap-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white p-3 text-sm font-normal shadow-lg dark:bg-gray-900"
+        className="absolute top-full left-0 z-10 mt-2 grid w-80 max-w-[80vw] gap-2 border-2 border-ink bg-paper p-4 font-sans text-sm font-normal normal-case tracking-normal text-ink"
       >
         <span>{t('categories.intro')}</span>
         {CATEGORIES.map((c) => (
           <span key={c.key} className="grid gap-0.5">
-            <span className="font-medium">{c.label}</span>
+            <span className="font-bold">{c.label}</span>
             <span>{t(c.explanation)}</span>
           </span>
         ))}
-        <span className="text-xs opacity-70">{t('categories.source')}</span>
+        <span className="text-xs text-ink-2">{t('categories.source')}</span>
       </span>
     </span>
   )

@@ -106,7 +106,7 @@ function Generator({ ids }: { ids: string[] }) {
   }
 
   return (
-    <section className="mt-8">
+    <section className="mt-12 max-w-3xl">
       <h2 className={h2}>{t('prompt.title')}</h2>
       {levels.status === 'loading' && <p className={muted}>{t('common.loading')}</p>}
       {levels.status === 'none' && <p className={muted}>{t('prompt.noVersion')}</p>}
@@ -114,7 +114,7 @@ function Generator({ ids }: { ids: string[] }) {
       {emptyBasket && <p className={muted}>{t('prompt.emptyBasket')}</p>}
 
       {levels.status === 'ready' && (
-        <pre className="mt-2 rounded-xl border border-slate-200 bg-white p-3 shadow-sm dark:border-slate-700 dark:bg-slate-900 whitespace-pre-wrap text-sm">{text}</pre>
+        <pre className="mt-2 max-h-[28rem] overflow-auto border-2 border-ink bg-paper p-4 font-mono text-sm leading-[1.6] whitespace-pre-wrap">{text}</pre>
       )}
 
       <div className="mt-3 flex flex-wrap gap-2">

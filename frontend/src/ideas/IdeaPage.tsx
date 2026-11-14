@@ -3,7 +3,7 @@ import { Link, useParams } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { api, ApiError } from '../api'
 import type { Idea } from '../types'
-import { errorText, h1, h2, muted } from '../ui'
+import { buttonSecondary, chip, errorText, h1Compact, label, muted } from '../ui'
 import { CATEGORY_LABEL } from './categories'
 import BasketButton from '../basket/BasketButton'
 
@@ -44,16 +44,18 @@ function Show({ idea }: { idea: Idea }) {
   const { space } = idea
   const title = idea.title || t('ideas.untitled')
   return (
-    <article className="grid max-w-2xl gap-4">
-      <h1 className={h1}>{title}</h1>
-      <BasketButton ideaId={idea.id} />
-      <p>
-        <Link to={`/ideas/${idea.id}/edit`}>{t('ideas.edit')}</Link>
-      </p>
+    <article className="grid max-w-3xl gap-5">
+      <h1 className={`${h1Compact} mb-0`}>{title}</h1>
+      <div className="flex flex-wrap gap-3">
+        <BasketButton ideaId={idea.id} />
+        <Link to={`/ideas/${idea.id}/edit`} className={buttonSecondary}>
+          {t('ideas.edit')}
+        </Link>
+      </div>
       {idea.categories.length > 0 && (
         <ul aria-label={t('ideas.categories.chips')} className="flex flex-wrap gap-2">
           {idea.categories.map((key) => (
-            <li key={key} className="rounded-full border border-slate-200 dark:border-slate-700 px-3 py-1 text-sm">
+            <li key={key} className={chip}>
               {CATEGORY_LABEL[key]}
             </li>
           ))}
@@ -66,7 +68,7 @@ function Show({ idea }: { idea: Idea }) {
               <img
                 src={`/api/ideas/${idea.id}/images/${n}`}
                 alt={t('ideas.imageAlt', { title, n: n + 1 })}
-                className="w-full rounded-lg object-cover"
+                className="aspect-[16/10] w-full border-2 border-ink object-cover"
               />
             </li>
           ))}
@@ -81,13 +83,13 @@ function Show({ idea }: { idea: Idea }) {
       <Section title={t('ideas.field.exhibitRelated')} text={idea.exhibitRelated} />
       <Section title={t('ideas.accessibility')} text={idea.accessibility} />
       <section>
-        <h2 className={h2}>{t('ideas.space.legend')}</h2>
+        <h2 className={sectionHead}>{t('ideas.space.legend')}</h2>
         <p>
           {space.areaM2 == null ? '—' : `${space.areaM2} m²`} · {space.volumeM3 == null ? '—' : `${space.volumeM3} m³`}
         </p>
       </section>
       <section>
-        <h2 className={h2}>{t('ideas.equipment.label')}</h2>
+        <h2 className={sectionHead}>{t('ideas.equipment.label')}</h2>
         {idea.equipment.length === 0 ? (
           <p className={muted}>{t('ideas.equipment.none')}</p>
         ) : (
@@ -99,18 +101,21 @@ function Show({ idea }: { idea: Idea }) {
         )}
       </section>
       <section>
-        <h2 className={h2}>{t('ideas.budget')}</h2>
+        <h2 className={sectionHead}>{t('ideas.budget')}</h2>
         <p>{idea.budget ?? t('ideas.budget.notSet')}</p>
       </section>
     </article>
   )
 }
 
+// Section heads look like the metadata lines of an object label.
+const sectionHead = `${label} mb-2 border-t-2 border-ink pt-3`
+
 function Section({ title, text }: { title: string; text: string }) {
   return (
     <section>
-      <h2 className={h2}>{title}</h2>
-      {text ? <p className="whitespace-pre-line">{text}</p> : <p className={muted}>—</p>}
+      <h2 className={sectionHead}>{title}</h2>
+      {text ? <p className="m-0 whitespace-pre-line leading-[1.55]">{text}</p> : <p className={muted}>—</p>}
     </section>
   )
 }

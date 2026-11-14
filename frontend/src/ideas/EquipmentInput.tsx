@@ -1,7 +1,7 @@
 import { useEffect, useState, type KeyboardEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { api } from '../api'
-import { button, input, linkButton, muted } from '../ui'
+import { buttonSecondary, iconButton, input, muted } from '../ui'
 
 interface Props {
   value: string[]
@@ -55,12 +55,12 @@ export default function EquipmentInput({ value, onChange }: Props) {
     <div className="grid gap-2">
       <ul className="flex flex-wrap gap-2" aria-label={t('ideas.equipment.label')}>
         {value.map((name) => (
-          <li key={name} className="flex items-center gap-1 rounded-full border border-slate-200 dark:border-slate-700 px-3 py-1">
+          <li key={name} className="flex items-center border-2 border-ink pl-3 font-mono text-sm">
             {name}
             <button
               type="button"
               aria-label={t('ideas.equipment.remove', { name })}
-              className={linkButton}
+              className={`${iconButton} ml-2 border-l-2 border-ink`}
               onClick={() => onChange(value.filter((v) => v !== name))}
             >
               ×
@@ -80,7 +80,7 @@ export default function EquipmentInput({ value, onChange }: Props) {
         <ul className="flex flex-wrap gap-2" aria-label={t('ideas.equipment.suggestions')}>
           {suggestions.map((name) => (
             <li key={name}>
-              <button type="button" className={button} onClick={() => add(name)}>
+              <button type="button" className={buttonSecondary} onClick={() => add(name)}>
                 {name}
               </button>
             </li>

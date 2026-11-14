@@ -3,7 +3,7 @@ import { Navigate } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { api, ApiError } from '../api'
 import { useMe } from '../auth/useMe'
-import { button, cell, errorText, h1, h2, input, muted, noticeText, table } from '../ui'
+import { button, cell, errorText, h1, h2, headCell, input, label, muted, noticeText, table, tableWrap } from '../ui'
 
 // F-015: CSV import of ideas. Two steps: preview (stores nothing), then confirm (same file again).
 interface RowInfo {
@@ -77,9 +77,9 @@ function Importer() {
     <>
       <h1 className={h1}>{t('admin.import.title')}</h1>
       <p className={muted}>{t('admin.import.intro')}</p>
-      <form onSubmit={handlePreview} className="mt-4 flex flex-wrap items-center gap-3">
-        <label className="grid gap-1">
-          <span className="font-medium">{t('admin.import.file')}</span>
+      <form onSubmit={handlePreview} className="mt-6 flex max-w-3xl flex-wrap items-end gap-3">
+        <label className="grid min-w-0 flex-1 basis-72 gap-2">
+          <span className={label}>{t('admin.import.file')}</span>
           <input
             type="file"
             accept=".csv,text/csv"
@@ -105,13 +105,14 @@ function Importer() {
             {t('admin.import.countInvalid', { count: shown.invalid })}
           </p>
           {shown.rows.length > 0 && (
-            <table className={`${table} mt-3`}>
+            <div className={`${tableWrap} mt-4`}>
+            <table className={table}>
               <thead>
                 <tr>
-                  <th className={cell}>{t('admin.import.colLine')}</th>
-                  <th className={cell}>{t('admin.import.colTitle')}</th>
-                  <th className={cell}>{t('admin.import.colStatus')}</th>
-                  <th className={cell}>{t('admin.import.colMessage')}</th>
+                  <th className={headCell}>{t('admin.import.colLine')}</th>
+                  <th className={headCell}>{t('admin.import.colTitle')}</th>
+                  <th className={headCell}>{t('admin.import.colStatus')}</th>
+                  <th className={headCell}>{t('admin.import.colMessage')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -125,6 +126,7 @@ function Importer() {
                 ))}
               </tbody>
             </table>
+            </div>
           )}
           {preview && (
             <div className="mt-4">
