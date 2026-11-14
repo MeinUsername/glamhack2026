@@ -1,6 +1,6 @@
 import data from '../data/icom-filter-kategorien.json'
 
-// ICOM filter categories and the location filter (F-021). The JSON file is the source of the
+// ICOM filter categories and the location filter (F-024). The JSON file is the source of the
 // labels; the server checks the same IDs (ideas_icom.go, kept in step by a Go test).
 
 export interface Localized {

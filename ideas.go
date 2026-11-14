@@ -10,6 +10,7 @@ import (
 	"math"
 	"mime/multipart"
 	"net/http"
+	"net/mail"
 	"strconv"
 	"strings"
 	"time"
@@ -26,6 +27,7 @@ const (
 	maxIdeaImageBytes   = 5 << 20  // 5 MiB per image
 	maxIdeaBodyBytes    = 26 << 20 // 5 images plus text, under the Cloud Run limit of 32 MiB
 	maxIdeaTextRunes    = 5000
+	maxConceptRunes     = 200000 // technical cap only (F-023 D7): stays under the 1 MiB Firestore document limit
 	maxDeviceRunes      = 50
 	maxDevicesPerIdea   = 50
 	equipmentSuggestMax = 10
@@ -37,7 +39,14 @@ var budgetSizes = map[string]bool{"S": true, "M": true, "L": true, "XL": true}
 type ideaDoc struct {
 	Title       string `firestore:"title"`
 	Description string `firestore:"description"`
-	TargetGroup string `firestore:"target_group"`
+	// MediationConcept is Markdown, shown only on the detail page (F-023).
+	MediationConcept string `firestore:"mediation_concept"`
+	// Credit line and contact (F-027); all optional, the email is public.
+	CreditFirstName string `firestore:"credit_first_name"`
+	CreditLastName  string `firestore:"credit_last_name"`
+	CreditInstitute string `firestore:"credit_institute"`
+	CreditEmail     string `firestore:"credit_email"`
+	TargetGroup     string `firestore:"target_group"`
 	// LegacyAudience is only read: pages saved before F-014 hold the target group here.
 	LegacyAudience           string     `firestore:"audience"`
 	Goal                     string     `firestore:"goal"`
@@ -49,12 +58,14 @@ type ideaDoc struct {
 	Space                    spaceDoc   `firestore:"space"`
 	Equipment                []string   `firestore:"equipment"`
 	Categories               []string   `firestore:"categories"`
-	ICOMCategories           []string   `firestore:"icom_categories"` // F-021
-	Locations                []string   `firestore:"locations"`       // F-021
+	ICOMCategories           []string   `firestore:"icom_categories"` // F-024
+	Locations                []string   `firestore:"locations"`       // F-024
 	Budget                   *string    `firestore:"budget"`
 	Images                   []imageDoc `firestore:"images"`
-	CreatedBy                string     `firestore:"created_by"`
-	CreatedAt                time.Time  `firestore:"created_at"`
+	// TermsAcceptedAt is when the author confirmed the Terms and Conditions (F-028); nil if never (old or imported ideas).
+	TermsAcceptedAt *time.Time `firestore:"terms_accepted_at"`
+	CreatedBy       string     `firestore:"created_by"`
+	CreatedAt       time.Time  `firestore:"created_at"`
 }
 
 type spaceDoc struct {
@@ -79,6 +90,11 @@ type equipmentDoc struct {
 type ideaInput struct {
 	Title                    string `json:"title"`
 	Description              string `json:"description"`
+	MediationConcept         string `json:"mediationConcept"`
+	CreditFirstName          string `json:"creditFirstName"`
+	CreditLastName           string `json:"creditLastName"`
+	CreditInstitute          string `json:"creditInstitute"`
+	CreditEmail              string `json:"creditEmail"`
 	TargetGroup              string `json:"targetGroup"`
 	Goal                     string `json:"goal"`
 	DescriptionOfInteraction string `json:"descriptionOfInteraction"`
@@ -93,8 +109,10 @@ type ideaInput struct {
 	Equipment      []string `json:"equipment"`
 	Budget         string   `json:"budget"`
 	Categories     []string `json:"categories"`
-	ICOMCategories []string `json:"icomCategories"` // F-021
-	Locations      []string `json:"locations"`      // F-021
+	ICOMCategories []string `json:"icomCategories"` // F-024
+	Locations      []string `json:"locations"`      // F-024
+	// TermsAccepted must be true when an idea is created or changed through the form (F-028).
+	TermsAccepted bool `json:"termsAccepted"`
 }
 
 // ideaView is an idea as returned by GET /api/ideas/{id}.
@@ -102,6 +120,11 @@ type ideaView struct {
 	ID                       string      `json:"id"`
 	Title                    string      `json:"title"`
 	Description              string      `json:"description"`
+	MediationConcept         string      `json:"mediationConcept"`
+	CreditFirstName          string      `json:"creditFirstName"`
+	CreditLastName           string      `json:"creditLastName"`
+	CreditInstitute          string      `json:"creditInstitute"`
+	CreditEmail              string      `json:"creditEmail"`
 	TargetGroup              string      `json:"targetGroup"`
 	Goal                     string      `json:"goal"`
 	DescriptionOfInteraction string      `json:"descriptionOfInteraction"`
@@ -127,6 +150,32 @@ type spaceView struct {
 type imageView struct {
 	ContentType string `json:"contentType"`
 	Bytes       int64  `json:"bytes"`
+	Version     string `json:"version"`
+}
+
+// checkCreditEmail accepts an empty value or a plain address (no display name), F-027 D4.
+func checkCreditEmail(email string) error {
+	if email == "" {
+		return nil
+	}
+	if len(email) > 254 {
+		return userError("Credit line email address is not valid.")
+	}
+	addr, err := mail.ParseAddress(email)
+	if err != nil || addr.Address != email {
+		return userError("Credit line email address is not valid.")
+	}
+	return nil
+}
+
+// applyTermsAcceptance requires the confirmation of the Terms and Conditions and stores its time (F-028).
+// It is not part of validateIdeaInput, because the CSV import has no such confirmation.
+func applyTermsAcceptance(in ideaInput, doc *ideaDoc, now time.Time) error {
+	if !in.TermsAccepted {
+		return userError("You must confirm the Terms and Conditions.")
+	}
+	doc.TermsAcceptedAt = &now
+	return nil
 }
 
 // validateIdeaInput checks the JSON input without touching Firestore and returns the
@@ -142,6 +191,9 @@ func validateIdeaInput(in ideaInput) (ideaDoc, []equipmentDoc, error) {
 		"Exhibit relation":           in.ExhibitRelated,
 		"Sustainability":             in.Sustainability,
 		"Accessibility":              in.Accessibility,
+		"First name":                 in.CreditFirstName,
+		"Last name":                  in.CreditLastName,
+		"Institute":                  in.CreditInstitute,
 	}
 	for field, v := range texts {
 		if utf8.RuneCountInString(v) > maxIdeaTextRunes {
@@ -149,7 +201,19 @@ func validateIdeaInput(in ideaInput) (ideaDoc, []equipmentDoc, error) {
 		}
 	}
 
+	if utf8.RuneCountInString(in.MediationConcept) > maxConceptRunes {
+		return ideaDoc{}, nil, userError(fmt.Sprintf("Mediation concept is longer than %d characters.", maxConceptRunes))
+	}
+
 	var doc ideaDoc
+	doc.MediationConcept = strings.TrimSpace(in.MediationConcept)
+	doc.CreditFirstName = strings.TrimSpace(in.CreditFirstName)
+	doc.CreditLastName = strings.TrimSpace(in.CreditLastName)
+	doc.CreditInstitute = strings.TrimSpace(in.CreditInstitute)
+	doc.CreditEmail = strings.TrimSpace(in.CreditEmail)
+	if err := checkCreditEmail(doc.CreditEmail); err != nil {
+		return ideaDoc{}, nil, err
+	}
 	doc.Title = strings.TrimSpace(in.Title)
 	doc.Description = strings.TrimSpace(in.Description)
 	doc.TargetGroup = strings.TrimSpace(in.TargetGroup)
@@ -291,6 +355,9 @@ func (s *server) apiCreateIdea(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	doc, catalog, err := validateIdeaInput(in)
+	if err == nil {
+		err = applyTermsAcceptance(in, &doc, time.Now().UTC())
+	}
 	if err != nil {
 		writeUserError(w, err)
 		return
@@ -405,6 +472,11 @@ func toIdeaView(id string, d ideaDoc) ideaView {
 		ID:                       id,
 		Title:                    d.Title,
 		Description:              d.Description,
+		MediationConcept:         d.MediationConcept,
+		CreditFirstName:          d.CreditFirstName,
+		CreditLastName:           d.CreditLastName,
+		CreditInstitute:          d.CreditInstitute,
+		CreditEmail:              d.CreditEmail,
 		TargetGroup:              d.TargetGroup,
 		Goal:                     d.Goal,
 		DescriptionOfInteraction: d.DescriptionOfInteraction,
@@ -416,7 +488,7 @@ func toIdeaView(id string, d ideaDoc) ideaView {
 		Equipment:                d.Equipment,
 		Budget:                   d.Budget,
 		Categories:               d.Categories,
-		ICOMCategories:           emptyIfNil(d.ICOMCategories), // pages saved before F-021 have no field
+		ICOMCategories:           emptyIfNil(d.ICOMCategories), // pages saved before F-024 have no field
 		Locations:                emptyIfNil(d.Locations),
 		CreatedAt:                d.CreatedAt.Format(time.RFC3339),
 	}
@@ -431,7 +503,7 @@ func toIdeaView(id string, d ideaDoc) ideaView {
 	}
 	v.Images = make([]imageView, 0, len(d.Images))
 	for _, img := range d.Images {
-		v.Images = append(v.Images, imageView{ContentType: img.ContentType, Bytes: img.Size})
+		v.Images = append(v.Images, imageView{ContentType: img.ContentType, Bytes: img.Size, Version: imageVersion(img.Object)})
 	}
 	return v
 }
@@ -521,7 +593,9 @@ type ideaSummary struct {
 	ImageCount int    `json:"imageCount"`
 	// Description is the full text of the field "Beschreibung" (Q-014-08).
 	Description string `json:"description"`
-	// F-021: for the filter bar of the overview.
+	// CoverVersion is the version of the first image, for its cache-proof URL (F-029).
+	CoverVersion string `json:"coverVersion,omitempty"`
+	// F-024: for the filter bar of the overview.
 	ICOMCategories []string `json:"icomCategories"`
 	Locations      []string `json:"locations"`
 }
@@ -546,14 +620,18 @@ func (s *server) apiListIdeas(w http.ResponseWriter, r *http.Request) {
 			log.Printf("decode idea %s: %v", snap.Ref.ID, err)
 			continue
 		}
-		out = append(out, ideaSummary{
+		row := ideaSummary{
 			ID:             snap.Ref.ID,
 			Title:          d.Title,
 			ImageCount:     len(d.Images),
 			Description:    d.Description,
 			ICOMCategories: emptyIfNil(d.ICOMCategories),
 			Locations:      emptyIfNil(d.Locations),
-		})
+		}
+		if len(d.Images) > 0 {
+			row.CoverVersion = imageVersion(d.Images[0].Object)
+		}
+		out = append(out, row)
 	}
 	writeJSON(w, http.StatusOK, out)
 }

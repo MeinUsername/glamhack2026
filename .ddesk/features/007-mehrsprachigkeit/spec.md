@@ -1,7 +1,7 @@
 ---
 id: F-007
 title: Mehrsprachigkeit
-status: testing
+status: done
 ---
 
 # F-007 Mehrsprachigkeit

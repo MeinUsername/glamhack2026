@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import userEvent from '@testing-library/user-event'
 import { screen, within } from '@testing-library/react'
-import { renderAt, routeFetch } from '../test/helpers'
+import { renderAt, routeFetch, saveIdea } from '../test/helpers'
 
 const user = { json: { email: 'a@example.ch', role: 'user' } }
 
@@ -40,7 +40,7 @@ describe('IdeaForm', () => {
       'GET /api/ideas/i1': () => savedIdea,
     })
     renderAt('/ideas/new')
-    await userEvent.setup().click(await screen.findByRole('button', { name: 'Save idea' }))
+    await saveIdea(userEvent.setup())
 
     const post = calls.find((c) => c.method === 'POST')
     expect(post?.url).toBe('/api/ideas')
@@ -61,7 +61,7 @@ describe('IdeaForm', () => {
     await u.type(screen.getByLabelText('Description of interaction'), 'Drücken')
     await u.type(screen.getByLabelText('Staff needed'), 'yes')
     await u.type(screen.getByLabelText('Necessarily related to specific exhibits'), 'no')
-    await u.click(screen.getByRole('button', { name: 'Save idea' }))
+    await saveIdea(u)
 
     const post = calls.find((c) => c.method === 'POST')
     const data = JSON.parse(String(formData(post?.body).get('data')))
@@ -72,6 +72,22 @@ describe('IdeaForm', () => {
       exhibitRelated: 'no',
     })
     expect(data.audience).toBeUndefined()
+  })
+
+  it('AC-023-1/3 sendet das Concept unverändert mit Zeilenumbrüchen; ohne Concept bleibt es leer', async () => {
+    const { calls } = routeFetch({
+      'GET /api/me': () => user,
+      'POST /api/ideas': () => ({ status: 201, json: { id: 'i1' } }),
+      'GET /api/ideas/i1': () => savedIdea,
+    })
+    renderAt('/ideas/new')
+    const u = userEvent.setup()
+    await screen.findByRole('tab', { name: 'Write' })
+    await u.click(document.querySelector('.cm-content') as HTMLElement)
+    await u.keyboard('# Titel{Enter}- eins')
+    await saveIdea(u)
+    const data = JSON.parse(String(formData(calls.find((c) => c.method === 'POST')?.body).get('data')))
+    expect(data.mediationConcept).toBe('# Titel\n- eins')
   })
 
   it('AC-002-3 lehnt mehr als 5 Bilder ab und sendet nichts', async () => {
@@ -129,7 +145,7 @@ describe('IdeaForm', () => {
     const u = userEvent.setup()
     await u.type(await screen.findByLabelText('Area (m²)'), '2,5')
     await u.type(screen.getByLabelText('Volume (m³)'), '12.25')
-    await u.click(screen.getByRole('button', { name: 'Save idea' }))
+    await saveIdea(u)
 
     const post = calls.find((c) => c.method === 'POST')
     const data = JSON.parse(String(formData(post?.body).get('data')))
@@ -144,7 +160,7 @@ describe('IdeaForm', () => {
     renderAt('/ideas/new')
     const u = userEvent.setup()
     await u.type(await screen.findByLabelText('Title'), 'Lichtinstallation')
-    await u.click(screen.getByRole('button', { name: 'Save idea' }))
+    await saveIdea(u)
 
     expect(await screen.findByText('Budget must be S, M, L, XL or empty.')).toBeInTheDocument()
     expect(screen.getByLabelText('Title')).toHaveValue('Lichtinstallation')
@@ -160,7 +176,7 @@ describe('IdeaForm', () => {
     const u = userEvent.setup()
     await u.click(await screen.findByRole('checkbox', { name: 'Reproductive' }))
     await u.click(screen.getByRole('checkbox', { name: 'Transformation' }))
-    await u.click(screen.getByRole('button', { name: 'Save idea' }))
+    await saveIdea(u)
 
     const post = calls.find((c) => c.method === 'POST')
     const data = JSON.parse(String(formData(post?.body).get('data')))
@@ -174,10 +190,184 @@ describe('IdeaForm', () => {
       'GET /api/ideas/i1': () => savedIdea,
     })
     renderAt('/ideas/new')
-    await userEvent.setup().click(await screen.findByRole('button', { name: 'Save idea' }))
+    await saveIdea(userEvent.setup())
 
     const post = calls.find((c) => c.method === 'POST')
     const data = JSON.parse(String(formData(post?.body).get('data')))
     expect(data.categories).toEqual([])
+  })
+
+  // AC-026-3: the concept is the last input, after the budget and before the save button.
+  it('AC-026-3 setzt das Concept-Feld ans Ende, beim Anlegen und Bearbeiten', async () => {
+    for (const path of ['/ideas/new', '/ideas/i1/edit']) {
+      routeFetch({
+        'GET /api/me': () => user,
+        'GET /api/ideas/i1': () => ({ json: { ...savedIdea.json, title: 'X' } }),
+      })
+      const { unmount } = renderAt(path)
+      const budget = await screen.findByLabelText('Budget')
+      const tab = screen.getByRole('tab', { name: 'Write' })
+      const save = screen.getByRole('button', { name: 'Save idea' })
+      const before = (a: Node, b: Node) => Boolean(a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING)
+      expect(before(budget, tab)).toBe(true)
+      expect(before(tab, save)).toBe(true)
+      const fields = [...document.querySelectorAll('form input, form select, form textarea, form [role="tab"]')]
+      const lastInput = fields.filter((e) => !e.closest('.cm-editor') && e.getAttribute('role') !== 'tab').at(-1)
+      // F-027/F-028: the credit block sits between the budget and the editor, the terms checkbox follows it.
+      expect(before(budget, screen.getByLabelText('Email'))).toBe(true)
+      expect(before(screen.getByLabelText('Email'), tab)).toBe(true)
+      expect(lastInput).toBe(screen.getByRole('checkbox', { name: /I confirm that my content/ }))
+      expect(before(tab, lastInput as Node)).toBe(true)
+      unmount()
+    }
+  })
+
+  // F-020: editing an idea with images.
+  const fiveImages = { json: { ...savedIdea.json, title: 'Licht', goal: 'Ziel', targetGroup: 'Schulen', images: Array.from({ length: 5 }, (_, i) => ({ contentType: 'image/png', bytes: 1, version: `v${i}` })) } }
+
+  it('AC-020-3 belegt Felder und Bilder beim Bearbeiten vor', async () => {
+    routeFetch({ 'GET /api/me': () => user, 'GET /api/ideas/i1': () => fiveImages })
+    renderAt('/ideas/i1/edit')
+    expect(await screen.findByLabelText('Title')).toHaveValue('Licht')
+    expect(screen.getByLabelText('Target audience')).toHaveValue('Schulen')
+    const boxes = screen.getAllByRole('checkbox').filter((b) => b.closest('label')?.querySelector('img'))
+    expect(boxes).toHaveLength(5)
+    boxes.forEach((b) => expect(b).toBeChecked())
+  })
+
+  it('AC-020-4 sendet keepImages der verbleibenden Bilder und die neue Datei', async () => {
+    const { calls } = routeFetch({
+      'GET /api/me': () => user,
+      'GET /api/ideas/i1': () => fiveImages,
+      'PUT /api/ideas/i1': () => ({ json: { id: 'i1' } }),
+    })
+    renderAt('/ideas/i1/edit')
+    const u = userEvent.setup()
+    await screen.findByLabelText('Title')
+    const boxes = screen.getAllByRole('checkbox').filter((b) => b.closest('label')?.querySelector('img'))
+    await u.click(boxes[1])
+    await u.upload(screen.getByLabelText(/^Images/), new File(['x'], 'neu.png', { type: 'image/png' }))
+    await saveIdea(u)
+
+    const put = calls.find((c) => c.method === 'PUT')
+    const form = formData(put?.body)
+    expect(JSON.parse(String(form.get('data'))).keepImages).toEqual([0, 2, 3, 4])
+    expect(form.getAll('images')).toHaveLength(1)
+  })
+
+  it('AC-020-5 lehnt ein sechstes Bild verständlich ab, bis ein Bild abgewählt wird', async () => {
+    const { calls } = routeFetch({ 'GET /api/me': () => user, 'GET /api/ideas/i1': () => fiveImages })
+    renderAt('/ideas/i1/edit')
+    const u = userEvent.setup()
+    await screen.findByLabelText('Title')
+    await u.upload(screen.getByLabelText(/^Images/), new File(['x'], 'neu.png', { type: 'image/png' }))
+    expect(await screen.findByText(/5 stay, you can add 0 more/)).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Save idea' })).toBeDisabled()
+
+    const boxes = screen.getAllByRole('checkbox').filter((b) => b.closest('label')?.querySelector('img'))
+    await u.click(boxes[0])
+    expect(screen.queryByText(/stay, you can add/)).toBeNull()
+    expect(screen.getByRole('button', { name: 'Save idea' })).toBeEnabled()
+    expect(calls.some((c) => c.method === 'PUT')).toBe(false)
+  })
+
+  it('AC-029-1/5 Ersetzen und alle Bilder abwählen; Vorschaubilder tragen die Version', async () => {
+    const one = { json: { ...savedIdea.json, images: [{ contentType: 'image/png', bytes: 1, version: 'alt' }] } }
+    const { calls } = routeFetch({
+      'GET /api/me': () => user,
+      'GET /api/ideas/i1': () => one,
+      'PUT /api/ideas/i1': () => ({ json: { id: 'i1' } }),
+    })
+    renderAt('/ideas/i1/edit')
+    const u = userEvent.setup()
+    await screen.findByLabelText('Title')
+    const box = screen.getAllByRole('checkbox').find((b) => b.closest('label')?.querySelector('img')) as HTMLElement
+    expect(box.closest('label')?.querySelector('img')).toHaveAttribute('src', '/api/ideas/i1/images/0?v=alt')
+    await u.click(box)
+    await u.upload(screen.getByLabelText(/^Images/), new File(['x'], 'neu.png', { type: 'image/png' }))
+    await saveIdea(u)
+    const put = calls.find((c) => c.method === 'PUT')
+    expect(JSON.parse(String(formData(put?.body).get('data'))).keepImages).toEqual([])
+    expect(formData(put?.body).getAll('images')).toHaveLength(1)
+  })
+
+  it('AC-029-5 speichert ohne Bilder, wenn alle abgewählt sind', async () => {
+    const one = { json: { ...savedIdea.json, images: [{ contentType: 'image/png', bytes: 1, version: 'alt' }] } }
+    const { calls } = routeFetch({
+      'GET /api/me': () => user,
+      'GET /api/ideas/i1': () => one,
+      'PUT /api/ideas/i1': () => ({ json: { id: 'i1' } }),
+    })
+    renderAt('/ideas/i1/edit')
+    const u = userEvent.setup()
+    await screen.findByLabelText('Title')
+    await u.click(screen.getAllByRole('checkbox').find((b) => b.closest('label')?.querySelector('img')) as HTMLElement)
+    await saveIdea(u)
+    const put = calls.find((c) => c.method === 'PUT')
+    expect(JSON.parse(String(formData(put?.body).get('data'))).keepImages).toEqual([])
+    expect(formData(put?.body).getAll('images')).toHaveLength(0)
+  })
+
+  it('AC-027-1/3/4 hat die Credit-Felder mit Platzhalter, sendet sie und lehnt eine ungültige E-Mail ab', async () => {
+    const { calls } = routeFetch({
+      'GET /api/me': () => user,
+      'POST /api/ideas': () => ({ status: 201, json: { id: 'i1' } }),
+      'GET /api/ideas/i1': () => savedIdea,
+    })
+    renderAt('/ideas/new')
+    const u = userEvent.setup()
+    expect(await screen.findByPlaceholderText('First name')).toBeInTheDocument()
+    expect(screen.getByPlaceholderText('Last name')).toBeInTheDocument()
+    expect(screen.getByPlaceholderText('Institute')).toBeInTheDocument()
+    await u.type(screen.getByLabelText('Email'), 'kaputt')
+    await saveIdea(u)
+    expect(await screen.findByText('Please enter a valid email address.')).toBeInTheDocument()
+    expect(calls.some((c) => c.method === 'POST')).toBe(false)
+
+    await u.clear(screen.getByLabelText('Email'))
+    await u.type(screen.getByLabelText('Email'), 'ada@example.org')
+    await u.type(screen.getByPlaceholderText('First name'), 'Ada')
+    await saveIdea(u)
+    const data = JSON.parse(String(formData(calls.find((c) => c.method === 'POST')?.body).get('data')))
+    expect(data).toMatchObject({ creditFirstName: 'Ada', creditEmail: 'ada@example.org', creditLastName: '', creditInstitute: '' })
+  })
+
+  it('AC-027-2/3 speichert mit leeren Feldern; Bearbeiten füllt die Werte vor', async () => {
+    routeFetch({
+      'GET /api/me': () => user,
+      'GET /api/ideas/i1': () => ({ json: { ...savedIdea.json, creditLastName: 'Lovelace', creditEmail: 'ada@example.org' } }),
+    })
+    renderAt('/ideas/i1/edit')
+    expect(await screen.findByPlaceholderText('Last name')).toHaveValue('Lovelace')
+    expect(screen.getByLabelText('Email')).toHaveValue('ada@example.org')
+  })
+
+  it('AC-028-6/7/8/9 verlangt die Terms-Bestätigung, sendet sie und beginnt beim Bearbeiten ungesetzt', async () => {
+    const { calls } = routeFetch({
+      'GET /api/me': () => user,
+      'POST /api/ideas': () => ({ status: 201, json: { id: 'i1' } }),
+      'GET /api/ideas/i1': () => savedIdea,
+    })
+    renderAt('/ideas/new')
+    const u = userEvent.setup()
+    const box = await screen.findByRole('checkbox', { name: /I confirm that my content/ })
+    expect(box).not.toBeChecked()
+    const formLink = box.closest('label')?.querySelector('a')
+    expect(formLink).toHaveAttribute('href', '/terms')
+    expect(formLink).toHaveAttribute('rel', 'noopener noreferrer')
+
+    await u.click(screen.getByRole('button', { name: 'Save idea' }))
+    expect(await screen.findByText('Please confirm the Terms and Conditions before saving.')).toBeInTheDocument()
+    expect(calls.some((c) => c.method === 'POST')).toBe(false)
+
+    await saveIdea(u)
+    const data = JSON.parse(String(formData(calls.find((c) => c.method === 'POST')?.body).get('data')))
+    expect(data.termsAccepted).toBe(true)
+  })
+
+  it('AC-028-9 beim Bearbeiten ist die Bestätigung wieder ungesetzt', async () => {
+    routeFetch({ 'GET /api/me': () => user, 'GET /api/ideas/i1': () => savedIdea })
+    renderAt('/ideas/i1/edit')
+    expect(await screen.findByRole('checkbox', { name: /I confirm that my content/ })).not.toBeChecked()
   })
 })

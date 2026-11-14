@@ -1,18 +1,19 @@
 import { useEffect, useRef, useState, type KeyboardEvent, type TouchEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { label } from '../ui'
+import { imageUrl } from './imageUrl'
 
 interface Props {
   ideaId: string
-  count: number
+  // One version per image (F-029): it goes into the URL, so a replaced image is not taken from the cache.
+  versions: string[]
   title: string
 }
 
-const src = (ideaId: string, n: number) => `/api/ideas/${ideaId}/images/${n}`
-
 // The pictures of an idea: a large first image and thumbnails. Each opens the lightbox.
-export default function Gallery({ ideaId, count, title }: Props) {
+export default function Gallery({ ideaId, versions, title }: Props) {
   const { t } = useTranslation()
+  const count = versions.length
   const [open, setOpen] = useState<number | null>(null)
   if (count === 0) return null
 
@@ -28,14 +29,14 @@ export default function Gallery({ ideaId, count, title }: Props) {
           className="group relative block aspect-[4/3] w-full cursor-zoom-in overflow-hidden rounded-field border-2 border-ink bg-paper p-0"
         >
           <img
-            src={src(ideaId, n)}
+            src={imageUrl(ideaId, n, versions[n])}
             alt={t('ideas.imageAlt', { title, n: n + 1 })}
             className="absolute inset-0 h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
           />
         </button>
       ))}
       {open !== null && (
-        <Lightbox ideaId={ideaId} count={count} title={title} index={open} onIndex={setOpen} onClose={() => setOpen(null)} />
+        <Lightbox ideaId={ideaId} versions={versions} title={title} index={open} onIndex={setOpen} onClose={() => setOpen(null)} />
       )}
     </section>
   )
@@ -49,8 +50,9 @@ interface LightboxProps extends Props {
 
 const FOCUSABLE = 'button:not([disabled]), [href], [tabindex]:not([tabindex="-1"])'
 
-function Lightbox({ ideaId, count, title, index, onIndex, onClose }: LightboxProps) {
+function Lightbox({ ideaId, versions, title, index, onIndex, onClose }: LightboxProps) {
   const { t } = useTranslation()
+  const count = versions.length
   const dialog = useRef<HTMLDivElement>(null)
   const closeButton = useRef<HTMLButtonElement>(null)
   const touchX = useRef<number | null>(null)
@@ -142,7 +144,7 @@ function Lightbox({ ideaId, count, title, index, onIndex, onClose }: LightboxPro
         )}
         <img
           key={index}
-          src={src(ideaId, index)}
+          src={imageUrl(ideaId, index, versions[index])}
           alt={t('ideas.imageAlt', { title, n: index + 1 })}
           className="max-h-full min-w-0 max-w-full rounded-field object-contain"
         />
@@ -164,7 +166,7 @@ function Lightbox({ ideaId, count, title, index, onIndex, onClose }: LightboxPro
               aria-current={n === index ? 'true' : undefined}
               className="h-16 w-16 shrink-0 cursor-pointer overflow-hidden rounded-[10px] border-2 border-paper/40 bg-transparent p-0 opacity-60 hover:opacity-100 aria-[current=true]:border-coral aria-[current=true]:opacity-100"
             >
-              <img src={src(ideaId, n)} alt="" className="h-full w-full object-cover" />
+              <img src={imageUrl(ideaId, n, versions[n])} alt="" className="h-full w-full object-cover" />
             </button>
           ))}
         </div>

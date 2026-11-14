@@ -32,12 +32,18 @@ export type Category = 'affirmative' | 'reproductive' | 'deconstructive' | 'tran
 export interface IdeaImage {
   contentType: string
   bytes: number
+  version: string
 }
 
 export interface Idea {
   id: string
   title: string
   description: string
+  mediationConcept: string
+  creditFirstName: string
+  creditLastName: string
+  creditInstitute: string
+  creditEmail: string
   targetGroup: string
   goal: string
   descriptionOfInteraction: string
@@ -48,12 +54,20 @@ export interface Idea {
   space: { areaM2: number | null; volumeM3: number | null }
   equipment: string[]
   categories: Category[]
-  // F-021: IDs from data/icom-filter-kategorien.json. Optional, because older test data lacks them.
+  // F-024: IDs from data/icom-filter-kategorien.json. Optional, because older test data lacks them.
   icomCategories?: string[]
   locations?: string[]
   budget: Budget | null
   images: IdeaImage[]
   createdAt: string
+}
+
+// F-025: a feedback prompt. The text is only sent to admins.
+export interface FeedbackPrompt {
+  id: string
+  title: string
+  description: string
+  text?: string
 }
 
 // F-018: a prompt level (Detailgrad). Titles and descriptions per language, English always present.

@@ -5,10 +5,10 @@ import (
 	"strings"
 )
 
-// ICOM filter (F-021): every idea can carry several ICOM categories and one or more locations.
+// ICOM filter (F-024): every idea can carry several ICOM categories and one or more locations.
 // The IDs mirror frontend/src/data/icom-filter-kategorien.json, which also holds the labels.
 // frontend/ is not uploaded on deploy (.gcloudignore), so the IDs are repeated here;
-// TestICOMIDsMatchFrontendJSON keeps both lists in step.
+// TestF024_IDsMatchFrontendJSON keeps both lists in step.
 
 // icomCategoryIDs in the order of the JSON file (groups, then categories).
 var icomCategoryIDs = []string{

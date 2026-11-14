@@ -1,4 +1,4 @@
-// Command assign-icom gives ideas that existed before F-021 their ICOM categories and locations.
+// Command assign-icom gives ideas that existed before F-024 their ICOM categories and locations.
 // The mapping lives in zuordnung.json (title → IDs). Without -apply it is a dry run.
 //
 //	go run ./cmd/assign-icom -project glamhack-hack-2026            # dry run

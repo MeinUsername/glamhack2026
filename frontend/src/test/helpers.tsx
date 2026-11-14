@@ -1,4 +1,5 @@
-import { render } from '@testing-library/react'
+import { render, screen } from '@testing-library/react'
+import type { UserEvent } from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router'
 import App from '../App'
 
@@ -46,3 +47,10 @@ export function renderAt(path: string) {
 }
 
 export const unauthorized = { status: 401, json: { error: 'nicht angemeldet' } }
+
+// Confirms the terms (F-028, once) and presses "Save idea" in the idea form.
+export async function saveIdea(u: UserEvent) {
+  const box = await screen.findByRole('checkbox', { name: /I confirm that my content/ })
+  if (!(box as HTMLInputElement).checked) await u.click(box)
+  await u.click(screen.getByRole('button', { name: 'Save idea' }))
+}

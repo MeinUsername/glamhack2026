@@ -13,7 +13,7 @@ import (
 	"google.golang.org/api/iterator"
 )
 
-// ICOMAssignment is one entry of the mapping file for ideas that existed before F-021.
+// ICOMAssignment is one entry of the mapping file for ideas that existed before F-024.
 type ICOMAssignment struct {
 	Title          string   `json:"title"`
 	ICOMCategories []string `json:"icomCategories"`

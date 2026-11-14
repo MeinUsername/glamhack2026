@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { label as labelClass } from '../ui'
 import { ICOM_GROUPS, LOCATION_LABEL, LOCATIONS, pick } from './icom'
 
-// Chips of the ICOM filter (F-021) in the «Objektschild» style: square, 2px frame,
+// Chips of the ICOM filter (F-024) in the «Objektschild» style: square, 2px frame,
 // active = accent background with white text.
 
 const chipFace =

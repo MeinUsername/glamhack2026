@@ -144,3 +144,25 @@ func TestAC016_2_FileRoutesAreGone(t *testing.T) {
 		}
 	}
 }
+
+// AC-028-2: the legal pages are served without a session and without a redirect.
+func TestLegalRoutesServeReactIndexWithoutSession(t *testing.T) {
+	s := newRouteServer(t)
+	for _, path := range []string{"/imprint", "/terms"} {
+		rec := httptest.NewRecorder()
+		s.mux.ServeHTTP(rec, httptest.NewRequest("GET", path, nil))
+		if rec.Code != http.StatusOK || !strings.Contains(rec.Body.String(), `<div id="root">`) {
+			t.Errorf("GET %s: status %d, want 200 with the React page", path, rec.Code)
+		}
+	}
+}
+
+// AC-025-1: the feedback prompts page is served without a session.
+func TestFeedbackPromptsRouteServesReactIndexWithoutSession(t *testing.T) {
+	s := newRouteServer(t)
+	rec := httptest.NewRecorder()
+	s.mux.ServeHTTP(rec, httptest.NewRequest("GET", "/feedback-prompts", nil))
+	if rec.Code != http.StatusOK || !strings.Contains(rec.Body.String(), `<div id="root">`) {
+		t.Errorf("GET /feedback-prompts: status %d", rec.Code)
+	}
+}

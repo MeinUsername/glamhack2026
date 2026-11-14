@@ -1,7 +1,7 @@
 ---
 id: F-009
 title: Kategorien hinzufügen zu Seiten Template
-status: testing
+status: done
 ---
 
 # F-009 Kategorien hinzufügen zu Seiten Template

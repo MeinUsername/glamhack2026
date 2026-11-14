@@ -20,6 +20,46 @@ const base = {
   createdAt: '2026-11-13T10:00:00Z',
 }
 
+describe('IdeaPage mediation concept', () => {
+  it('AC-023-4 rendert das Concept als Markdown und führt kein HTML aus', async () => {
+    routeFetch({
+      'GET /api/ideas/i1': () => ({
+        json: { ...base, categories: [], mediationConcept: '## Ablauf\n\n- eins\n- zwei\n\n<script>alert(1)</script>' },
+      }),
+    })
+    const { container } = renderAt('/ideas/i1')
+    expect(await screen.findByRole('heading', { name: 'Mediation concept' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Ablauf' })).toBeInTheDocument()
+    expect(screen.getAllByRole('listitem').length).toBeGreaterThanOrEqual(2)
+    expect(container.querySelector('script')).toBeNull()
+  })
+
+  it('AC-026-1 zeigt das Concept als letzten Abschnitt nach Budget', async () => {
+    routeFetch({
+      'GET /api/ideas/i1': () => ({ json: { ...base, categories: [], mediationConcept: 'Text' } }),
+    })
+    renderAt('/ideas/i1')
+    await screen.findByRole('heading', { name: 'Mediation concept' })
+    const names = screen.getAllByRole('heading', { level: 2 }).map((h) => h.textContent)
+    expect(names.at(-1)).toBe('Mediation concept')
+    expect(names.at(-2)).toBe('Budget')
+  })
+
+  it('AC-023-6 blendet den Abschnitt ohne Concept aus, auch bei fehlendem Feld', async () => {
+    routeFetch({ 'GET /api/ideas/i1': () => ({ json: { ...base, categories: [] } }) })
+    renderAt('/ideas/i1')
+    expect(await screen.findByRole('heading', { name: 'Lichtinstallation' })).toBeInTheDocument()
+    expect(screen.queryByRole('heading', { name: 'Mediation concept' })).toBeNull()
+  })
+
+  it('AC-023-6 blendet den Abschnitt bei Leerzeichen-Concept aus', async () => {
+    routeFetch({ 'GET /api/ideas/i1': () => ({ json: { ...base, categories: [], mediationConcept: '  \n ' } }) })
+    renderAt('/ideas/i1')
+    expect(await screen.findByRole('heading', { name: 'Lichtinstallation' })).toBeInTheDocument()
+    expect(screen.queryByRole('heading', { name: 'Mediation concept' })).toBeNull()
+  })
+})
+
 describe('IdeaPage categories', () => {
   it('AC-009-5 zeigt gewählte Kategorien als Chips unter dem Titel', async () => {
     routeFetch({
@@ -40,5 +80,54 @@ describe('IdeaPage categories', () => {
 
     expect(await screen.findByRole('heading', { name: 'Lichtinstallation' })).toBeInTheDocument()
     expect(screen.queryByRole('list', { name: 'Categories' })).toBeNull()
+  })
+
+describe('IdeaPage edit entry', () => {
+  it('AC-020-1 zeigt einen Bearbeiten-Button, der zum Formular führt', async () => {
+    routeFetch({ 'GET /api/ideas/i1': () => ({ json: { ...base, categories: [] } }) })
+    renderAt('/ideas/i1')
+    const link = await screen.findByRole('link', { name: 'Edit' })
+    expect(link).toHaveAttribute('href', '/ideas/i1/edit')
+  })
+})
+})
+
+describe('IdeaPage image URLs (F-029)', () => {
+  it('AC-029-1/2 nutzt die Version in der Bild-URL, eine neue Version ergibt eine neue URL', async () => {
+    const withImage = (version: string) => ({
+      json: { ...base, categories: [], images: [{ contentType: 'image/png', bytes: 1, version }] },
+    })
+    routeFetch({ 'GET /api/ideas/i1': () => withImage('alt') })
+    const first = renderAt('/ideas/i1')
+    expect((await screen.findAllByRole('img'))[0]).toHaveAttribute('src', '/api/ideas/i1/images/0?v=alt')
+    first.unmount()
+
+    routeFetch({ 'GET /api/ideas/i1': () => withImage('neu') })
+    renderAt('/ideas/i1')
+    expect((await screen.findAllByRole('img'))[0]).toHaveAttribute('src', '/api/ideas/i1/images/0?v=neu')
+  })
+})
+
+describe('IdeaPage credit line (F-027)', () => {
+  it('AC-027-5/7 zeigt den Abschnitt vor dem Concept mit mailto-Link, ohne Login', async () => {
+    routeFetch({
+      'GET /api/ideas/i1': () => ({
+        json: { ...base, categories: [], creditFirstName: 'Ada', creditLastName: 'Lovelace', creditEmail: 'ada@example.org', mediationConcept: 'Text' },
+      }),
+    })
+    renderAt('/ideas/i1')
+    const heading = await screen.findByRole('heading', { name: 'Credit line and contact information' })
+    expect(screen.getByText('Ada Lovelace')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'ada@example.org' })).toHaveAttribute('href', 'mailto:ada@example.org')
+    const names = screen.getAllByRole('heading', { level: 2 }).map((h) => h.textContent)
+    expect(names.indexOf('Credit line and contact information')).toBe(names.indexOf('Mediation concept') - 1)
+    expect(heading).toBeInTheDocument()
+  })
+
+  it('AC-027-6 zeigt ohne Angaben keinen Abschnitt, auch wenn die Felder fehlen', async () => {
+    routeFetch({ 'GET /api/ideas/i1': () => ({ json: { ...base, categories: [] } }) })
+    renderAt('/ideas/i1')
+    await screen.findByRole('heading', { name: 'Lichtinstallation' })
+    expect(screen.queryByRole('heading', { name: 'Credit line and contact information' })).toBeNull()
   })
 })

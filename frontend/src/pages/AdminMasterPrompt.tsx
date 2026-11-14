@@ -8,6 +8,7 @@ import { localeFor, renderPrompt, unknownVariables } from '../prompt/render'
 import { pickLocalized } from '../prompt/localized'
 import { LANGUAGES, LANGUAGE_NAMES } from '../i18n'
 import type { Idea } from '../types'
+import AdminFeedbackPrompts from './AdminFeedbackPrompts'
 import { button, buttonSecondary, cell, errorText, h1, h2, headCell, iconButton, input, label, linkButton, muted, noticeText, table, tableWrap } from '../ui'
 
 // F-008/F-018: editor for the prompt levels (Detailgrade). Only admins get here (the server checks too).
@@ -41,7 +42,30 @@ export default function AdminMasterPrompt() {
   if (me.status === 'loading') return <p className={muted}>{t('common.loading')}</p>
   if (me.status === 'anonymous') return <Navigate to="/login" replace />
   if (me.me.role !== 'admin') return <p role="alert" className={errorText}>{t('admin.onlyAdmins')}</p>
-  return <Levels />
+  return <Categories />
+}
+
+// F-025: two categories of prompts. Existing prompts are master prompts.
+function Categories() {
+  const { t } = useTranslation()
+  const [category, setCategory] = useState<'master' | 'feedback'>('master')
+  const tab = (active: boolean) =>
+    `inline-flex min-h-11 cursor-pointer items-center rounded-full border-2 px-5 font-sans text-base ${
+      active ? 'border-ink bg-ink font-semibold text-on-accent' : 'border-ink bg-paper text-ink hover:bg-coral-soft'
+    }`
+  return (
+    <>
+      <div role="tablist" aria-label={t('feedback.admin.category')} className="mb-4 flex flex-wrap gap-2">
+        <button type="button" role="tab" aria-selected={category === 'master'} className={tab(category === 'master')} onClick={() => setCategory('master')}>
+          {t('feedback.admin.master')}
+        </button>
+        <button type="button" role="tab" aria-selected={category === 'feedback'} className={tab(category === 'feedback')} onClick={() => setCategory('feedback')}>
+          {t('feedback.admin.feedback')}
+        </button>
+      </div>
+      {category === 'master' ? <Levels /> : <AdminFeedbackPrompts />}
+    </>
+  )
 }
 
 function Levels() {

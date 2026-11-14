@@ -8,11 +8,12 @@ import { CATEGORY_LABEL } from './categories'
 import BasketButton from '../basket/BasketButton'
 import { icomCategory, location, LOCATION_LABEL, pick } from './icom'
 import Gallery from './Gallery'
+import MarkdownView from '../components/MarkdownView'
 
 const tagLink =
   'inline-flex min-h-11 items-center rounded-full border-2 border-ink bg-paper px-[18px] py-2 text-[15px] leading-tight font-medium text-ink no-underline hover:bg-coral hover:text-ink'
 
-// F-021: the ICOM categories and locations of the idea. Each one links to the overview filtered by it.
+// F-024: the ICOM categories and locations of the idea. Each one links to the overview filtered by it.
 function IcomTags({ idea }: { idea: Idea }) {
   const { t, i18n } = useTranslation()
   const lang = i18n.resolvedLanguage
@@ -98,7 +99,7 @@ function Show({ idea }: { idea: Idea }) {
   return (
     <article className="grid max-w-3xl gap-5">
       <h1 className={`${h1Compact} mb-0`}>{title}</h1>
-      <div className="flex flex-wrap gap-3">
+      <div className="flex flex-wrap items-center gap-3">
         <BasketButton ideaId={idea.id} />
         <Link to={`/ideas/${idea.id}/edit`} className={buttonSecondary}>
           {t('ideas.edit')}
@@ -114,7 +115,7 @@ function Show({ idea }: { idea: Idea }) {
         </ul>
       )}
       <IcomTags idea={idea} />
-      <Gallery ideaId={idea.id} count={idea.images.length} title={title} />
+      <Gallery ideaId={idea.id} versions={idea.images.map((img) => img.version)} title={title} />
       <Section title={t('ideas.field.description')} text={idea.description} />
       <Section title={t('ideas.field.descriptionOfInteraction')} text={idea.descriptionOfInteraction} />
       <Section title={t('ideas.field.targetGroup')} text={idea.targetGroup} />
@@ -145,12 +146,40 @@ function Show({ idea }: { idea: Idea }) {
         <h2 className={sectionHead}>{t('ideas.budget')}</h2>
         <p>{idea.budget ?? t('ideas.budget.notSet')}</p>
       </section>
+      <Credit idea={idea} />
+      {idea.mediationConcept?.trim() && (
+        <section>
+          <h2 className={sectionHead}>{t('ideas.field.mediationConcept')}</h2>
+          <MarkdownView text={idea.mediationConcept} />
+        </section>
+      )}
     </article>
   )
 }
 
 // Section heads look like the metadata lines of an object label.
 const sectionHead = `${label} mb-2 border-t border-ink/20 pt-4`
+
+// F-027: credit line and contact; only the filled parts, and nothing at all if all are empty.
+function Credit({ idea }: { idea: Idea }) {
+  const { t } = useTranslation()
+  const name = [idea.creditFirstName, idea.creditLastName].map((v) => v?.trim()).filter(Boolean).join(' ')
+  const institute = idea.creditInstitute?.trim()
+  const email = idea.creditEmail?.trim()
+  if (!name && !institute && !email) return null
+  return (
+    <section>
+      <h2 className={sectionHead}>{t('ideas.credit.legend')}</h2>
+      {name && <p className="m-0">{name}</p>}
+      {institute && <p className="m-0">{institute}</p>}
+      {email && (
+        <p className="m-0">
+          <a href={`mailto:${email}`}>{email}</a>
+        </p>
+      )}
+    </section>
+  )
+}
 
 function Section({ title, text }: { title: string; text: string }) {
   return (

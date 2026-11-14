@@ -4,16 +4,23 @@ import { useTranslation } from 'react-i18next'
 import { api, ApiError } from '../api'
 import { button, errorText, h1, input, label as labelClass, muted } from '../ui'
 import EquipmentInput from './EquipmentInput'
-import { BUDGETS, imageProblem, MAX_IDEA_IMAGES } from './rules'
+import { BUDGETS, imageProblem, isValidEmail, MAX_IDEA_IMAGES } from './rules'
 import { CATEGORIES } from './categories'
 import CategoriesInfo from './CategoriesInfo'
 import { IcomPicker } from './IcomChips'
+import { imageUrl } from './imageUrl'
+import MarkdownEditor from './MarkdownEditor'
 import type { Category, Idea } from '../types'
 
 // Text fields of the form; the names are the English field names of the spec.
 interface Draft {
   title: string
   description: string
+  mediationConcept: string
+  creditFirstName: string
+  creditLastName: string
+  creditInstitute: string
+  creditEmail: string
   targetGroup: string
   descriptionOfInteraction: string
   staffNeeded: string
@@ -35,6 +42,11 @@ function draftFrom(idea: Idea): Draft {
   return {
     title: idea.title,
     description: idea.description,
+    mediationConcept: idea.mediationConcept ?? '',
+    creditFirstName: idea.creditFirstName ?? '',
+    creditLastName: idea.creditLastName ?? '',
+    creditInstitute: idea.creditInstitute ?? '',
+    creditEmail: idea.creditEmail ?? '',
     targetGroup: idea.targetGroup,
     descriptionOfInteraction: idea.descriptionOfInteraction,
     staffNeeded: idea.staffNeeded,
@@ -55,6 +67,11 @@ function draftFrom(idea: Idea): Draft {
 const emptyDraft: Draft = {
   title: '',
   description: '',
+  mediationConcept: '',
+  creditFirstName: '',
+  creditLastName: '',
+  creditInstitute: '',
+  creditEmail: '',
   targetGroup: '',
   descriptionOfInteraction: '',
   staffNeeded: '',
@@ -107,6 +124,9 @@ function IdeaEditor({ edit }: { edit?: Idea }) {
   const [images, setImages] = useState<File[]>([])
   const [imageError, setImageError] = useState('')
   const [inputKey, setInputKey] = useState(0) // remounts the file input after a rejected pick
+  // Kept plus new images may not exceed the limit; recomputed when the checkboxes change (F-020).
+  const countProblem = images.length > 0 ? imageProblem(images, t, keep.length) : ''
+  const [termsAccepted, setTermsAccepted] = useState(false) // always starts unchecked, also when editing (F-028)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
 
@@ -146,6 +166,15 @@ function IdeaEditor({ edit }: { edit?: Idea }) {
     event.preventDefault()
     if (busy) return
     setError('')
+    if (!termsAccepted) {
+      setError(t('ideas.terms.error'))
+      return
+    }
+    if (countProblem) return
+    if (!isValidEmail(draft.creditEmail)) {
+      setError(t('rules.email'))
+      return
+    }
     const problem = imageProblem(images, t)
     if (problem) {
       setImageError(problem)
@@ -155,6 +184,12 @@ function IdeaEditor({ edit }: { edit?: Idea }) {
     const data: Record<string, unknown> = {
       title: draft.title,
       description: draft.description,
+      mediationConcept: draft.mediationConcept,
+      creditFirstName: draft.creditFirstName,
+      creditLastName: draft.creditLastName,
+      creditInstitute: draft.creditInstitute,
+      creditEmail: draft.creditEmail,
+      termsAccepted,
       targetGroup: draft.targetGroup,
       descriptionOfInteraction: draft.descriptionOfInteraction,
       staffNeeded: draft.staffNeeded,
@@ -188,14 +223,14 @@ function IdeaEditor({ edit }: { edit?: Idea }) {
   return (
     <>
       <h1 className={h1}>{edit ? t('ideas.editTitle') : t('ideas.new.title')}</h1>
-      <form onSubmit={handleSubmit} className="grid max-w-2xl gap-6">
+      <form onSubmit={handleSubmit} noValidate className="grid max-w-2xl gap-6">
         {edit && edit.images.length > 0 && (
           <fieldset className="grid gap-2">
             <legend className={`${labelClass} mb-2`}>{t('ideas.existingImages')}</legend>
             {edit.images.map((_, n) => (
               <label key={n} className="flex min-h-11 cursor-pointer items-center gap-3">
                 <input type="checkbox" checked={keep.includes(n)} onChange={() => toggleKeep(n)} />
-                <img src={`/api/ideas/${edit.id}/images/${n}`} alt="" className="h-12 w-12 rounded-[10px] border-2 border-ink object-cover" />
+                <img src={imageUrl(edit.id, n, edit.images[n].version)} alt="" className="h-12 w-12 rounded-[10px] border-2 border-ink object-cover" />
                 <span>{t('ideas.keepImage', { n: n + 1 })}</span>
               </label>
             ))}
@@ -219,7 +254,7 @@ function IdeaEditor({ edit }: { edit?: Idea }) {
             className={input}
             onChange={handlePickImages}
           />
-          {imageError && <span className={errorText}>{imageError}</span>}
+          {(imageError || countProblem) && <span className={errorText}>{imageError || countProblem}</span>}
         </Field>
         <Field label={t('ideas.field.targetGroup')}>
           <input className={input} value={draft.targetGroup} onChange={(e) => set('targetGroup', e.target.value)} />
@@ -286,9 +321,41 @@ function IdeaEditor({ edit }: { edit?: Idea }) {
             ))}
           </select>
         </Field>
+        <fieldset className="grid gap-2">
+          <legend className={`${labelClass} mb-2`}>{t('ideas.credit.legend')}</legend>
+          <div className="grid grid-cols-2 gap-3">
+            <Field label={t('ideas.credit.firstName')}>
+              <input className={input} placeholder={t('ideas.credit.firstName.ph')} value={draft.creditFirstName} onChange={(e) => set('creditFirstName', e.target.value)} />
+            </Field>
+            <Field label={t('ideas.credit.lastName')}>
+              <input className={input} placeholder={t('ideas.credit.lastName.ph')} value={draft.creditLastName} onChange={(e) => set('creditLastName', e.target.value)} />
+            </Field>
+          </div>
+          <Field label={t('ideas.credit.institute')}>
+            <input className={input} placeholder={t('ideas.credit.institute.ph')} value={draft.creditInstitute} onChange={(e) => set('creditInstitute', e.target.value)} />
+          </Field>
+          <Field label={t('ideas.credit.email')}>
+            <input className={input} type="email" placeholder={t('ideas.credit.email.ph')} value={draft.creditEmail} onChange={(e) => set('creditEmail', e.target.value)} />
+          </Field>
+        </fieldset>
+        <MarkdownEditor
+          label={t('ideas.field.mediationConcept')}
+          value={draft.mediationConcept}
+          onChange={(v) => set('mediationConcept', v)}
+        />
+        <p className={muted}>{t('ideas.markdown.help')}</p>
+        <label className="flex items-start gap-2">
+          <input type="checkbox" className="mt-1" checked={termsAccepted} onChange={(e) => setTermsAccepted(e.target.checked)} />
+          <span>
+            {t('ideas.terms.label')}{' '}
+            <a href="/terms" target="_blank" rel="noopener noreferrer">
+              {t('ideas.terms.link')}
+            </a>
+          </span>
+        </label>
         {error && <p className={errorText}>{error}</p>}
         <div>
-          <button type="submit" className={button} disabled={busy || !!imageError}>
+          <button type="submit" className={button} disabled={busy || !!imageError || !!countProblem}>
             {busy ? t('ideas.saving') : t('ideas.save')}
           </button>
         </div>

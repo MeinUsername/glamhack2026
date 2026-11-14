@@ -10,6 +10,7 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 )
 
 var (
@@ -293,7 +294,7 @@ func TestAC014_4_NewTextFieldsLimit(t *testing.T) {
 	}
 }
 
-// AC-014-6: the overview row carries id, title, imageCount and description; F-021 adds
+// AC-014-6: the overview row carries id, title, imageCount and description; F-024 adds
 // icomCategories and locations for the filter bar.
 func TestAC014_6_SummaryFields(t *testing.T) {
 	b, _ := json.Marshal(ideaSummary{})
@@ -306,5 +307,120 @@ func TestAC014_6_SummaryFields(t *testing.T) {
 		if _, ok := m[k]; !ok {
 			t.Errorf("missing %q", k)
 		}
+	}
+}
+
+// AC-023-3, AC-023-6: the concept keeps inner line breaks, may exceed 5000 characters and is optional.
+func TestAC023_ConceptIsKeptAndOptional(t *testing.T) {
+	md := "# Titel\n\n- eins\n  - zwei\n\n```\ncode\n```"
+	doc, _, err := validateIdeaInput(ideaInput{MediationConcept: "\n" + md + "\n"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if doc.MediationConcept != md {
+		t.Errorf("concept = %q, want %q", doc.MediationConcept, md)
+	}
+	if _, _, err := validateIdeaInput(ideaInput{MediationConcept: strings.Repeat("ä", maxIdeaTextRunes+1)}); err != nil {
+		t.Errorf("long concept rejected: %v", err)
+	}
+	if _, _, err := validateIdeaInput(ideaInput{MediationConcept: strings.Repeat("ä", maxConceptRunes+1)}); err == nil {
+		t.Error("concept over the technical cap accepted")
+	}
+	if doc, _, err := validateIdeaInput(ideaInput{}); err != nil || doc.MediationConcept != "" {
+		t.Errorf("empty concept: %v %q", err, doc.MediationConcept)
+	}
+	if v := toIdeaView("x", ideaDoc{MediationConcept: md}); v.MediationConcept != md {
+		t.Errorf("view concept = %q", v.MediationConcept)
+	}
+	if v := toIdeaView("x", ideaDoc{}); v.MediationConcept != "" {
+		t.Errorf("old idea concept = %q", v.MediationConcept)
+	}
+}
+
+// AC-023-7: the overview row never carries the concept.
+func TestAC023_7_SummaryHasNoConcept(t *testing.T) {
+	b, _ := json.Marshal(ideaSummary{})
+	if strings.Contains(string(b), "oncept") {
+		t.Errorf("summary: %s", b)
+	}
+}
+
+// AC-029-2: the version is the random part of the object name and changes with a new upload.
+func TestAC029_ImageVersion(t *testing.T) {
+	if got := imageVersion("ideas/x/abc123.png"); got != "abc123" {
+		t.Errorf("version = %q", got)
+	}
+	old := toIdeaView("x", ideaDoc{Images: []imageDoc{{Object: "ideas/x/aaa.png"}, {Object: "ideas/x/bbb.jpg"}}})
+	replaced := toIdeaView("x", ideaDoc{Images: []imageDoc{{Object: "ideas/x/bbb.jpg"}, {Object: "ideas/x/ccc.png"}}})
+	if old.Images[0].Version == replaced.Images[0].Version {
+		t.Error("replaced image at index 0 keeps its version")
+	}
+	if old.Images[1].Version != replaced.Images[0].Version {
+		t.Error("an unchanged image changed its version")
+	}
+}
+
+// AC-029-3..5: deselected images are removed, kept ones keep their order, none kept is allowed.
+func TestAC029_SelectKept(t *testing.T) {
+	old := []imageDoc{{Object: "a"}, {Object: "b"}, {Object: "c"}}
+	kept, removed, err := selectKeptImages(old, []int{2})
+	if err != nil || len(kept) != 1 || kept[0].Object != "c" || len(removed) != 2 {
+		t.Fatalf("kept=%v removed=%v err=%v", kept, removed, err)
+	}
+	kept, removed, err = selectKeptImages(old, nil)
+	if err != nil || len(kept) != 0 || len(removed) != 3 {
+		t.Errorf("none kept: kept=%v removed=%v err=%v", kept, removed, err)
+	}
+}
+
+// AC-027-2..4: the credit fields are optional, trimmed, kept, and the email is checked.
+func TestAC027_CreditLine(t *testing.T) {
+	if _, _, err := validateIdeaInput(ideaInput{}); err != nil {
+		t.Fatalf("empty credit line rejected: %v", err)
+	}
+	doc, _, err := validateIdeaInput(ideaInput{CreditFirstName: " Ada ", CreditLastName: "Lovelace", CreditInstitute: " ETH ", CreditEmail: " ada@example.org "})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if doc.CreditFirstName != "Ada" || doc.CreditInstitute != "ETH" || doc.CreditEmail != "ada@example.org" {
+		t.Errorf("doc = %+v", doc)
+	}
+	v := toIdeaView("x", doc)
+	if v.CreditFirstName != "Ada" || v.CreditLastName != "Lovelace" || v.CreditInstitute != "ETH" || v.CreditEmail != "ada@example.org" {
+		t.Errorf("view = %+v", v)
+	}
+	for _, bad := range []string{"abc", "a@", "Name <a@b.ch>", "a b@c.ch", strings.Repeat("a", 250) + "@b.ch"} {
+		if _, _, err := validateIdeaInput(ideaInput{CreditEmail: bad}); err == nil {
+			t.Errorf("email %q accepted", bad)
+		}
+	}
+	if _, _, err := validateIdeaInput(ideaInput{CreditLastName: strings.Repeat("ä", maxIdeaTextRunes+1)}); err == nil {
+		t.Error("long name accepted")
+	}
+}
+
+// AC-028-8..10: the terms confirmation is required, stored with its time and renewed on every save.
+func TestAC028_TermsAcceptance(t *testing.T) {
+	var doc ideaDoc
+	if err := applyTermsAcceptance(ideaInput{}, &doc, time.Now()); err == nil {
+		t.Fatal("save without confirmation accepted")
+	}
+	if doc.TermsAcceptedAt != nil {
+		t.Error("time set without confirmation")
+	}
+	first := time.Date(2026, 11, 14, 10, 0, 0, 0, time.UTC)
+	if err := applyTermsAcceptance(ideaInput{TermsAccepted: true}, &doc, first); err != nil {
+		t.Fatal(err)
+	}
+	if doc.TermsAcceptedAt == nil || !doc.TermsAcceptedAt.Equal(first) {
+		t.Fatalf("time = %v", doc.TermsAcceptedAt)
+	}
+	second := first.Add(time.Hour)
+	if err := applyTermsAcceptance(ideaInput{TermsAccepted: true}, &doc, second); err != nil || !doc.TermsAcceptedAt.Equal(second) {
+		t.Errorf("not renewed: %v %v", err, doc.TermsAcceptedAt)
+	}
+	// validateIdeaInput stays free of the confirmation, the CSV import relies on that.
+	if d, _, err := validateIdeaInput(ideaInput{}); err != nil || d.TermsAcceptedAt != nil {
+		t.Errorf("validateIdeaInput: %v %v", err, d.TermsAcceptedAt)
 	}
 }

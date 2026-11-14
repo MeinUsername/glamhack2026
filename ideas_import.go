@@ -25,7 +25,7 @@ const (
 )
 
 // csvColumns maps the lowercase header names to our fields. "space needed" and "picture"
-// are known but dropped (D4, D5). "icom categories" and "location" are optional (F-021):
+// are known but dropped (D4, D5). "icom categories" and "location" are optional (F-024):
 // IDs separated by ";" or ",".
 var csvColumns = map[string]bool{
 	"title": true, "description of idea": true, "description of interaction": true,

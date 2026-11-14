@@ -1,7 +1,7 @@
 ---
 id: F-018
 title: Mehre Masterprompt für verschiedene Detailierungsgrade
-status: implementing
+status: done
 ---
 
 # F-018 Mehre Masterprompt für verschiedene Detailierungsgrade

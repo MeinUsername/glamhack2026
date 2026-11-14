@@ -6,7 +6,7 @@ import { useMe } from '../auth/useMe'
 import { button, cell, errorText, h1, h2, headCell, input, label, muted, noticeText, table, tableWrap } from '../ui'
 import { ICOM_GROUPS, LOCATION_LABEL, LOCATIONS, pick } from '../ideas/icom'
 
-// F-021: which IDs the optional columns «ICOM categories» and «Location» accept.
+// F-024: which IDs the optional columns «ICOM categories» and «Location» accept.
 function IcomColumnsHelp() {
   const { t, i18n } = useTranslation()
   const lang = i18n.resolvedLanguage

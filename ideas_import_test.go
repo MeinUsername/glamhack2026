@@ -108,3 +108,22 @@ func TestParseIdeaCSVAcceptsBOMAndCaseInsensitiveHeader(t *testing.T) {
 		t.Errorf("rows %+v err %v", rows, err)
 	}
 }
+
+// AC-023-9: the CSV import never sets a mediation concept.
+func TestAC023_9_ImportSetsNoConcept(t *testing.T) {
+	for _, r := range startRows(t) {
+		if r.Input.MediationConcept != "" || r.doc.MediationConcept != "" {
+			t.Fatalf("line %d has a concept", r.Line)
+		}
+	}
+}
+
+// AC-027-9: the import neither reads nor sets the credit fields.
+func TestAC027_9_ImportSetsNoCreditLine(t *testing.T) {
+	for _, r := range startRows(t) {
+		in := r.Input
+		if in.CreditFirstName+in.CreditLastName+in.CreditInstitute+in.CreditEmail != "" {
+			t.Fatalf("line %d has credit data", r.Line)
+		}
+	}
+}

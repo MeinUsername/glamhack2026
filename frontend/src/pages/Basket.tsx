@@ -5,6 +5,7 @@ import { api, ApiError } from '../api'
 import { useBasket } from '../basket/useBasket'
 import type { Idea } from '../types'
 import PromptGenerator from '../prompt/PromptGenerator'
+import { imageUrl } from '../ideas/imageUrl'
 import { buttonSecondary, errorText, h1, mark, muted } from '../ui'
 
 // The basket page. Public: visitors without login see it too (Q-006-06).
@@ -70,7 +71,7 @@ function BasketEntry({ id, onGone }: { id: string; onGone: () => void }) {
     <li className="flex flex-wrap items-center gap-4 rounded-card border-2 border-ink bg-paper p-4">
       {idea.images.length > 0 && (
         <img
-          src={`/api/ideas/${idea.id}/images/0`}
+          src={imageUrl(idea.id, 0, idea.images[0].version)}
           alt=""
           className="aspect-[16/10] w-28 rounded-field border-2 border-ink object-cover"
         />

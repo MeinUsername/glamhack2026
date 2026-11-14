@@ -8,8 +8,8 @@ import (
 	"testing"
 )
 
-// The IDs in Go must match the JSON file the frontend uses for labels (F-021).
-func TestF021_IDsMatchFrontendJSON(t *testing.T) {
+// The IDs in Go must match the JSON file the frontend uses for labels (F-024).
+func TestF024_IDsMatchFrontendJSON(t *testing.T) {
 	data, err := os.ReadFile("frontend/src/data/icom-filter-kategorien.json")
 	if err != nil {
 		t.Fatal(err)
@@ -54,7 +54,7 @@ func TestF021_IDsMatchFrontendJSON(t *testing.T) {
 }
 
 // Several categories and locations are stored, duplicates once, in the order of first occurrence.
-func TestF021_ValidateStoresCategoriesAndLocations(t *testing.T) {
+func TestF024_ValidateStoresCategoriesAndLocations(t *testing.T) {
 	doc, _, err := validateIdeaInput(ideaInput{
 		ICOMCategories: []string{"accessibility", "dialogue-exchange", "accessibility"},
 		Locations:      []string{"online", "onsite", "online"},
@@ -70,7 +70,7 @@ func TestF021_ValidateStoresCategoriesAndLocations(t *testing.T) {
 	}
 }
 
-func TestF021_FieldsAreOptional(t *testing.T) {
+func TestF024_FieldsAreOptional(t *testing.T) {
 	doc, _, err := validateIdeaInput(ideaInput{})
 	if err != nil {
 		t.Fatal(err)
@@ -80,7 +80,7 @@ func TestF021_FieldsAreOptional(t *testing.T) {
 	}
 }
 
-func TestF021_UnknownIDsRejected(t *testing.T) {
+func TestF024_UnknownIDsRejected(t *testing.T) {
 	for _, in := range []ideaInput{
 		{ICOMCategories: []string{"nope"}},
 		{ICOMCategories: []string{"Accessibility"}}, // case-sensitive in the API
@@ -93,8 +93,8 @@ func TestF021_UnknownIDsRejected(t *testing.T) {
 	}
 }
 
-// Pages saved before F-021 have no fields; the API answers empty lists.
-func TestF021_OldPagesGiveEmptyLists(t *testing.T) {
+// Pages saved before F-024 have no fields; the API answers empty lists.
+func TestF024_OldPagesGiveEmptyLists(t *testing.T) {
 	v := toIdeaView("x", ideaDoc{})
 	if v.ICOMCategories == nil || v.Locations == nil {
 		t.Errorf("view: %#v / %#v", v.ICOMCategories, v.Locations)
@@ -106,7 +106,7 @@ func TestF021_OldPagesGiveEmptyLists(t *testing.T) {
 }
 
 // The CSV import reads the optional columns; IDs are case-insensitive there, ";" and "," separate.
-func TestF021_ImportColumns(t *testing.T) {
+func TestF024_ImportColumns(t *testing.T) {
 	csv := "Title,ICOM categories,Location\n" +
 		"A,\"Accessibility; dialogue-exchange\",online\n" +
 		"B,,\n" +
@@ -135,7 +135,7 @@ func TestF021_ImportColumns(t *testing.T) {
 }
 
 // The mapping for existing ideas is valid and covers exactly the start ideas of the CSV.
-func TestF021_MappingCoversStartIdeas(t *testing.T) {
+func TestF024_MappingCoversStartIdeas(t *testing.T) {
 	list, err := ReadICOMAssignments("cmd/assign-icom/zuordnung.json")
 	if err != nil {
 		t.Fatal(err)
@@ -156,7 +156,7 @@ func TestF021_MappingCoversStartIdeas(t *testing.T) {
 	}
 }
 
-func TestF021_MappingRejectsUnknownIDsAndDuplicates(t *testing.T) {
+func TestF024_MappingRejectsUnknownIDsAndDuplicates(t *testing.T) {
 	for _, bad := range []string{
 		`[{"title":"A","icomCategories":["nope"],"locations":[]}]`,
 		`[{"title":"A","icomCategories":[],"locations":["moon"]}]`,

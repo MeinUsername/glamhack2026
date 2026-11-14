@@ -1,7 +1,7 @@
 ---
 id: F-006
 title: Shopping Basket
-status: testing
+status: done
 ---
 
 # F-006 Shopping Basket

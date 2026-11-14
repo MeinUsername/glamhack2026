@@ -28,7 +28,7 @@ function Probe() {
   return <output data-testid="search">{search}</output>
 }
 
-describe('ICOM filter (F-021)', () => {
+describe('ICOM filter (F-024)', () => {
   beforeEach(() => localStorage.clear())
   afterEach(async () => {
     await i18n.changeLanguage('en')
@@ -144,7 +144,7 @@ describe('matchesFilter / parseIdList', () => {
   })
 })
 
-describe('Idee bearbeiten (F-021)', () => {
+describe('Idee bearbeiten (F-024)', () => {
   it('sendet gewählte ICOM-Kategorien und Orte', async () => {
     const { calls } = routeFetch({
       'GET /api/me': () => user,
@@ -164,6 +164,8 @@ describe('Idee bearbeiten (F-021)', () => {
     await u.click(await screen.findByRole('checkbox', { name: 'Sustainability & Climate' }))
     await u.click(screen.getByRole('checkbox', { name: 'Dialogue & Exchange' }))
     await u.click(screen.getByRole('checkbox', { name: 'Online' }))
+    // F-028: saving needs the confirmed terms.
+    await u.click(screen.getByRole('checkbox', { name: /I confirm that my content/ }))
     await u.click(screen.getByRole('button', { name: 'Save idea' }))
 
     const post = calls.find((c) => c.method === 'POST')

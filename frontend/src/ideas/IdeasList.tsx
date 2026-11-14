@@ -3,6 +3,7 @@ import { Link, useSearchParams } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { api } from '../api'
 import BasketButton from '../basket/BasketButton'
+import { imageUrl } from './imageUrl'
 import { buttonOnAccent, errorText, h1, label, mark, muted } from '../ui'
 import { FilterChip } from './IcomChips'
 import {
@@ -23,11 +24,12 @@ interface IdeaRow {
   title: string
   imageCount: number
   description: string
+  coverVersion?: string
   icomCategories?: string[]
   locations?: string[]
 }
 
-// URL parameters of the filter (F-021), so that a filtered view can be shared.
+// URL parameters of the filter (F-024), so that a filtered view can be shared.
 const CATEGORIES_PARAM = 'categories'
 const LOCATIONS_PARAM = 'locations'
 
@@ -308,7 +310,7 @@ function IdeaCard({ row, number }: { row: IdeaRow; number: number }) {
           photos never change its size. */}
       <div className="relative mx-3 mt-3 aspect-[16/10] shrink-0 overflow-hidden rounded-[18px]">
         {row.imageCount > 0 ? (
-          <img src={`/api/ideas/${row.id}/images/0`} alt="" className="absolute inset-0 h-full w-full object-cover" />
+          <img src={imageUrl(row.id, 0, row.coverVersion)} alt="" className="absolute inset-0 h-full w-full object-cover" />
         ) : (
           // No picture: soft shapes in the accents, so the grid stays even.
           <div aria-hidden="true" className={`absolute inset-0 overflow-hidden ${odd ? 'bg-accent' : 'bg-coral-soft'}`}>
@@ -344,8 +346,17 @@ function IdeaCard({ row, number }: { row: IdeaRow; number: number }) {
         )}
         {categories.length > 0 && <p className={`${label} m-0 mt-auto pt-1 text-xs text-ink-2`}>{categories.join(' · ')}</p>}
       </div>
-      <div className="px-6 pb-6">
-        <BasketButton ideaId={row.id} variant="bar" />
+      <div className="flex items-center gap-2 px-6 pb-6">
+        <div className="min-w-0 flex-1">
+          <BasketButton ideaId={row.id} variant="bar" />
+        </div>
+        {/* F-020: every card leads to editing its idea. */}
+        <Link
+          to={`/ideas/${row.id}/edit`}
+          className="inline-flex min-h-[52px] shrink-0 items-center rounded-full border-2 border-ink bg-paper px-5 font-semibold text-ink no-underline hover:bg-ink hover:text-on-accent"
+        >
+          {t('ideas.edit')}
+        </Link>
       </div>
     </li>
   )
