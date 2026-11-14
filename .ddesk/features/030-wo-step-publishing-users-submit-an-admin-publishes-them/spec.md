@@ -1,7 +1,7 @@
 ---
 id: F-030
 title: Two step publishing
-status: plan-ready
+status: implementing
 ---
 
 # F-030 Two step publishing
