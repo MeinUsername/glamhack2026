@@ -253,17 +253,16 @@ function FilterBar({
                   aria-labelledby={`filter-group-${g.id}`}
                   className="flex flex-wrap gap-2 px-1 pt-1 pb-2"
                 >
+                  {/* The explanation of each sub-category is the browser tooltip on hover (title). */}
                   {g.categories.map((c) => (
-                    <div key={c.id} className="grid basis-full gap-1">
-                      <div>
-                        <FilterChip pressed={categories.includes(c.id)} onClick={() => onToggleCategory(c.id)} describedBy={`filter-desc-${c.id}`}>
-                          {pick(c.label, lang)}
-                        </FilterChip>
-                      </div>
-                      <p id={`filter-desc-${c.id}`} className={`${muted} m-0 px-1 text-sm leading-snug`}>
-                        {pick(c.description, lang)}
-                      </p>
-                    </div>
+                    <FilterChip
+                      key={c.id}
+                      pressed={categories.includes(c.id)}
+                      onClick={() => onToggleCategory(c.id)}
+                      title={pick(c.description, lang)}
+                    >
+                      {pick(c.label, lang)}
+                    </FilterChip>
                   ))}
                 </div>
               </div>

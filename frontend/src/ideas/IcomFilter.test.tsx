@@ -64,16 +64,19 @@ describe('ICOM filter (F-024)', () => {
     expect(shownTitles()).toEqual(['Talking hour', 'Online archive'])
   })
 
-  it('AC-035-6 zeigt die Beschreibung sichtbar und wechselt mit der Sprache', async () => {
+  // AC-035-6, changed: the description is the browser tooltip of the chip, not text below it.
+  it('AC-035-6 zeigt die Beschreibung als Tooltip und wechselt mit der Sprache', async () => {
     mockIdeas()
     renderAt('/ideas')
     const u = userEvent.setup()
     await u.click(await screen.findByRole('switch', { name: 'Show all subcategories' }))
     const cat = ICOM_GROUPS.flatMap((g) => g.categories).find((c) => c.id === 'accessibility')!
-    expect(screen.getByText(cat.description.en)).toBeVisible()
-    expect(screen.getByRole('button', { name: 'Accessibility & Access' })).toHaveAccessibleDescription(cat.description.en)
+    const chip = screen.getByRole('button', { name: 'Accessibility & Access' })
+    expect(chip).toHaveAttribute('title', cat.description.en)
+    expect(chip).toHaveAccessibleDescription(cat.description.en)
+    expect(screen.queryByText(cat.description.en)).toBeNull() // no visible text below the chip
     await i18n.changeLanguage('de')
-    expect(await screen.findByText(cat.description.de)).toBeVisible()
+    expect(await screen.findByRole('button', { name: 'Barrierefreiheit & Zugang' })).toHaveAttribute('title', cat.description.de)
   })
 
   it('liest den Filter aus der URL und meldet, wenn nichts passt', async () => {
