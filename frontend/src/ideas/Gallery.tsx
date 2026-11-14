@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type KeyboardEvent, type TouchEvent } from
 import { useTranslation } from 'react-i18next'
 import { label } from '../ui'
 import { imageUrl } from './imageUrl'
+import FittedImage from './FittedImage'
 
 interface Props {
   ideaId: string
@@ -28,10 +29,10 @@ export default function Gallery({ ideaId, versions, title }: Props) {
           aria-label={t('gallery.open', { title, n: n + 1, count })}
           className="group relative block aspect-[4/3] w-full cursor-zoom-in overflow-hidden rounded-field border-2 border-ink bg-paper p-0"
         >
-          <img
+          <FittedImage
             src={imageUrl(ideaId, n, versions[n])}
             alt={t('ideas.imageAlt', { title, n: n + 1 })}
-            className="absolute inset-0 h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
+            className="transition-transform duration-300 group-hover:scale-[1.03]"
           />
         </button>
       ))}

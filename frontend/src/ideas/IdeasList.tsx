@@ -6,6 +6,7 @@ import BasketButton from '../basket/BasketButton'
 import { imageUrl } from './imageUrl'
 import StatusBadge from '../components/StatusBadge'
 import type { IdeaStatus } from '../types'
+import FittedImage from './FittedImage'
 import { buttonOnAccent, errorText, h1, label, mark, muted } from '../ui'
 import { FilterChip } from './IcomChips'
 import {
@@ -315,7 +316,7 @@ function IdeaCard({ row, number }: { row: IdeaRow; number: number }) {
           photos never change its size. */}
       <div className="relative mx-3 mt-3 aspect-[16/10] shrink-0 overflow-hidden rounded-[18px]">
         {row.imageCount > 0 ? (
-          <img src={imageUrl(row.id, 0, row.coverVersion)} alt="" className="absolute inset-0 h-full w-full object-cover" />
+          <FittedImage src={imageUrl(row.id, 0, row.coverVersion)} alt="" />
         ) : (
           // No picture: soft shapes in the accents, so the grid stays even.
           <div aria-hidden="true" className={`absolute inset-0 overflow-hidden ${odd ? 'bg-accent' : 'bg-coral-soft'}`}>
