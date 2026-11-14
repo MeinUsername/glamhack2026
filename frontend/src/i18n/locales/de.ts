@@ -130,6 +130,7 @@ export const de: Record<keyof typeof en, string> = {
   'ideas.categories.chips': 'Kategorien',
 
   'rules.tooMany': 'Es können höchstens {{max}} Bilder hochgeladen werden.',
+  'rules.tooManyWithExisting': 'Es sind höchstens {{max}} Bilder möglich; {{kept}} bleiben, du kannst noch {{free}} hinzufügen. Entferne ein Bild, um Platz zu schaffen.',
   'rules.tooBig': 'Jedes Bild darf höchstens 5 MB gross sein.',
   'rules.type': 'Bilder müssen JPG, PNG oder WebP sein.',
 

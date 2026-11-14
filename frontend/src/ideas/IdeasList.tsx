@@ -46,8 +46,11 @@ function Overview() {
                   {row.title || t('ideas.untitled')}
                 </Link>
                 {row.description && <p className="whitespace-pre-line text-sm text-slate-600 dark:text-slate-300">{row.description}</p>}
-                <div className="mt-auto pt-1">
+                <div className="mt-auto flex items-center gap-3 pt-1">
                   <BasketButton ideaId={row.id} />
+                  <Link to={`/ideas/${row.id}/edit`} className="text-sm">
+                    {t('ideas.edit')}
+                  </Link>
                 </div>
               </div>
             </li>

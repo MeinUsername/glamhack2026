@@ -217,4 +217,53 @@ describe('IdeaForm', () => {
       unmount()
     }
   })
+
+  // F-020: editing an idea with images.
+  const fiveImages = { json: { ...savedIdea.json, title: 'Licht', goal: 'Ziel', targetGroup: 'Schulen', images: Array.from({ length: 5 }, () => ({ contentType: 'image/png', bytes: 1 })) } }
+
+  it('AC-020-3 belegt Felder und Bilder beim Bearbeiten vor', async () => {
+    routeFetch({ 'GET /api/me': () => user, 'GET /api/ideas/i1': () => fiveImages })
+    renderAt('/ideas/i1/edit')
+    expect(await screen.findByLabelText('Title')).toHaveValue('Licht')
+    expect(screen.getByLabelText('Target audience')).toHaveValue('Schulen')
+    const boxes = screen.getAllByRole('checkbox').filter((b) => b.closest('label')?.querySelector('img'))
+    expect(boxes).toHaveLength(5)
+    boxes.forEach((b) => expect(b).toBeChecked())
+  })
+
+  it('AC-020-4 sendet keepImages der verbleibenden Bilder und die neue Datei', async () => {
+    const { calls } = routeFetch({
+      'GET /api/me': () => user,
+      'GET /api/ideas/i1': () => fiveImages,
+      'PUT /api/ideas/i1': () => ({ json: { id: 'i1' } }),
+    })
+    renderAt('/ideas/i1/edit')
+    const u = userEvent.setup()
+    await screen.findByLabelText('Title')
+    const boxes = screen.getAllByRole('checkbox').filter((b) => b.closest('label')?.querySelector('img'))
+    await u.click(boxes[1])
+    await u.upload(screen.getByLabelText(/^Images/), new File(['x'], 'neu.png', { type: 'image/png' }))
+    await u.click(screen.getByRole('button', { name: 'Save idea' }))
+
+    const put = calls.find((c) => c.method === 'PUT')
+    const form = formData(put?.body)
+    expect(JSON.parse(String(form.get('data'))).keepImages).toEqual([0, 2, 3, 4])
+    expect(form.getAll('images')).toHaveLength(1)
+  })
+
+  it('AC-020-5 lehnt ein sechstes Bild verständlich ab, bis ein Bild abgewählt wird', async () => {
+    const { calls } = routeFetch({ 'GET /api/me': () => user, 'GET /api/ideas/i1': () => fiveImages })
+    renderAt('/ideas/i1/edit')
+    const u = userEvent.setup()
+    await screen.findByLabelText('Title')
+    await u.upload(screen.getByLabelText(/^Images/), new File(['x'], 'neu.png', { type: 'image/png' }))
+    expect(await screen.findByText(/5 stay, you can add 0 more/)).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Save idea' })).toBeDisabled()
+
+    const boxes = screen.getAllByRole('checkbox').filter((b) => b.closest('label')?.querySelector('img'))
+    await u.click(boxes[0])
+    expect(screen.queryByText(/stay, you can add/)).toBeNull()
+    expect(screen.getByRole('button', { name: 'Save idea' })).toBeEnabled()
+    expect(calls.some((c) => c.method === 'PUT')).toBe(false)
+  })
 })

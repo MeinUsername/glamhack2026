@@ -14,6 +14,14 @@ import (
 // F-012 T6: an idea can be edited without login (Q-012-13). The form is the same as for
 // creating, plus keepImages: the 0-based indices of the existing images that stay.
 
+// checkImageCount enforces the image limit on an edit: kept plus new images (F-020, AC-020-5).
+func checkImageCount(kept, added int) error {
+	if kept+added <= maxIdeaImages {
+		return nil
+	}
+	return userError(fmt.Sprintf("At most %d images are possible; %d stay, you can add %d more.", maxIdeaImages, kept, max(0, maxIdeaImages-kept)))
+}
+
 var errBadImageRef = userError("Ein Bild kann nicht zugeordnet werden.")
 
 // selectKeptImages splits the stored images into the kept ones (in the order of keep)
@@ -94,8 +102,8 @@ func (s *server) apiUpdateIdea(w http.ResponseWriter, r *http.Request) {
 		writeUserError(w, err)
 		return
 	}
-	if len(kept)+len(newImages) > maxIdeaImages {
-		writeUserError(w, userError(fmt.Sprintf("At most %d images can be uploaded.", maxIdeaImages)))
+	if err := checkImageCount(len(kept), len(newImages)); err != nil {
+		writeUserError(w, err)
 		return
 	}
 

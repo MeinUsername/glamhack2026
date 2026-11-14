@@ -104,6 +104,8 @@ function IdeaEditor({ edit }: { edit?: Idea }) {
   const [images, setImages] = useState<File[]>([])
   const [imageError, setImageError] = useState('')
   const [inputKey, setInputKey] = useState(0) // remounts the file input after a rejected pick
+  // Kept plus new images may not exceed the limit; recomputed when the checkboxes change (F-020).
+  const countProblem = images.length > 0 ? imageProblem(images, t, keep.length) : ''
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
 
@@ -139,6 +141,7 @@ function IdeaEditor({ edit }: { edit?: Idea }) {
     event.preventDefault()
     if (busy) return
     setError('')
+    if (countProblem) return
     const problem = imageProblem(images, t)
     if (problem) {
       setImageError(problem)
@@ -211,7 +214,7 @@ function IdeaEditor({ edit }: { edit?: Idea }) {
             className={input}
             onChange={handlePickImages}
           />
-          {imageError && <span className={errorText}>{imageError}</span>}
+          {(imageError || countProblem) && <span className={errorText}>{imageError || countProblem}</span>}
         </Field>
         <Field label={t('ideas.field.targetGroup')}>
           <input className={input} value={draft.targetGroup} onChange={(e) => set('targetGroup', e.target.value)} />
@@ -280,7 +283,7 @@ function IdeaEditor({ edit }: { edit?: Idea }) {
         <p className={muted}>{t('ideas.markdown.help')}</p>
         {error && <p className={errorText}>{error}</p>}
         <div>
-          <button type="submit" className={button} disabled={busy || !!imageError}>
+          <button type="submit" className={button} disabled={busy || !!imageError || !!countProblem}>
             {busy ? t('ideas.saving') : t('ideas.save')}
           </button>
         </div>

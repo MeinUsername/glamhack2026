@@ -129,6 +129,7 @@ export const en = {
   'ideas.categories.chips': 'Categories',
 
   'rules.tooMany': 'At most {{max}} images can be uploaded.',
+  'rules.tooManyWithExisting': 'At most {{max}} images are possible; {{kept}} stay, you can add {{free}} more. Remove an image to make room.',
   'rules.tooBig': 'Each image must be at most 5 MB.',
   'rules.type': 'Images must be JPG, PNG or WebP.',
 

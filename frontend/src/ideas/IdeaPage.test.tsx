@@ -81,4 +81,13 @@ describe('IdeaPage categories', () => {
     expect(await screen.findByRole('heading', { name: 'Lichtinstallation' })).toBeInTheDocument()
     expect(screen.queryByRole('list', { name: 'Categories' })).toBeNull()
   })
+
+describe('IdeaPage edit entry', () => {
+  it('AC-020-1 zeigt einen Bearbeiten-Button, der zum Formular führt', async () => {
+    routeFetch({ 'GET /api/ideas/i1': () => ({ json: { ...base, categories: [] } }) })
+    renderAt('/ideas/i1')
+    const link = await screen.findByRole('link', { name: 'Edit' })
+    expect(link).toHaveAttribute('href', '/ideas/i1/edit')
+  })
+})
 })

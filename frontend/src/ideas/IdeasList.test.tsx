@@ -90,4 +90,14 @@ describe('IdeasList (F-011)', () => {
     expect(await screen.findByText('No ideas yet.')).toBeInTheDocument()
     expect(calls.some((c) => c.url === '/api/ideas')).toBe(true)
   })
+
+describe('IdeasList edit entry (F-020)', () => {
+  it('AC-020-2 führt pro Karte zum Bearbeiten der eigenen Idee', async () => {
+    routeFetch({ 'GET /api/me': () => user, 'GET /api/ideas': () => ({ json: rows }) })
+    renderAt('/ideas')
+    await screen.findByRole('link', { name: 'Lichtinstallation' })
+    const links = screen.getAllByRole('link', { name: 'Edit' })
+    expect(links.map((l) => l.getAttribute('href'))).toEqual(['/ideas/a/edit', '/ideas/b/edit'])
+  })
+})
 })
