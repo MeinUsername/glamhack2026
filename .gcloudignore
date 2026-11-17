@@ -13,3 +13,6 @@ frontend/src/data/*
 .gcloudignore
 *.md
 .DS_Store
+
+# Never upload local site credentials.
+.env

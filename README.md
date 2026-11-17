@@ -49,13 +49,55 @@ go run ./cmd/setup-admin -project glamhack-hack-2026 admin@example.ch
 
 | Variable | Zweck |
 | --- | --- |
+| `SITE_PASSWORD` | Gemeinsames Seitenpasswort (F-038); ohne Wert bleibt die App offen, mit Warnung im Log |
 | `INITIAL_ADMIN_EMAIL` | Adresse des Initialadmins (Standard `glamhack@x99.ch`) |
 | `INITIAL_ADMIN_PASSWORD` | Passwort, nur beim Neuanlegen. Gehört in den Secret Manager, nicht in den Quelltext |
 
 Vor dem ersten Deploy mit F-012 muss `INITIAL_ADMIN_PASSWORD` im Secret Manager liegen und
 am Cloud-Run-Dienst als Secret eingebunden sein, zum Beispiel über
-`--set-secrets INITIAL_ADMIN_PASSWORD=<secret-name>:latest`. Die Zeile fehlt im Deploy-Befehl
-von `cloudbuild.yaml`, bis das Secret existiert, weil ein fehlendes Secret den Deploy abbricht.
+`--set-secrets INITIAL_ADMIN_PASSWORD=<secret-name>:latest`. Die Secret-Zuordnung steht in `cloudbuild.yaml`; ein fehlendes Secret bricht den Deploy ab.
+
+## Seitenpasswort (F-038)
+
+Mit `SITE_PASSWORD` schützt der Go-Server die gesamte App: Seiten, API, Bilder, Assets und
+auch `/login` sowie die Rechtsseiten. Nur `/access` und `/robots.txt` bleiben ohne Freigabe
+erreichbar. Die Passwortseite funktioniert ohne Firebase und zeigt deutsche oder englische
+Texte nach `Accept-Language`. Nach der Eingabe geht es zurück zur angefragten internen Adresse.
+
+Die Freigabe gilt 30 Tage. Das signierte Cookie `access` ist HttpOnly, Secure und SameSite=Lax;
+es enthält kein Passwort. API-/Asset-Anfragen ohne Freigabe erhalten `401`, Seitenaufrufe eine
+Weiterleitung. Geschützte Antworten sind nicht cachebar. Die Firebase-Anmeldung für Admins
+bleibt zusätzlich erforderlich. Ohne gesetztes Passwort bleibt alles offen, mit einer einmaligen
+Warnung beim ersten Request. Eine geänderte Konfiguration wird beim Instanzstart eingelesen.
+
+**Lokal ist kein Seitenpasswort nötig.** `SITE_PASSWORD` nicht setzen; die App ist dann direkt
+zugänglich. Falls die Variable noch in deiner Shell gesetzt ist, mit `unset SITE_PASSWORD` entfernen.
+Es muss keine `.env` angelegt oder geladen werden.
+
+Das Passwort für **Produktion** setzt dieses Skript:
+
+```sh
+./scripts/set-site-password.sh
+```
+
+Es fragt das neue Passwort zweimal verdeckt ab, legt das Secret `SITE_PASSWORD` an oder fügt
+eine neue Version hinzu und gewährt dem tatsächlichen Cloud-Run-Laufzeit-Servicekonto Zugriff.
+Das Passwort landet weder in einer lokalen Datei noch als Argument in der Kommandozeile.
+Voraussetzungen: installierte und angemeldete Google Cloud CLI (`gcloud auth login`),
+ein bestehender Cloud-Run-Dienst sowie Rechte zur Secret-Verwaltung und zum Lesen des Dienstes.
+Projekt, Dienst und Region sind vorbelegt; Optionen zeigt `./scripts/set-site-password.sh --help`.
+
+Anschließend die App neu deployen. `cloudbuild.yaml` bindet `SITE_PASSWORD:latest` ein;
+das Secret muss vor dem Deploy existieren. Zum Ändern des Passworts dasselbe Skript erneut
+aufrufen und danach neu deployen. Das Skript führt selbst keinen Deploy durch.
+
+Nach vollständigem Austausch der alten Instanzen sind alle bisherigen Freigaben ungültig.
+Nach fünf falschen Eingaben pro IP antwortet der Server 15 Minuten mit `429` und `Retry-After`,
+auch bei richtigem Passwort. Die Zähler gelten je Instanz und sind auf 10 000 Einträge begrenzt;
+bei voller Tabelle werden neue Clients bis zur Freigabe von Platz zurückgewiesen. Die Client-IP
+kommt aus dem ersten `X-Forwarded-For`-Eintrag, sofern dieser eine gültige IP enthält,
+sonst aus `RemoteAddr`. Diese Bremse
+setzt einen vertrauenswürdigen Proxy voraus und ersetzt keine zentrale Missbrauchskontrolle.
 
 ## ICOM-Kategorien und Orte
 
@@ -121,6 +163,7 @@ gcloud run deploy glamhack-app --source . --function Handler --base-image go127 
   --region us-central1 --project glamhack-hack-2026 --allow-unauthenticated \
   --memory 256Mi --min-instances 0 --max-instances 2 --timeout 60 \
   --set-env-vars PROJECT_ID=glamhack-hack-2026,BUCKET_NAME=glamhack-hack-2026-files \
+  --set-secrets INITIAL_ADMIN_PASSWORD=INITIAL_ADMIN_PASSWORD:latest,SITE_PASSWORD=SITE_PASSWORD:latest \
   --set-build-env-vars GOFLAGS=-buildvcs=false
 ```
 

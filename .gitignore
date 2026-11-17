@@ -2,3 +2,6 @@
 frontend/node_modules/
 .idea/
 .vite/
+
+# Local site password (F-038)
+.env

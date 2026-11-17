@@ -7,6 +7,7 @@ require (
 	cloud.google.com/go/storage v1.70.0
 	firebase.google.com/go/v4 v4.23.0
 	github.com/GoogleCloudPlatform/functions-framework-go v1.9.2
+	golang.org/x/text v0.44.0
 	google.golang.org/api v0.311.0
 	google.golang.org/grpc v1.85.0
 )
@@ -61,7 +62,6 @@ require (
 	golang.org/x/oauth2 v0.38.0 // indirect
 	golang.org/x/sync v0.25.0 // indirect
 	golang.org/x/sys v0.50.0 // indirect
-	golang.org/x/text v0.44.0 // indirect
 	golang.org/x/time v0.16.0 // indirect
 	google.golang.org/appengine/v2 v2.0.6 // indirect
 	google.golang.org/genproto v0.0.0-20261110000943-09e21b237f2c // indirect
